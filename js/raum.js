@@ -1,6 +1,6 @@
-import { sb, spielEintragen, spielLoggen } from './server.js?v=0.1.0';
-import { fragenBauen, pruefe, AUSWAHL } from './abgleich.js?v=0.1.0';
-import { lobbyMelden, lobbyAbmelden } from './lobby.js?v=0.1.0';
+import { sb, spielEintragen, spielLoggen } from './server.js?v=0.2.0';
+import { fragenBauen, pruefe, AUSWAHL } from './abgleich.js?v=0.2.0';
+import { lobbyMelden, lobbyAbmelden } from './lobby.js?v=0.2.0';
 
 export const STANDARD = { runden: 10, zeit: 15, auswahl: 'bekannt', modus: 'tippen' };
 const COUNTDOWN = 3000;
@@ -264,9 +264,11 @@ export class Raum {
   }
 
   allePruefen() {
-    if (!this.hostSchritt || this.hostSchritt.fertig || this.phase !== 'frage') return;
+    const schritt = this.hostSchritt;
+    if (!schritt || schritt.fertig || schritt.alleDa || this.phase !== 'frage') return;
     const ids = [...this.spieler.keys()];
     if (ids.length && ids.every(id => this.geloest.has(id) || this.gesperrt.has(id))) {
+      schritt.alleDa = true; // nur einmal planen, sonst schiebt jede Anwesenheits-Meldung die Auflösung nach hinten
       clearTimeout(this.timer);
       this.timer = setTimeout(() => this.aufloesen(), 700);
     }

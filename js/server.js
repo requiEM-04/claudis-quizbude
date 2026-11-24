@@ -1,4 +1,4 @@
-import { CONFIG } from './config.js?v=0.1.0';
+import { CONFIG } from './config.js?v=0.2.0';
 
 // ?sitzung=2 in der Adresse = zweites Konto im selben Browser (zum Testen mit zwei Tabs)
 const sitzung = new URLSearchParams(location.search).get('sitzung');

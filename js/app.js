@@ -1,26 +1,26 @@
-import { VERSION } from './config.js?v=0.1.0';
+import { VERSION } from './config.js?v=0.2.0';
 import {
   online, nameFehler, registrieren, anmelden, abmelden, sitzungHolen, profilLaden,
   bestenliste, letzteSpiele, sprintEintragen, sb,
-} from './server.js?v=0.1.0';
-import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.1.0';
-import { Raum, codeNeu } from './raum.js?v=0.1.0';
-import { LAND, AUSWAHL, pruefe, flaggeUrl } from './abgleich.js?v=0.1.0';
-import { LAENDER } from './laender.js?v=0.1.0';
+} from './server.js?v=0.2.0';
+import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.2.0';
+import { Raum, codeNeu } from './raum.js?v=0.2.0';
+import { LAND, AUSWAHL, pruefe, flaggeUrl } from './abgleich.js?v=0.2.0';
+import { LAENDER } from './laender.js?v=0.2.0';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const zufall = a => a[Math.floor(Math.random() * a.length)];
 
 const AVATARE = ['🦊', '🐸', '🐼', '🦉', '🐙', '🦖', '🐝', '🐧', '🐢', '🦁', '🐨', '🐳', '🦜', '🍕', '☕', '🥨', '🔧', '🚧'];
-const FARBEN = ['#F2B531', '#F0668E', '#6FD6A6', '#7FB2F0', '#C49BF2', '#F28C4B'];
+const FARBEN = ['#CDB68C', '#8FB3A2', '#9AAFC7', '#C79A9A', '#B3A3C9', '#C8A68A'];
 
 const SPRUCH = {
   hallo: [
     'Hey {name}, Kaffee steht, Flaggen auch.',
-    '{name}! Pause ist Quizzeit.',
+    '{name}, Pause ist Quizzeit.',
     'Na {name}, wer holt sich heute die Krone?',
-    '{name}, kurz abschalten, Hirn bleibt an.',
+    '{name}, kurz abschalten. Hirn bleibt an.',
     'Schön, dass du da bist, {name}. Die Flaggen hängen schon.',
   ],
   richtig: ['Ticket geschlossen.', 'Sauber!', 'Zack, drin.', 'Läuft bei dir.', 'Schneller als jeder Neustart.', 'Das sitzt.'],
@@ -82,17 +82,17 @@ function anmeldenAufbauen() {
   $('farb-wahl').onclick = e => { const b = e.target.closest('button'); if (b) { auswahl.farbe = b.dataset.f; markieren(); } };
   markieren();
 
-  document.querySelectorAll('#s-anmelden .reiter-knopf').forEach(b => {
+  document.querySelectorAll('#s-anmelden .umschalter-knopf').forEach(b => {
     b.onclick = () => {
       anmeldeModus = b.dataset.modus;
-      document.querySelectorAll('#s-anmelden .reiter-knopf').forEach(x => {
+      document.querySelectorAll('#s-anmelden .umschalter-knopf').forEach(x => {
         x.classList.toggle('aktiv', x === b); x.setAttribute('aria-selected', x === b);
       });
       const neu = anmeldeModus === 'neu';
       document.querySelector('.nur-neu').hidden = !neu;
       $('anmelde-knopf').textContent = neu ? 'Konto anlegen' : 'Anmelden';
       document.querySelector('#anmelde-form [name=passwort]').autocomplete = neu ? 'new-password' : 'current-password';
-      $('anmelden-claudi').textContent = neu ? 'Neu hier? Such dir ein Gesicht aus, Passwort ab 4 Zeichen reicht.' : 'Pause? Dann rein in die Bude.';
+      $('anmelden-claudi').textContent = neu ? 'Such dir einen Avatar aus. Ein Passwort ab 4 Zeichen reicht.' : 'Claudi hat die Flaggen schon aufgehängt.';
       $('anmelde-fehler').textContent = '';
     };
   });
@@ -126,11 +126,24 @@ function anmeldenAufbauen() {
   $('gast-sprint').onclick = () => { location.hash = '#/sprint'; };
 }
 
+// Drei Flaggen als Fächer, bei jedem Besuch andere
+function faecherFuellen() {
+  const pool = LAENDER.filter(l => l.bekannt);
+  const drei = [];
+  while (drei.length < 3) { const c = zufall(pool).code; if (!drei.includes(c)) drei.push(c); }
+  const lage = [{ x: '-34%', y: '6%', dreh: '-11deg' }, { x: '0%', y: '-6%', dreh: '2deg' }, { x: '34%', y: '8%', dreh: '13deg' }];
+  document.querySelectorAll('[data-faecher]').forEach(f => {
+    if (f.closest('.screen')?.hidden) return;
+    f.innerHTML = drei.map((c, i) => `<img src="${flaggeUrl(c)}" alt="" style="--i:${i};--x:${lage[i].x};--y:${lage[i].y};--dreh:${lage[i].dreh}">`).join('');
+  });
+}
+
 function anmeldenZeigen() {
   zeige('anmelden');
+  faecherFuellen();
   const ohneServer = !online();
   $('anmelde-form').hidden = ohneServer;
-  document.querySelector('#s-anmelden .reiter').hidden = ohneServer;
+  document.querySelector('#s-anmelden .umschalter').hidden = ohneServer;
   $('offline-hinweis').hidden = !ohneServer;
   $('gast-sprint').hidden = !ohneServer;
 }
@@ -143,11 +156,13 @@ async function profilHolen(user) {
   lobbyStart();
 }
 
+const AUS_ICON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>';
+
 function chipZeichnen() {
   const chip = $('profil-chip');
-  if (!ich) { chip.hidden = true; chip.innerHTML = ''; return; }
-  chip.hidden = false;
-  chip.innerHTML = `<span class="chip">${avatarHtml(ich)}<span>${esc(ich.name)}</span></span><button class="knopf leise klein" id="abmelden">Abmelden</button>`;
+  $('dock').hidden = !ich;
+  if (!ich) { chip.innerHTML = ''; return; }
+  chip.innerHTML = `${avatarHtml(ich)}<span class="dock-name">${esc(ich.name)}</span><button class="dock-aus" id="abmelden" title="Abmelden" aria-label="Abmelden">${AUS_ICON}</button>`;
   $('abmelden').onclick = async () => {
     if (raum) { raum.verlassen(); raum = null; }
     lobbyStopp();
@@ -161,6 +176,7 @@ function chipZeichnen() {
 // ---------- Bude ----------
 function budeZeigen() {
   zeige('bude');
+  faecherFuellen();
   $('bude-claudi').textContent = zufall(SPRUCH.hallo).replace('{name}', ich.name);
   if (lobbyAus) lobbyAus();
   lobbyAus = lobbyAbo(raeumeZeichnen);
@@ -179,7 +195,7 @@ function raeumeZeichnen(raeume) {
       <span class="code">${esc(r.code)}</span>
       <span class="info"><strong>Raum von ${esc(r.host)}</strong>
         <span>${r.spieler === 1 ? '1 Person' : `${r.spieler} Leute`}, ${esc(r.auswahl)}, ${r.phase === 'warten' || r.phase === 'ende' ? 'wartet auf den Start' : 'spielt gerade'}</span></span>
-      <a class="knopf senf klein" href="#/raum/${esc(r.code)}">Rein da</a>
+      <a class="knopf haupt klein" href="#/raum/${esc(r.code)}">Rein da</a>
     </li>`).join('');
 }
 
@@ -212,7 +228,8 @@ async function letzteLaden() {
       const text = sp.length > 1
         ? `${esc(erster.avatar)} ${esc(erster.name)} gewinnt mit ${erster.pkt} Punkten gegen ${sp.length - 1 === 1 ? '1 andere Person' : `${sp.length - 1} andere`}`
         : `${esc(erster.avatar)} ${esc(erster.name)} hat allein ${erster.pkt} Punkte geholt`;
-      return `<li>${text}, ${wann(s.am)}.</li>`;
+      const w = wann(s.am);
+      return `<li>${text}, ${w}${w.endsWith('.') ? '' : '.'}</li>`;
     }).join('') : '<li>Noch kein Spiel. Das ändert sich gleich.</li>';
   } catch (e) {
     ul.innerHTML = `<li>${esc(e.message)}</li>`;
@@ -229,10 +246,10 @@ function budeAufbauen() {
     location.hash = '#/raum/' + c;
   };
   $('sprint-start').onclick = () => { location.hash = '#/sprint'; };
-  document.querySelectorAll('#besten-reiter .reiter-knopf').forEach(b => {
+  document.querySelectorAll('#besten-reiter .umschalter-knopf').forEach(b => {
     b.onclick = () => {
       besteSpalte = b.dataset.spalte;
-      document.querySelectorAll('#besten-reiter .reiter-knopf').forEach(x => { x.classList.toggle('aktiv', x === b); x.setAttribute('aria-selected', x === b); });
+      document.querySelectorAll('#besten-reiter .umschalter-knopf').forEach(x => { x.classList.toggle('aktiv', x === b); x.setAttribute('aria-selected', x === b); });
       bestenLaden();
     };
   });
@@ -372,6 +389,7 @@ function raumZeichnen() {
       gezeichnet.phase = 'aufloesung-' + r.idx;
     }
     if (r.phase === 'frage') $('aufgeloest').textContent = '';
+    $('rate-form').hidden = r.einst.modus === 'auswahl' || r.phase === 'aufloesung';
     gezeichnet.idx = r.idx;
   } else {
     gezeichnet.idx = -2;
@@ -504,6 +522,8 @@ function sprintAufbauen() {
 // ---------- Weiche ----------
 function route() {
   const h = location.hash || '#/';
+  const nav = h === '#/sprint' ? 'sprint' : h.startsWith('#/raum/') ? '' : 'bude';
+  document.querySelectorAll('.dock-link').forEach(a => a.classList.toggle('aktiv', a.dataset.nav === nav));
   if (raum && h !== '#/raum/' + raum.code) { raum.verlassen(); raum = null; }
   if (sprint && h !== '#/sprint') { sprint.laeuft = false; sprint = null; }
   if (h !== '#/' && lobbyAus) { lobbyAus(); lobbyAus = null; }
@@ -538,5 +558,8 @@ async function los() {
   }
   route();
 }
+
+// Für die Fehlersuche in der Konsole: quizbude.raum
+window.quizbude = { get raum() { return raum; } };
 
 los();
