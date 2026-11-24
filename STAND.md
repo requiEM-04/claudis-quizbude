@@ -10,8 +10,12 @@
 
 ## Offen
 
-- Live-Test mit zwei echten Konten im Browser (lokal mit nachgebautem Server bestanden: Spiel, Auswahl-Modus, Gastgeber-Wechsel).
-- Testkonten `Testkiosk1` (und ggf. `Testkiosk2`) im Supabase-Dashboard unter Authentication → Users löschen.
+- Testkonten `Testkiosk1`, `Testkiosk2`, `Testkiosk3` im Supabase-Dashboard löschen (Authentication → Users; das Profil verschwindet mit) und das Testspiel aus der Tabelle `spiele` entfernen.
+
+## Getestet
+
+- 24.11.: Live mit zwei Konten über den echten Server: Lobby zeigt Räume, Beitreten mit Sync, 5 Flaggen inkl. abgelaufener Zeit, gleicher Endstand bei beiden, Statistik und Verlauf gespeichert, Gastgeber-Wechsel beim Verlassen.
+- Lokal mit nachgebautem Server (`werkzeuge/test/`): zusätzlich Auswahl-Modus und Gastgeber-Wechsel mitten im Spiel.
 
 ## Ideen für später
 
