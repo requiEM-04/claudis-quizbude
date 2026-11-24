@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Claudis Quizbude</title>
+<meta name="description" content="Flaggen raten in der Pause, allein oder zusammen im Raum.">
+<meta name="theme-color" content="#1C3466">
+<link rel="icon" href="bilder/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="css/stil.css?v=0.1.0">
+</head>
+<body>
+<div class="markise" aria-hidden="true"></div>
+
+<header class="kopf">
+  <a class="schild" href="#/" aria-label="Claudis Quizbude, zur Startseite">
+    <span class="schild-klein">Claudis</span>
+    <span class="schild-gross">Quizbude</span>
+  </a>
+  <div class="kopf-rechts" id="profil-chip" hidden></div>
+</header>
+
+<main>
+  <!-- Anmelden -->
+  <section class="screen" id="s-anmelden" hidden>
+    <div class="claudi-zeile"><span class="claudi" aria-hidden="true"></span><p class="sprechblase" id="anmelden-claudi">Pause? Dann rein in die Bude.</p></div>
+    <div class="theke anmelde-theke">
+      <div class="reiter" role="tablist">
+        <button role="tab" class="reiter-knopf aktiv" data-modus="anmelden" aria-selected="true">Anmelden</button>
+        <button role="tab" class="reiter-knopf" data-modus="neu" aria-selected="false">Neu hier</button>
+      </div>
+      <form id="anmelde-form" autocomplete="on" novalidate>
+        <label>Name <input name="name" autocomplete="username" maxlength="16" required></label>
+        <label>Passwort <input name="passwort" type="password" autocomplete="current-password" minlength="4" required></label>
+        <fieldset class="nur-neu" hidden>
+          <legend>Dein Gesicht in der Bude</legend>
+          <div class="avatar-wahl" id="avatar-wahl"></div>
+          <div class="farb-wahl" id="farb-wahl"></div>
+        </fieldset>
+        <p class="fehler" id="anmelde-fehler" role="alert"></p>
+        <button class="knopf senf" type="submit" id="anmelde-knopf">Anmelden</button>
+      </form>
+      <p class="kleingedruckt" id="offline-hinweis" hidden>Der Server wird gerade eingerichtet. Bis dahin geht nur der Flaggen-Sprint ohne Konto.</p>
+      <button class="knopf leise" id="gast-sprint" hidden>Flaggen-Sprint ohne Konto</button>
+    </div>
+  </section>
+
+  <!-- Bude (Start) -->
+  <section class="screen" id="s-bude" hidden>
+    <div class="claudi-zeile"><span class="claudi" aria-hidden="true"></span><p class="sprechblase" id="bude-claudi"></p></div>
+    <div class="bude-raster">
+      <div class="theke spielen">
+        <h2>Spielen</h2>
+        <button class="knopf senf gross" id="raum-neu">Raum aufmachen</button>
+        <form class="beitreten" id="beitreten-form">
+          <label for="code-eingabe">Raum-Code</label>
+          <div class="zeile">
+            <input id="code-eingabe" maxlength="4" autocomplete="off" spellcheck="false" placeholder="ABCD">
+            <button class="knopf" type="submit">Beitreten</button>
+          </div>
+        </form>
+        <button class="knopf leise" id="sprint-start">Flaggen-Sprint allein, 60 Sekunden</button>
+      </div>
+      <div class="raeume">
+        <h2>Offene Räume</h2>
+        <ul id="raum-liste" class="raum-liste"></ul>
+      </div>
+    </div>
+    <div class="tafel bestentafel">
+      <div class="tafel-kopf">
+        <h2>Bestenliste</h2>
+        <div class="reiter klein" role="tablist" id="besten-reiter">
+          <button role="tab" class="reiter-knopf aktiv" data-spalte="siege" aria-selected="true">Siege</button>
+          <button role="tab" class="reiter-knopf" data-spalte="punkte" aria-selected="false">Punkte</button>
+          <button role="tab" class="reiter-knopf" data-spalte="sprint_rekord" aria-selected="false">Sprint</button>
+        </div>
+      </div>
+      <ol id="besten-liste" class="besten-liste"></ol>
+      <h3>Zuletzt gespielt</h3>
+      <ul id="letzte-liste" class="letzte-liste"></ul>
+    </div>
+  </section>
+
+  <!-- Raum -->
+  <section class="screen" id="s-raum" hidden>
+    <div class="raum-raster">
+      <div class="tafel spieltafel">
+        <div class="tafel-kopf">
+          <button class="raum-code" id="raum-code" title="Einladungslink kopieren"></button>
+          <span class="runde" id="raum-runde"></span>
+          <a class="knopf leise klein" href="#/">Raus</a>
+        </div>
+        <div class="zeitleiste" id="zeitleiste" hidden><div class="zeitleiste-fuellung" id="zeitleiste-fuellung"></div></div>
+
+        <div class="buehne" id="buehne">
+          <!-- Warten: Einstellungen -->
+          <div class="phase" id="p-warten">
+            <h2>Gleich geht's los</h2>
+            <p class="tafel-text" id="warten-text"></p>
+            <div class="einst" id="einst">
+              <label>Runden <select data-e="runden"><option>5</option><option>10</option><option>15</option><option>20</option><option>30</option></select></label>
+              <label>Zeit pro Flagge <select data-e="zeit"><option value="10">10 s</option><option value="15">15 s</option><option value="20">20 s</option><option value="30">30 s</option></select></label>
+              <label>Flaggen <select data-e="auswahl" id="einst-auswahl"></select></label>
+              <label>Antworten <select data-e="modus"><option value="tippen">Selbst tippen</option><option value="auswahl">4 zur Auswahl</option></select></label>
+            </div>
+            <button class="knopf senf gross" id="los">Los geht's</button>
+          </div>
+
+          <div class="phase" id="p-countdown"><p class="countdown" id="countdown"></p></div>
+
+          <div class="phase" id="p-frage">
+            <div class="flaggen-rahmen"><img id="flagge" alt="Flagge, welches Land ist das?" draggable="false"></div>
+            <p class="aufgeloest" id="aufgeloest" aria-live="polite"></p>
+            <form class="rate-form" id="rate-form" autocomplete="off">
+              <input id="rate-eingabe" placeholder="Welches Land?" spellcheck="false" autocapitalize="off">
+            </form>
+            <div class="optionen" id="optionen"></div>
+            <p class="rueckmeldung" id="rueckmeldung" aria-live="polite"></p>
+          </div>
+
+          <div class="phase" id="p-ende">
+            <h2>Endstand</h2>
+            <ol class="podest" id="podest"></ol>
+            <div class="zeile mitte">
+              <button class="knopf senf" id="nochmal">Nochmal</button>
+              <a class="knopf leise" href="#/">Zur Bude</a>
+            </div>
+            <p class="tafel-text" id="ende-text"></p>
+          </div>
+        </div>
+      </div>
+
+      <aside class="seite">
+        <h2>Im Raum</h2>
+        <ul class="spieler-liste" id="spieler-liste"></ul>
+        <div class="chat">
+          <ul class="chat-liste" id="chat-liste" aria-live="polite"></ul>
+          <form id="chat-form" class="zeile"><input id="chat-eingabe" placeholder="Nachricht" maxlength="200" autocomplete="off"><button class="knopf klein" type="submit">Senden</button></form>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- Sprint -->
+  <section class="screen" id="s-sprint" hidden>
+    <div class="tafel spieltafel sprint">
+      <div class="tafel-kopf">
+        <span class="sprint-punkte" id="sprint-punkte">0</span>
+        <span class="runde" id="sprint-zeit">60</span>
+        <a class="knopf leise klein" href="#/">Raus</a>
+      </div>
+      <div class="zeitleiste"><div class="zeitleiste-fuellung" id="sprint-leiste"></div></div>
+      <div class="buehne">
+        <div class="phase" id="sp-laeuft">
+          <div class="flaggen-rahmen"><img id="sprint-flagge" alt="Flagge, welches Land ist das?" draggable="false"></div>
+          <form class="rate-form" id="sprint-form" autocomplete="off">
+            <input id="sprint-eingabe" placeholder="Welches Land?" spellcheck="false" autocapitalize="off">
+          </form>
+          <div class="zeile mitte"><button class="knopf leise klein" id="sprint-skip">Weiß ich nicht (−2 s)</button></div>
+          <p class="rueckmeldung" id="sprint-rueck" aria-live="polite"></p>
+        </div>
+        <div class="phase" id="sp-ende" hidden>
+          <h2 id="sprint-ergebnis"></h2>
+          <p class="tafel-text" id="sprint-rekord"></p>
+          <div class="zeile mitte">
+            <button class="knopf senf" id="sprint-nochmal">Nochmal</button>
+            <a class="knopf leise" href="#/">Zur Bude</a>
+          </div>
+          <h3 id="sprint-verpasst-titel">Das waren die anderen</h3>
+          <ul class="verpasst" id="sprint-verpasst"></ul>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="fuss">Version <span id="version"></span>. Flaggen von flag-icons (MIT), Länderdaten von world-countries (ODbL).</footer>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script src="vendor/supabase.js?v=0.1.0"></script>
+<script type="module" src="js/app.js?v=0.1.0"></script>
+</body>
+</html>
