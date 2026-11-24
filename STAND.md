@@ -10,7 +10,7 @@
 
 ## Offen
 
-- Testkonten `Testkiosk1`, `Testkiosk2`, `Testkiosk3` im Supabase-Dashboard löschen (Authentication → Users; das Profil verschwindet mit) und das Testspiel aus der Tabelle `spiele` entfernen.
+- Nichts Dringendes. Testkonten und Testspiel sind am 24.11. gelöscht, die Datenbank startet leer.
 
 ## Getestet
 
