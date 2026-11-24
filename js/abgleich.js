@@ -1,5 +1,5 @@
-import { LAENDER } from './laender.js?v=0.2.0';
-import { kanon } from './kanon.js?v=0.2.0';
+import { LAENDER } from './laender.js?v=0.3.0';
+import { kanon } from './kanon.js?v=0.3.0';
 
 export const LAND = Object.fromEntries(LAENDER.map(l => [l.code, l]));
 const WEM = new Map();
@@ -20,23 +20,26 @@ function abstand(a, b) {
   return d[m][n];
 }
 
-// 'richtig' | 'knapp' | 'falsch' | 'leer'
-export function pruefe(eingabe, code) {
+// Vergleicht eine Eingabe mit einer Liste erlaubter Antworten (schon kanonisiert).
+// gehoertAnderem(k) sagt, ob die exakte Eingabe zu einer anderen Lösung passt. Ergebnis: 'richtig' | 'knapp' | 'falsch' | 'leer'
+export function abgleichen(eingabe, antworten, gehoertAnderem = () => false) {
   const k = kanon(eingabe);
   if (k.length < 2) return 'leer';
-  const land = LAND[code];
-  if (land.antworten.includes(k)) return 'richtig';
-  const anderes = WEM.get(k);
-  if (anderes && anderes !== code) return 'falsch'; // exakt ein anderes Land getippt
+  if (antworten.includes(k)) return 'richtig';
+  if (gehoertAnderem(k)) return 'falsch';
   const grenze = k.length <= 4 ? 0 : k.length <= 7 ? 1 : 2;
   let best = 99;
-  for (const a of land.antworten) {
+  for (const a of antworten) {
     if (Math.abs(a.length - k.length) > 3) continue;
     best = Math.min(best, abstand(a, k));
   }
   if (best <= grenze) return 'richtig';
   if (k.length >= 4 && best <= grenze + 1) return 'knapp';
   return 'falsch';
+}
+
+export function pruefe(eingabe, code) {
+  return abgleichen(eingabe, LAND[code].antworten, k => { const anderes = WEM.get(k); return !!anderes && anderes !== code; });
 }
 
 export const AUSWAHL = {
@@ -56,21 +59,6 @@ export function mischen(arr) {
     [a[i], a[j]] = [a[j], a[i]];
   }
   return a;
-}
-
-// Fragenliste für einen Raum. Bei „Auswahl" gibt's drei falsche Antworten aus derselben Ecke der Welt.
-export function fragenBauen({ auswahl, runden, modus }) {
-  const pool = LAENDER.filter(AUSWAHL[auswahl]?.filter || (() => true));
-  const gezogen = mischen(pool).slice(0, Math.min(runden, pool.length));
-  return gezogen.map(l => {
-    const f = { c: l.code };
-    if (modus === 'auswahl') {
-      const nah = mischen(LAENDER.filter(x => x.code !== l.code && x.region === l.region));
-      const fern = mischen(LAENDER.filter(x => x.code !== l.code && x.region !== l.region));
-      f.o = mischen([l.code, ...nah.concat(fern).slice(0, 3).map(x => x.code)]);
-    }
-    return f;
-  });
 }
 
 export function flaggeUrl(code) {

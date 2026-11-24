@@ -26,8 +26,7 @@ async def registrieren(pg, name, avatar):
     await pg.wait_for_selector('#s-bude:not([hidden])', timeout=5000)
 
 async def code_jetzt(pg):
-    src = await pg.get_attribute('#flagge', 'src')
-    return src.split('/')[-1].split('.')[0].upper()
+    return await pg.evaluate('quizbude.raum.frage.c')
 
 async def warte_phase(pg, phase_id, timeout=20000):
     await pg.wait_for_selector(f'#{phase_id}:not([hidden])', timeout=timeout)
@@ -49,7 +48,7 @@ async def main():
         Bp = await neu(ctx, BASIS + '?sitzung=2', 'B')
         await registrieren(Bp, 'Leonie', '🐸')
 
-        await A.click('#raum-neu')
+        await A.click('.kachel[data-k=flaggen]')
         await warte_phase(A, 'p-warten')
         code = (await A.inner_text('#raum-code')).strip()
         print('Raum', code)
@@ -72,7 +71,7 @@ async def main():
         await A.screenshot(path='/tmp/t_countdown.png')
         for i in range(5):
             await warte_phase(A, 'p-frage', 8000)
-            await A.wait_for_function(f'document.getElementById("raum-runde").textContent.includes("Flagge {i+1} ")', timeout=8000)
+            await A.wait_for_function(f'document.getElementById("raum-runde").textContent.includes("Frage {i+1} ")', timeout=8000)
             await A.wait_for_timeout(300)
             c = await code_jetzt(A)
             cb = await code_jetzt(Bp)
@@ -123,7 +122,7 @@ async def main():
         await A.wait_for_timeout(1500)
         print('B nach Gastgeber-Wechsel:', await spieler(Bp))
         for i in range(1, 5):
-            await Bp.wait_for_function(f'document.getElementById("raum-runde").textContent.includes("Flagge {i+1} ")', timeout=12000)
+            await Bp.wait_for_function(f'document.getElementById("raum-runde").textContent.includes("Frage {i+1} ")', timeout=12000)
             await Bp.wait_for_timeout(200)
             c = await code_jetzt(Bp)
             await Bp.click(f'#optionen button[data-c="{c}"]')

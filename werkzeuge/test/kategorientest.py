@@ -1,0 +1,84 @@
+# Spielt jede Kategorie mit zwei Konten durch (nachgebautes Supabase) und macht Bilder davon.
+# Start: im Repo-Ordner "python3 -m http.server 8765", dann "python3 werkzeuge/test/kategorientest.py [ordner-fuer-bilder]".
+import asyncio, os, sys
+from playwright.async_api import async_playwright
+HIER = os.path.dirname(os.path.abspath(__file__))
+BASIS = 'http://localhost:8765/'
+FAKE = open(os.path.join(HIER, 'supabase-fake.js')).read()
+BILDER = sys.argv[1] if len(sys.argv) > 1 else '/tmp'
+fehler = []
+
+ANTWORTEN = """async (falsch) => {
+  const v = document.getElementById('version').textContent;
+  const m = await import('./js/kategorien.js?v=' + v);
+  const { LAND } = await import('./js/abgleich.js?v=' + v);
+  const r = quizbude.raum; const f = r.frage;
+  if (!f || r.phase !== 'frage' || r.meinStatus) return 'nichts';
+  if (f.o) {
+    const keys = m.optionSchluessel(f);
+    const k = keys.find(k => falsch ? !m.richtigeWahl(f, k) : m.richtigeWahl(f, k));
+    document.querySelector(`#optionen button[data-c="${CSS.escape(k)}"]`).click();
+    return f.k + ' wahl ' + k;
+  }
+  const text = falsch ? 'Atlantis' : (f.k === 'hauptstaedte' ? LAND[f.c].stadt : LAND[f.c].name);
+  const inp = document.getElementById('rate-eingabe'); inp.value = text; document.getElementById('rate-form').requestSubmit();
+  return f.k + ' tippe ' + text;
+}"""
+
+async def neu(ctx, url, tag):
+    pg = await ctx.new_page()
+    pg.on('pageerror', lambda e: fehler.append(f'{tag} PAGEERROR {e}'))
+    pg.on('console', lambda m: m.type == 'error' and fehler.append(f'{tag} {m.text}'))
+    await pg.goto(url); await pg.wait_for_timeout(400)
+    return pg
+
+async def registrieren(pg, name, avatar):
+    await pg.click('[data-modus=neu]')
+    await pg.fill('#anmelde-form [name=name]', name)
+    await pg.fill('#anmelde-form [name=passwort]', 'test1234')
+    await pg.click(f'#avatar-wahl [data-a="{avatar}"]')
+    await pg.click('#anmelde-knopf')
+    await pg.wait_for_selector('#s-bude:not([hidden])', timeout=5000)
+
+async def main():
+    async with async_playwright() as p:
+        b = await p.chromium.launch()
+        ctx = await b.new_context(viewport={'width': 1440, 'height': 900})
+        await ctx.route('**/vendor/supabase.js*', lambda r: r.fulfill(status=200, content_type='application/javascript', body=FAKE))
+        A = await neu(ctx, BASIS, 'A'); await registrieren(A, 'Colin', '🦊')
+        B = await neu(ctx, BASIS + '?sitzung=2', 'B'); await registrieren(B, 'Leonie', '🐸')
+        await A.screenshot(path=f'{BILDER}/k_bude.png', full_page=True)
+        # Raum über die Kachel „Gemischt"
+        await A.click('.kachel[data-k=gemischt]')
+        await A.wait_for_selector('#p-warten:not([hidden])')
+        await B.wait_for_timeout(900)
+        print('Lobby:', (await B.inner_text('#raum-liste')).replace('\n', ' | '))
+        await B.click('#raum-liste a'); await B.wait_for_selector('#p-warten:not([hidden])')
+        for kat in ['gemischt', 'flaggen', 'umrisse', 'hauptstaedte', 'groesser', 'wissen', 'emoji']:
+            await A.select_option('#einst-kategorie', kat); await A.wait_for_timeout(300)
+            await A.select_option('#einst [data-e=runden]', '10' if kat == 'gemischt' else '5')
+            await A.select_option('#einst [data-e=zeit]', '10'); await A.wait_for_timeout(300)
+            if kat == 'gemischt': await A.screenshot(path=f'{BILDER}/k_warten.png')
+            print(kat, 'B sieht:', await B.eval_on_selector('#einst-kategorie', 'e => e.value'), '/', await B.eval_on_selector('#einst-auswahl', 'e => e.value'), '/ modus aus:', await B.eval_on_selector('#einst-modus', 'e => e.value'))
+            await A.click('#los')
+            gesehen = set()
+            while True:
+                await A.wait_for_function('["frage","ende"].includes(quizbude.raum.phase)', timeout=20000)
+                if await A.evaluate('quizbude.raum.phase') == 'ende': break
+                idx = await A.evaluate('quizbude.raum.idx'); art = await A.evaluate('quizbude.raum.frage.k')
+                await A.wait_for_timeout(500)
+                if kat == 'gemischt' and art not in gesehen:
+                    await A.screenshot(path=f'{BILDER}/k_frage_{art}.png')
+                await B.evaluate(ANTWORTEN, idx % 3 == 1)
+                await A.evaluate(ANTWORTEN, False)
+                await A.wait_for_function(f'quizbude.raum.phase !== "frage" || quizbude.raum.idx !== {idx}', timeout=15000)
+                if kat == 'gemischt' and art not in gesehen:
+                    await A.wait_for_timeout(300); await A.screenshot(path=f'{BILDER}/k_aufl_{art}.png'); gesehen.add(art)
+            pa = (await A.inner_text('#podest')).replace('\n', ' '); pb = (await B.inner_text('#podest')).replace('\n', ' ')
+            print(kat, 'Endstand:', pa, '| gleich bei B:', pa == pb, '| Arten:', sorted(gesehen) if gesehen else '')
+            await A.click('#nochmal'); await A.wait_for_selector('#p-warten:not([hidden])')
+        await A.goto(BASIS + '#/'); await A.wait_for_timeout(800)
+        print('Letzte:', (await A.inner_text('#letzte-liste')).split('\n')[0])
+        print('FEHLER:', fehler)
+        await b.close()
+asyncio.run(main())

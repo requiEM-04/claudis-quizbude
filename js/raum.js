@@ -1,8 +1,8 @@
-import { sb, spielEintragen, spielLoggen } from './server.js?v=0.2.0';
-import { fragenBauen, pruefe, AUSWAHL } from './abgleich.js?v=0.2.0';
-import { lobbyMelden, lobbyAbmelden } from './lobby.js?v=0.2.0';
+import { sb, spielEintragen, spielLoggen } from './server.js?v=0.3.0';
+import { fragenBauen, pruefeFrage, richtigeWahl, fragenVorladen, KATEGORIEN } from './kategorien.js?v=0.3.0';
+import { lobbyMelden, lobbyAbmelden } from './lobby.js?v=0.3.0';
 
-export const STANDARD = { runden: 10, zeit: 15, auswahl: 'bekannt', modus: 'tippen' };
+export const STANDARD = { kategorie: 'flaggen', runden: 10, zeit: 15, auswahl: 'bekannt', modus: 'tippen' };
 const COUNTDOWN = 3000;
 const AUFLOESUNG = 3500;
 
@@ -126,9 +126,10 @@ export class Raum {
 
   lobbyAktualisieren() {
     if (!this.binHost || this.weg) return;
+    const kat = KATEGORIEN[this.einst.kategorie] || KATEGORIEN.flaggen;
     lobbyMelden({
       code: this.code, host: this.ich.name, spieler: Math.max(1, this.spieler.size),
-      phase: this.phase, auswahl: AUSWAHL[this.einst.auswahl]?.name || '',
+      phase: this.phase, kategorie: kat.name, auswahl: kat.auswahlen[this.einst.auswahl] || '',
     });
   }
 
@@ -236,7 +237,7 @@ export class Raum {
   }
 
   vorladen() {
-    for (const f of this.fragen) { const img = new Image(); img.src = `flaggen/${f.c.toLowerCase()}.svg`; }
+    fragenVorladen(this.fragen).then(() => this.meldung());
   }
 
   // ---------- Gastgeber ----------
@@ -295,7 +296,7 @@ export class Raum {
     liste.sort((a, b) => b.pkt - a.pkt);
     this.senden('ende', { liste });
     spielLoggen({
-      code: this.code, runden: this.fragen.length, modus: this.einst.modus, auswahl: this.einst.auswahl,
+      code: this.code, kategorie: this.einst.kategorie, runden: this.fragen.length, modus: this.einst.modus, auswahl: this.einst.auswahl,
       spieler: liste.slice(0, 20).map(({ name, avatar, pkt }) => ({ name, avatar, pkt })),
     });
   }
@@ -309,7 +310,7 @@ export class Raum {
   // ---------- Mitspielen ----------
   raten(text) {
     if (this.phase !== 'frage' || this.meinStatus) return 'zu';
-    const ergebnis = pruefe(text, this.frage.c);
+    const ergebnis = pruefeFrage(this.frage, text);
     if (ergebnis === 'richtig') {
       this.meinStatus = 'wartet';
       this.senden('treffer', { i: this.idx, ms: performance.now() - this.start });
@@ -320,7 +321,7 @@ export class Raum {
   waehlen(code) {
     if (this.phase !== 'frage' || this.meinStatus) return 'zu';
     const ms = performance.now() - this.start;
-    if (code === this.frage.c) { this.meinStatus = 'wartet'; this.senden('treffer', { i: this.idx, ms }); return 'richtig'; }
+    if (richtigeWahl(this.frage, code)) { this.meinStatus = 'wartet'; this.senden('treffer', { i: this.idx, ms }); return 'richtig'; }
     this.meinStatus = 'gesperrt';
     this.senden('fehl', { i: this.idx });
     this.meldung();

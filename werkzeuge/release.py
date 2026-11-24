@@ -9,6 +9,7 @@ cfg.write_text(re.sub(r"VERSION = '[^']*'", f"VERSION = '{v}'", cfg.read_text())
 for f in (root / 'js').glob('*.js'):
     s = f.read_text()
     s2 = re.sub(r"(from '\./[\w-]+\.js)(\?v=[^']*)?'", rf"\1?v={v}'", s)
+    s2 = re.sub(r"(import\('\./[\w-]+\.js)(\?v=[^']*)?'\)", rf"\1?v={v}')", s2)
     if s2 != s: f.write_text(s2)
 idx = root / 'index.html'
 s = idx.read_text()

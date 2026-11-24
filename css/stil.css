@@ -254,6 +254,37 @@ legend { font-weight: 600; font-size: .86rem; color: var(--text-2); margin-botto
   box-shadow: inset 0 0 0 1px rgba(0,0,0,.15);
 }
 
+/* ---------- Kategorien in der Bude ---------- */
+.kategorien { margin-top: 52px; }
+.kategorien h2 { margin-bottom: 16px; }
+.kachel-raster { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+.kachel {
+  display: grid; grid-template-rows: 78px auto 1fr; gap: 4px; text-align: left;
+  padding: 14px 16px 16px; border-radius: var(--r-mittel); cursor: pointer;
+  background: linear-gradient(180deg, #262A2E, #212528); border: 1px solid var(--linie); color: var(--text);
+  font: inherit; box-shadow: var(--schatten);
+  transition: transform .15s ease, border-color .15s ease;
+}
+.kachel:hover { transform: translateY(-3px); border-color: rgba(205,182,140,.45); }
+.kachel:active { transform: translateY(-1px); }
+.kachel-bild { display: flex; align-items: center; height: 78px; }
+.kachel-name { font: 800 1rem/1.2 var(--display); hyphens: auto; overflow-wrap: break-word; }
+.kachel-text { color: var(--text-2); font-size: .83rem; line-height: 1.35; }
+.kb-faecher { position: relative; width: 96px; height: 62px; }
+.kb-faecher img, .kb-duell img { border-radius: 6px; box-shadow: 0 0 0 1px rgba(255,255,255,.08), 0 8px 16px -8px rgba(0,0,0,.8); }
+.kb-faecher img { position: absolute; width: 56px; top: 12px; }
+.kb-faecher img:nth-child(1) { left: 0; transform: rotate(-11deg); }
+.kb-faecher img:nth-child(2) { left: 18px; top: 4px; transform: rotate(2deg); }
+.kb-faecher img:nth-child(3) { left: 36px; transform: rotate(13deg); }
+.kb-umriss { height: 70px; filter: drop-shadow(0 8px 14px rgba(0,0,0,.5)); }
+.kb-text { font: 800 1.75rem/1 var(--display); color: var(--sand); letter-spacing: -.02em; }
+.kb-gross { font-size: 3.4rem; }
+.kb-duell { display: flex; align-items: center; gap: 8px; }
+.kb-duell img { width: 38px; }
+.kb-duell img:first-child { width: 56px; }
+.kb-duell b { font-size: .72rem; color: var(--text-3); font-weight: 700; }
+.kb-emoji { font-size: 2.5rem; line-height: 1; }
+
 /* ---------- Bühne (Raum + Sprint) ---------- */
 .raum-raster { display: grid; gap: 20px; }
 @media (min-width: 960px) { .raum-raster { grid-template-columns: minmax(0, 1fr) 320px; align-items: start; } }
@@ -286,6 +317,23 @@ legend { font-weight: 600; font-size: .86rem; color: var(--text-2); margin-botto
 .countdown { font: 800 clamp(6rem, 18vw, 10rem)/1 var(--display); margin: auto; color: var(--sand); }
 
 .flaggen-rahmen { width: min(100%, 460px); aspect-ratio: 4 / 3; display: grid; place-items: center; }
+.frage-hinweis { margin: 0; color: var(--text-2); font-weight: 700; font-size: .95rem; }
+.frage-bild { width: 100%; display: grid; place-items: center; min-height: 220px; }
+.frage-bild:empty { display: none; }
+.bild-flagge {
+  max-width: min(100%, 460px); max-height: 345px; border-radius: 14px; user-select: none;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.07), 0 30px 60px -22px rgba(0,0,0,.8);
+}
+.bild-umriss { width: min(100%, 330px); aspect-ratio: 1; fill: var(--sand); filter: drop-shadow(0 22px 34px rgba(0,0,0,.6)); }
+.bild-land { display: grid; justify-items: center; gap: 16px; }
+.bild-land img { width: 128px; border-radius: 9px; box-shadow: 0 0 0 1px rgba(255,255,255,.07), 0 16px 30px -14px rgba(0,0,0,.8); }
+.bild-land span { font: 800 clamp(2rem, 5.5vw, 3.4rem)/1.05 var(--display); letter-spacing: -.02em; }
+.bild-frage { font: 800 clamp(1.35rem, 3vw, 2rem)/1.28 var(--display); max-width: 28ch; margin: 0; letter-spacing: -.01em; }
+.bild-emoji { font-size: clamp(3.6rem, 11vw, 6.2rem); line-height: 1.15; margin: 0; letter-spacing: .06em; }
+.bild-laden { color: var(--text-3); }
+.frage-info { margin: 0; color: var(--text-2); font-size: .93rem; display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; }
+.frage-info:empty { display: none; }
+.info-flagge { width: 46px; border-radius: 4px; box-shadow: 0 0 0 1px rgba(255,255,255,.08); }
 .flaggen-rahmen img {
   max-width: 100%; max-height: 100%;
   border-radius: 14px;
@@ -314,6 +362,11 @@ legend { font-weight: 600; font-size: .86rem; color: var(--text-2); margin-botto
 .optionen button.richtig { background: var(--salbei); color: var(--dunkel-auf-sand); border-color: var(--salbei); }
 .optionen button.falsch { background: var(--rose); color: var(--dunkel-auf-sand); border-color: var(--rose); }
 .optionen button:disabled { cursor: default; }
+.optionen.duell { grid-template-columns: 1fr 1fr; width: min(100%, 580px); gap: 14px; }
+.optionen.duell button { display: grid; gap: 12px; justify-items: center; padding: 16px 14px 18px; border-radius: var(--r-gross); }
+.optionen.duell img { width: 100%; max-width: 220px; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 12px; box-shadow: 0 0 0 1px rgba(255,255,255,.07), 0 16px 28px -14px rgba(0,0,0,.8); }
+.optionen.duell span { font: 800 1.15rem var(--display); }
+.einst .breit { grid-column: 1 / -1; }
 
 .wackeln { animation: wackeln .35s; }
 @keyframes wackeln { 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
@@ -392,6 +445,11 @@ legend { font-weight: 600; font-size: .86rem; color: var(--text-2); margin-botto
   .karte { padding: 20px; border-radius: var(--r-mittel); }
   .buehne-karte { padding: 16px 16px 24px; border-radius: 24px; }
   .optionen { grid-template-columns: 1fr; }
+  .optionen.duell { grid-template-columns: 1fr 1fr; }
+  .kachel-raster { grid-template-columns: 1fr 1fr; }
+  .bild-umriss { width: min(72%, 240px); }
+  .frage-bild { min-height: 150px; }
+  .bild-flagge { max-height: 220px; }
   .avatar-wahl { grid-template-columns: repeat(6, minmax(0, 1fr)); }
   .dock { bottom: 10px; }
   .dock-name { display: none; }

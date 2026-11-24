@@ -7,7 +7,7 @@
 <meta name="description" content="Flaggen raten in der Pause, allein oder zusammen im Raum.">
 <meta name="theme-color" content="#1B1E21">
 <link rel="icon" href="bilder/icon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="css/stil.css?v=0.2.0">
+<link rel="stylesheet" href="css/stil.css?v=0.3.0">
 </head>
 <body>
 <main>
@@ -62,6 +62,11 @@
       </div>
     </div>
 
+    <section class="kategorien" aria-labelledby="kat-titel">
+      <h2 id="kat-titel">Was spielen wir?</h2>
+      <div class="kachel-raster" id="kachel-raster"></div>
+    </section>
+
     <div class="bude-raster">
       <section class="karte">
         <h2>Offene Räume</h2>
@@ -99,10 +104,11 @@
             <h2 class="phase-titel">Gleich geht's los</h2>
             <p class="phase-text" id="warten-text"></p>
             <div class="einst" id="einst">
+              <label class="breit">Kategorie <select data-e="kategorie" id="einst-kategorie"></select></label>
+              <label>Auswahl <select data-e="auswahl" id="einst-auswahl"></select></label>
+              <label>Antworten <select data-e="modus" id="einst-modus"><option value="tippen">Selbst tippen</option><option value="auswahl">Zur Auswahl</option></select></label>
               <label>Runden <select data-e="runden"><option>5</option><option>10</option><option>15</option><option>20</option><option>30</option></select></label>
-              <label>Zeit pro Flagge <select data-e="zeit"><option value="10">10 s</option><option value="15">15 s</option><option value="20">20 s</option><option value="30">30 s</option></select></label>
-              <label>Flaggen <select data-e="auswahl" id="einst-auswahl"></select></label>
-              <label>Antworten <select data-e="modus"><option value="tippen">Selbst tippen</option><option value="auswahl">4 zur Auswahl</option></select></label>
+              <label>Zeit pro Frage <select data-e="zeit"><option value="10">10 s</option><option value="15">15 s</option><option value="20">20 s</option><option value="30">30 s</option></select></label>
             </div>
             <button class="knopf haupt gross" id="los">Los geht's</button>
           </div>
@@ -110,8 +116,10 @@
           <div class="phase" id="p-countdown"><p class="countdown" id="countdown"></p></div>
 
           <div class="phase" id="p-frage">
-            <div class="flaggen-rahmen"><img id="flagge" alt="Flagge, welches Land ist das?" draggable="false"></div>
+            <p class="frage-hinweis" id="frage-hinweis"></p>
+            <div class="frage-bild" id="frage-bild"></div>
             <p class="aufgeloest" id="aufgeloest" aria-live="polite"></p>
+            <p class="frage-info" id="frage-info"></p>
             <form class="rate-form" id="rate-form" autocomplete="off">
               <input id="rate-eingabe" placeholder="Welches Land?" spellcheck="false" autocapitalize="off">
             </form>
@@ -174,7 +182,7 @@
     </div>
   </section>
 
-  <footer class="fuss">Version <span id="version"></span>. Flaggen von flag-icons (MIT), Länderdaten von world-countries (ODbL).</footer>
+  <footer class="fuss">Version <span id="version"></span>. Flaggen von flag-icons (MIT), Länderdaten und Umrisse von world-countries (ODbL).</footer>
 </main>
 
 <!-- Dock: Navigation unten in der Mitte -->
@@ -187,7 +195,7 @@
 </nav>
 <div class="toast" id="toast" role="status" hidden></div>
 
-<script src="vendor/supabase.js?v=0.2.0"></script>
-<script type="module" src="js/app.js?v=0.2.0"></script>
+<script src="vendor/supabase.js?v=0.3.0"></script>
+<script type="module" src="js/app.js?v=0.3.0"></script>
 </body>
 </html>

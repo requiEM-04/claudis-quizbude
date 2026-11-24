@@ -1,12 +1,15 @@
-import { VERSION } from './config.js?v=0.2.0';
+import { VERSION } from './config.js?v=0.3.0';
 import {
   online, nameFehler, registrieren, anmelden, abmelden, sitzungHolen, profilLaden,
   bestenliste, letzteSpiele, sprintEintragen, sb,
-} from './server.js?v=0.2.0';
-import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.2.0';
-import { Raum, codeNeu } from './raum.js?v=0.2.0';
-import { LAND, AUSWAHL, pruefe, flaggeUrl } from './abgleich.js?v=0.2.0';
-import { LAENDER } from './laender.js?v=0.2.0';
+} from './server.js?v=0.3.0';
+import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.3.0';
+import { Raum, codeNeu, STANDARD } from './raum.js?v=0.3.0';
+import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.3.0';
+import {
+  KATEGORIEN, KATEGORIE_REIHE, kategorieVon, optionSchluessel, richtigeWahl, umrisseDa,
+} from './kategorien.js?v=0.3.0';
+import { LAENDER } from './laender.js?v=0.3.0';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -194,7 +197,7 @@ function raeumeZeichnen(raeume) {
     <li>
       <span class="code">${esc(r.code)}</span>
       <span class="info"><strong>Raum von ${esc(r.host)}</strong>
-        <span>${r.spieler === 1 ? '1 Person' : `${r.spieler} Leute`}, ${esc(r.auswahl)}, ${r.phase === 'warten' || r.phase === 'ende' ? 'wartet auf den Start' : 'spielt gerade'}</span></span>
+        <span>${esc(r.kategorie || 'Flaggen')}${r.auswahl ? ` (${esc(r.auswahl)})` : ''}, ${r.spieler === 1 ? '1 Person' : `${r.spieler} Leute`}, ${r.phase === 'warten' || r.phase === 'ende' ? 'wartet auf den Start' : 'spielt gerade'}</span></span>
       <a class="knopf haupt klein" href="#/raum/${esc(r.code)}">Rein da</a>
     </li>`).join('');
 }
@@ -225,9 +228,11 @@ async function letzteLaden() {
       const sp = s.spieler || [];
       const erster = sp[0];
       if (!erster) return '';
+      const kat = KATEGORIEN[s.kategorie]?.name;
+      const wo = kat ? ` bei ${esc(kat)}` : '';
       const text = sp.length > 1
-        ? `${esc(erster.avatar)} ${esc(erster.name)} gewinnt mit ${erster.pkt} Punkten gegen ${sp.length - 1 === 1 ? '1 andere Person' : `${sp.length - 1} andere`}`
-        : `${esc(erster.avatar)} ${esc(erster.name)} hat allein ${erster.pkt} Punkte geholt`;
+        ? `${esc(erster.avatar)} ${esc(erster.name)} gewinnt${wo} mit ${erster.pkt} Punkten gegen ${sp.length - 1 === 1 ? '1 andere Person' : `${sp.length - 1} andere`}`
+        : `${esc(erster.avatar)} ${esc(erster.name)} hat${wo} allein ${erster.pkt} Punkte geholt`;
       const w = wann(s.am);
       return `<li>${text}, ${w}${w.endsWith('.') ? '' : '.'}</li>`;
     }).join('') : '<li>Noch kein Spiel. Das ändert sich gleich.</li>';
@@ -237,7 +242,14 @@ async function letzteLaden() {
 }
 
 function budeAufbauen() {
-  $('raum-neu').onclick = () => { const c = codeNeu(); neuErstellt = c; location.hash = '#/raum/' + c; };
+  $('raum-neu').onclick = () => raumAufmachen('gemischt');
+  $('kachel-raster').innerHTML = KATEGORIE_REIHE.map(k => `
+    <button class="kachel" data-k="${k}">
+      <span class="kachel-bild" aria-hidden="true">${kachelBild(k)}</span>
+      <span class="kachel-name">${esc(KATEGORIEN[k].name)}</span>
+      <span class="kachel-text">${esc(KATEGORIEN[k].text)}</span>
+    </button>`).join('');
+  $('kachel-raster').onclick = e => { const b = e.target.closest('.kachel'); if (b) raumAufmachen(b.dataset.k); };
   $('beitreten-form').onsubmit = e => {
     e.preventDefault();
     const c = $('code-eingabe').value.trim().toUpperCase();
@@ -255,6 +267,26 @@ function budeAufbauen() {
   });
 }
 
+function kachelBild(k) {
+  const f = c => `<img src="${flaggeUrl(c)}" alt="">`;
+  switch (k) {
+    case 'flaggen': return `<span class="kb-faecher">${f('JP')}${f('BR')}${f('SE')}</span>`;
+    case 'umrisse': return '<img class="kb-umriss" src="bilder/umriss-vorschau.svg" alt="">';
+    case 'hauptstaedte': return '<span class="kb-text">Wien?</span>';
+    case 'groesser': return `<span class="kb-duell">${f('CA')}<b>oder</b>${f('BR')}</span>`;
+    case 'wissen': return '<span class="kb-text kb-gross">?</span>';
+    case 'emoji': return '<span class="kb-emoji">🦁👑</span>';
+    default: return '<span class="kb-emoji">🎲</span>';
+  }
+}
+
+function raumAufmachen(kategorie) {
+  const code = codeNeu();
+  const kat = KATEGORIEN[kategorie];
+  neuErstellt = { code, einst: { ...STANDARD, kategorie, auswahl: kat.standard, zeit: kat.zeit, modus: kat.tippen ? 'tippen' : 'auswahl' } };
+  location.hash = '#/raum/' + code;
+}
+
 // ---------- Raum ----------
 let gezeichnet = { idx: -2, phase: '' };
 
@@ -264,9 +296,10 @@ async function raumBetreten(code) {
   gezeichnet = { idx: -2, phase: '' };
   $('chat-liste').innerHTML = '';
   $('spieler-liste').innerHTML = '';
-  const alsHost = neuErstellt === code;
-  neuErstellt = null;
+  const alsHost = neuErstellt?.code === code;
   raum = new Raum(code, ich, () => raumZeichnen());
+  if (alsHost) raum.einst = neuErstellt.einst;
+  neuErstellt = null;
   raumZeichnen();
   try {
     await raum.betreten(alsHost);
@@ -277,12 +310,17 @@ async function raumBetreten(code) {
 }
 
 function raumAufbauen() {
-  $('einst-auswahl').innerHTML = Object.entries(AUSWAHL)
-    .map(([k, a]) => `<option value="${k}">${a.name} (${LAENDER.filter(a.filter).length})</option>`).join('');
+  $('einst-kategorie').innerHTML = KATEGORIE_REIHE.map(k => `<option value="${k}">${esc(KATEGORIEN[k].name)}</option>`).join('');
   document.querySelectorAll('#einst select').forEach(s => {
     s.onchange = () => {
+      if (!raum) return;
+      if (s.dataset.e === 'kategorie') {
+        const kat = KATEGORIEN[s.value];
+        raum.einstellen({ kategorie: s.value, auswahl: kat.standard, zeit: kat.zeit, modus: kat.tippen ? 'tippen' : 'auswahl' });
+        return;
+      }
       const wert = ['runden', 'zeit'].includes(s.dataset.e) ? Number(s.value) : s.value;
-      raum?.einstellen({ [s.dataset.e]: wert });
+      raum.einstellen({ [s.dataset.e]: wert });
     };
   });
   $('los').onclick = () => raum?.starten();
@@ -336,7 +374,7 @@ function raumZeichnen() {
   const r = raum;
   $('raum-code').textContent = r.code;
   const n = r.fragen.length;
-  $('raum-runde').textContent = r.phase === 'frage' || r.phase === 'aufloesung' ? `Flagge ${r.idx + 1} von ${n}`
+  $('raum-runde').textContent = r.phase === 'frage' || r.phase === 'aufloesung' ? `Frage ${r.idx + 1} von ${n}`
     : r.phase === 'ende' ? 'Fertig' : r.phase === 'countdown' ? 'Gleich geht\'s los' : 'Warteraum';
 
   const sichtbar = { warten: 'p-warten', countdown: 'p-countdown', frage: 'p-frage', aufloesung: 'p-frage', ende: 'p-ende' }[r.phase];
@@ -346,7 +384,14 @@ function raumZeichnen() {
   const hostName = r.spieler.get(r.hostId)?.name || r.bekannt.get(r.hostId)?.name;
 
   if (r.phase === 'warten') {
-    document.querySelectorAll('#einst select').forEach(s => { s.value = String(r.einst[s.dataset.e]); s.disabled = !r.binHost; });
+    const kat = KATEGORIEN[r.einst.kategorie] || KATEGORIEN.flaggen;
+    const auswahlHtml = Object.entries(kat.auswahlen).map(([k, name]) => {
+      const anzahl = kat.pool ? kat.pool(k).length : 0;
+      return `<option value="${k}">${esc(name)}${anzahl ? ` (${anzahl})` : ''}</option>`;
+    }).join('');
+    if ($('einst-auswahl').dataset.fuer !== r.einst.kategorie) { $('einst-auswahl').innerHTML = auswahlHtml; $('einst-auswahl').dataset.fuer = r.einst.kategorie; }
+    document.querySelectorAll('#einst select').forEach(s => { s.value = String(r.einst[s.dataset.e] ?? ''); s.disabled = !r.binHost; });
+    if (!kat.tippen) { $('einst-modus').value = 'auswahl'; $('einst-modus').disabled = true; }
     $('los').hidden = !r.binHost;
     $('warten-text').textContent = !r.hostId ? 'Verbinde mit dem Raum …'
       : r.binHost ? 'Stell ein und leg los, sobald alle da sind. Klick auf den Code oben, dann ist der Einladungslink kopiert.'
@@ -355,13 +400,21 @@ function raumZeichnen() {
 
   if (r.phase === 'frage' || r.phase === 'aufloesung') {
     const f = r.frage;
+    const kat = kategorieVon(f);
     const eingabe = $('rate-eingabe');
+    if (gezeichnet.idx !== r.idx || gezeichnet.umriss !== umrisseDa()) {
+      $('frage-hinweis').textContent = kat.hinweis(f);
+      $('frage-bild').innerHTML = kat.bild(f);
+      $('frage-bild').dataset.art = f.k;
+      gezeichnet.umriss = umrisseDa();
+    }
     if (gezeichnet.idx !== r.idx) {
-      $('flagge').src = flaggeUrl(f.c);
       eingabe.value = ''; eingabe.disabled = false; eingabe.classList.remove('richtig');
+      eingabe.placeholder = f.k === 'hauptstaedte' ? 'Welche Stadt?' : 'Welches Land?';
       $('rueckmeldung').textContent = ''; $('rueckmeldung').className = 'rueckmeldung';
-      $('rate-form').hidden = r.einst.modus === 'auswahl';
-      $('optionen').innerHTML = f.o ? f.o.map(c => `<button type="button" data-c="${c}">${esc(LAND[c].name)}</button>`).join('') : '';
+      $('frage-info').innerHTML = '';
+      $('optionen').className = 'optionen' + (kat.optionKlasse ? ' ' + kat.optionKlasse : '');
+      $('optionen').innerHTML = f.o ? optionSchluessel(f).map(k => `<button type="button" data-c="${esc(k)}">${kat.option(k, f)}</button>`).join('') : '';
       if (r.phase === 'frage') {
         zeitleisteStarten($('zeitleiste-fuellung'), Math.max(0, r.dauer - (performance.now() - r.start)), r.dauer);
         if (!f.o) setTimeout(() => eingabe.focus(), 30);
@@ -377,10 +430,11 @@ function raumZeichnen() {
       const fl = $('zeitleiste-fuellung');
       fl.style.transition = 'none'; fl.style.width = '0%';
       eingabe.disabled = true;
-      $('aufgeloest').textContent = LAND[f.c].name;
+      $('aufgeloest').textContent = kat.loesung(f);
+      $('frage-info').innerHTML = (kat.nachher ? kat.nachher(f) : '') + esc(kat.info ? kat.info(f) : '');
       document.querySelectorAll('#optionen button').forEach(b => {
         b.disabled = true;
-        if (b.dataset.c === f.c) b.classList.add('richtig');
+        if (richtigeWahl(f, b.dataset.c)) b.classList.add('richtig');
       });
       const finder = [...r.geloest].sort((a, b) => a[1].rang - b[1].rang)
         .map(([id, g]) => `${r.bekannt.get(id)?.name || '?'} (+${g.pkt})`);
@@ -389,7 +443,7 @@ function raumZeichnen() {
       gezeichnet.phase = 'aufloesung-' + r.idx;
     }
     if (r.phase === 'frage') $('aufgeloest').textContent = '';
-    $('rate-form').hidden = r.einst.modus === 'auswahl' || r.phase === 'aufloesung';
+    $('rate-form').hidden = !!f.o || r.phase === 'aufloesung';
     gezeichnet.idx = r.idx;
   } else {
     gezeichnet.idx = -2;

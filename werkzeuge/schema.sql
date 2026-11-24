@@ -1,4 +1,4 @@
--- Claudis Quizbude 0.1.0 – Grundgerüst (einmal im Supabase-SQL-Editor ausführen)
+-- Claudis Quizbude – Grundgerüst (Stand 0.3.0) (einmal im Supabase-SQL-Editor ausführen)
 -- Konten laufen über Supabase Auth (Name@quizbude.app, E-Mail-Bestätigung aus).
 -- Räume und Spiele laufen live über Realtime (Broadcast + Presence), dafür braucht es keine Tabellen.
 
@@ -82,6 +82,7 @@ create table if not exists public.spiele (
   am timestamptz not null default now(),
   von uuid references auth.users on delete set null,
   code text,
+  kategorie text,
   runden int,
   modus text,
   auswahl text,
@@ -98,9 +99,12 @@ language plpgsql security definer set search_path = public as $$
 begin
   if auth.uid() is null then raise exception 'Nicht angemeldet'; end if;
   if octet_length(p::text) > 8000 then raise exception 'Eintrag zu groß'; end if;
-  insert into public.spiele (von, code, runden, modus, auswahl, spieler)
-  values (auth.uid(), left(p->>'code', 8), least(coalesce((p->>'runden')::int, 0), 50),
+  insert into public.spiele (von, code, kategorie, runden, modus, auswahl, spieler)
+  values (auth.uid(), left(p->>'code', 8), left(p->>'kategorie', 24), least(coalesce((p->>'runden')::int, 0), 50),
           left(p->>'modus', 16), left(p->>'auswahl', 16), coalesce(p->'spieler', '[]'::jsonb));
 end $$;
 revoke all on function public.spiel_loggen(jsonb) from public, anon;
 grant execute on function public.spiel_loggen(jsonb) to authenticated;
+
+-- 0.3.0: Kategorie im Verlauf (für bestehende Datenbanken)
+alter table public.spiele add column if not exists kategorie text;
