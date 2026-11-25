@@ -7,10 +7,11 @@
 <meta name="description" content="Flaggen raten in der Pause, allein oder zusammen im Raum.">
 <meta name="theme-color" content="#1B1E21">
 <link rel="icon" href="bilder/icon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="css/stil.css?v=0.8.0">
+<link rel="stylesheet" href="css/stil.css?v=0.8.1">
 </head>
 <body>
 <main>
+  <a class="ruhm-mini" id="ruhm-mini" href="#/profil" hidden aria-label="Dein Ruhm, zum Profil"></a>
   <!-- Anmelden -->
   <section class="screen" id="s-anmelden" hidden>
     <div class="buehnenbild">
@@ -30,6 +31,7 @@
         <form id="anmelde-form" autocomplete="on" novalidate>
           <label>Name <input name="name" autocomplete="username" maxlength="16" required></label>
           <label>Passwort <input name="passwort" type="password" autocomplete="current-password" minlength="4" required></label>
+          <small class="feststell" id="feststell-hinweis" hidden>Die Feststelltaste ist an.</small>
           <fieldset class="nur-neu" hidden>
             <legend>Dein Avatar</legend>
             <div class="avatar-wahl" id="avatar-wahl"></div>
@@ -77,11 +79,7 @@
         <h2>Offene Räume</h2>
         <ul id="raum-liste" class="raum-liste"></ul>
       </section>
-      <section class="karte">
-        <h2>Zuletzt gespielt</h2>
-        <ul id="letzte-liste" class="letzte-liste"></ul>
-      </section>
-      <!-- Bestenliste: ab 1560 px fest am rechten Rand, darunter dritte Spalte neben den Räumen -->
+      <!-- Bestenliste: ab 1560 px fest am rechten Rand, darunter neben bzw. unter den Räumen -->
       <aside class="bude-rechts" aria-labelledby="besten-titel">
         <section class="karte besten-karte">
           <div class="besten-kopf">
@@ -128,14 +126,27 @@
       </div>
     </div>
     <section class="karte anpassen" id="anpassen" hidden>
-      <h2>Anpassen</h2>
-      <p class="unterzeile">Was du mit Ruhm freigespielt hast, kannst du hier anlegen. Alle sehen es in der Bestenliste und im Raum.</p>
-      <div id="anpassen-zeilen"></div>
+      <div class="anpassen-raster">
+        <div class="anpassen-links">
+          <div id="hochkarte"></div>
+          <p class="anpassen-unter" id="anpassen-unter">So sehen dich die anderen. Fahr über etwas, um es auszuprobieren.</p>
+          <div class="zeile mitte anpassen-knoepfe" id="anpassen-knoepfe" hidden>
+            <button class="knopf haupt klein" id="stil-anlegen">Anlegen</button>
+            <button class="knopf zweit klein" id="stil-verwerfen">Verwerfen</button>
+          </div>
+        </div>
+        <div class="anpassen-rechts">
+          <h2>Anpassen</h2>
+          <div class="umschalter klein voll" role="tablist" id="anpassen-reiter"></div>
+          <p class="anpassen-info">Antippen zeigt es auf deiner Karte, mit „Anlegen“ übernimmst du es. Gesperrtes kannst du schon ausprobieren.</p>
+          <div class="stil-kacheln" id="stil-kacheln"></div>
+        </div>
+      </div>
     </section>
     <section class="karte ruhm-karte" id="ruhm-karte" hidden>
       <h2>Ruhmesweg</h2>
-      <p class="unterzeile">Ruhm gibt es fürs Mitspielen (10), für jede richtige Antwort im Raum (3), für Siege (20) und für jeden Sprint (4). Deine Sprint-Rekorde zählen obendrauf.</p>
-      <ol class="ruhmesweg" id="ruhmesweg"></ol>
+      <p class="unterzeile">Du spielst dich durch die Kartenfarben Karo, Herz, Pik und Kreuz, in jeder Farbe vom Bube bis zum Ass, ganz oben wartet der Joker. Jede Karte schaltet etwas frei, die Zahl ist der Ruhm, den du dafür brauchst. Ruhm gibt es fürs Mitspielen (10), für jede richtige Antwort im Raum (3), für Siege (20), für jeden Sprint (4) und jeden Sprint-Treffer (1). Verbesserst du einen Sprint-Rekord, zählt jeder Treffer mehr noch einmal extra.</p>
+      <div class="ruhmesweg" id="ruhmesweg"></div>
     </section>
     <dl class="werte" id="profil-werte"></dl>
     <div class="profil-raster">
@@ -195,6 +206,7 @@
             <p class="phase-text" id="warten-text"></p>
             <div class="einst" id="einst">
               <label class="breit">Kategorie <select data-e="kategorie" id="einst-kategorie"></select></label>
+              <label class="einst-richtung" hidden>Richtung <select data-e="richtung" id="einst-richtung"><option value="land">Land gegeben, Hauptstadt raten</option><option value="stadt">Hauptstadt gegeben, Land raten</option></select></label>
               <label>Auswahl <select data-e="auswahl" id="einst-auswahl"></select></label>
               <label>Antworten <select data-e="modus" id="einst-modus"><option value="tippen">Selbst tippen</option><option value="auswahl">Zur Auswahl</option></select></label>
               <label>Runden <select data-e="runden"><option>5</option><option>10</option><option>15</option><option>20</option><option>30</option></select></label>
@@ -223,7 +235,7 @@
           <div class="phase" id="p-ende">
             <h2 class="phase-titel" id="ende-titel">Endstand</h2>
             <div class="podest" id="podest"></div>
-            <div class="ende-ruhm" id="ende-ruhm" hidden></div>
+            <div class="ruhm-plus" id="ende-ruhm" hidden></div>
             <div class="zeile mitte">
               <button class="knopf haupt" id="nochmal">Nochmal</button>
               <button class="knopf zweit" id="andere-kategorie">Andere Kategorie</button>
@@ -253,9 +265,15 @@
     <div class="sprint-region">
       <span class="sr-titel">Region</span>
       <div class="umschalter klein" role="radiogroup" id="sprint-region" aria-label="Region für Flaggen, Umrisse und Hauptstädte"></div>
+      <span class="sr-titel sr-zweit">Hauptstädte</span>
+      <div class="umschalter klein" role="radiogroup" id="sprint-richtung" aria-label="Richtung bei Hauptstädte"></div>
       <small id="sprint-region-hinweis">Gilt für Flaggen, Umrisse und Hauptstädte. Mit Region ist der Sprint eine Übung, Rekorde zählen nur bei „Alle“.</small>
     </div>
     <div class="kachel-raster" id="sprint-kacheln"></div>
+    <section class="sprint-saison">
+      <div class="ss-kopf"><h2>Beste Sprints der Saison</h2><small id="sprint-saison-info"></small></div>
+      <div class="ss-raster" id="sprint-saison"></div>
+    </section>
   </section>
 
   <!-- Sprint -->
@@ -278,16 +296,18 @@
           <button class="textknopf" id="sprint-skip">Weiß ich nicht, weiter</button>
           <p class="rueckmeldung" id="sprint-rueck" aria-live="polite"></p>
         </div>
-        <div class="phase" id="sp-ende" hidden>
-          <h2 class="phase-titel" id="sprint-ergebnis"></h2>
+        <div class="phase sprint-ende" id="sp-ende" hidden>
+          <p class="se-kat" id="sprint-kat"></p>
+          <div class="se-zahl"><b id="sprint-ergebnis">0</b><span>richtig in 60 Sekunden</span></div>
+          <div class="se-vergleich" id="sprint-vergleich"></div>
           <p class="phase-text" id="sprint-rekord"></p>
-          <div class="ende-ruhm" id="sprint-ruhm" hidden></div>
-          <div class="zeile mitte">
-            <button class="knopf haupt" id="sprint-nochmal">Nochmal</button>
-            <a class="knopf zweit" href="#/sprint">Andere Kategorie</a>
+          <div class="se-werte" id="sprint-werte"></div>
+          <div class="ruhm-plus" id="sprint-ruhm" hidden></div>
+          <div class="zeile mitte"><button class="knopf haupt" id="sprint-nochmal">Nochmal</button></div>
+          <div class="se-listen">
+            <section id="sprint-richtig-bereich"><h3>Richtig <small id="sprint-richtig-zahl"></small></h3><ul class="verpasst klein" id="sprint-richtig"></ul></section>
+            <section id="sprint-verpasst-bereich"><h3 id="sprint-verpasst-titel">Ausgelassen <small id="sprint-verpasst-zahl"></small></h3><ul class="verpasst klein" id="sprint-verpasst"></ul></section>
           </div>
-          <h3 id="sprint-verpasst-titel">Die hast du ausgelassen</h3>
-          <ul class="verpasst" id="sprint-verpasst"></ul>
         </div>
       </div>
     </div>
@@ -313,15 +333,15 @@
 <!-- Dock: Navigation unten in der Mitte -->
 <nav class="dock" id="dock" aria-label="Navigation" hidden>
   <a class="dock-marke" href="#/" aria-label="Zur Bude"><img src="bilder/logo.svg" alt="" width="34" height="34"></a>
-  <a class="dock-link" href="#/" data-nav="bude">Bude</a>
-  <a class="dock-link" href="#/sprint" data-nav="sprint">Sprint</a>
-  <a class="dock-link" href="#/lernen" data-nav="lernen">Lernen</a>
+  <a class="dock-link" href="#/" data-nav="bude"><svg class="dock-icon" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg><span>Bude</span></a>
+  <a class="dock-link" href="#/sprint" data-nav="sprint"><svg class="dock-icon" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5"/><path d="M10 2h4"/><path d="M12 2v3"/></svg><span>Sprint</span></a>
+  <a class="dock-link" href="#/lernen" data-nav="lernen"><svg class="dock-icon" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/></svg><span>Lernen</span></a>
   <span class="dock-trenner" aria-hidden="true"></span>
   <span class="dock-profil" id="profil-chip"></span>
 </nav>
 <div class="toast" id="toast" role="status" hidden></div>
 
-<script src="vendor/supabase.js?v=0.8.0"></script>
-<script type="module" src="js/app.js?v=0.8.0"></script>
+<script src="vendor/supabase.js?v=0.8.1"></script>
+<script type="module" src="js/app.js?v=0.8.1"></script>
 </body>
 </html>

@@ -154,7 +154,6 @@ async def main():
         await A.wait_for_timeout(500)
         await A.screenshot(path='/tmp/t_bude_nach.png')
         print('Bestenliste A:', (await A.inner_text('#besten-liste')).replace('\n', ' '))
-        print('Letzte A:', (await A.inner_text('#letzte-liste')).replace('\n', ' | '))
         print('FEHLER:', fehler)
         await b.close()
 asyncio.run(main())

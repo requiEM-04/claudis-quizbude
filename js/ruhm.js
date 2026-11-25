@@ -1,26 +1,27 @@
-// Ruhm: Ränge wie Spielkarten (Bube, Dame, König, Ass), die Stufen sind die Kartenfarben
-// in Skat-Reihenfolge Karo < Herz < Pik < Kreuz. Ganz oben steht der Joker.
+// Ruhm wie ein Kartenspiel: Die Ränge sind die Kartenfarben in Skat-Reihenfolge Karo < Herz < Pik < Kreuz,
+// in jeder Farbe geht es von Bube über Dame und König bis zum Ass. Ganz oben steht der Joker.
 // Der Ruhm selbst wird auf dem Server aus der Statistik berechnet (siehe werkzeuge/schema.sql).
 
 export const SCHWELLEN = [0, 100, 250, 450, 700, 1000, 1350, 1750, 2200, 2700, 3250, 3850, 4500, 5200, 5950, 6750, 8000];
 
 export const RAENGE = [
-  { id: 'bube', name: 'Bube', kurz: 'B', farbe: '#E39A63', hell: '#F7C9A2', dunkel: '#94532A', titel: 'Gute Karten', effekt: 'Kupferfunken', rahmen: 'Kupferrand', hintergrund: 'Spieltisch' },
-  { id: 'dame', name: 'Dame', kurz: 'D', farbe: '#F0A9C3', hell: '#FCDCE7', dunkel: '#A45A79', titel: 'Pokerface', effekt: 'Kartenwirbel', rahmen: 'Herzecken', hintergrund: 'Roter Samt' },
-  { id: 'koenig', name: 'König', kurz: 'K', farbe: '#EBC660', hell: '#FDEBB0', dunkel: '#9E7520', titel: 'Sticht alles', effekt: 'Lichtstrahlen', rahmen: 'Goldkrone', hintergrund: 'Goldbrokat' },
-  { id: 'ass', name: 'Ass', kurz: 'A', farbe: '#CFE6F3', hell: '#FFFFFF', dunkel: '#6F8A9B', titel: 'Ass im Ärmel', effekt: 'Funkelglanz', rahmen: 'Pik-Ecken', hintergrund: 'Mitternacht' },
-  { id: 'joker', name: 'Joker', kurz: '★', farbe: '#C9A8FF', hell: '#FFFFFF', dunkel: '#7B5BC4', titel: 'Unberechenbar', effekt: 'Holo', rahmen: 'Regenbogen', hintergrund: 'Schillernde Nacht' },
+  { id: 'karo', name: 'Karo', rot: true, farbe: '#E39A63', hell: '#F7C9A2', dunkel: '#94532A', titel: 'Gute Karten', effekt: 'Kupferfunken', rahmen: 'Kupferrand', hintergrund: 'Spieltisch' },
+  { id: 'herz', name: 'Herz', rot: true, farbe: '#F0A9C3', hell: '#FCDCE7', dunkel: '#A45A79', titel: 'Pokerface', effekt: 'Kartenwirbel', rahmen: 'Herzecken', hintergrund: 'Roter Samt' },
+  { id: 'pik', name: 'Pik', rot: false, farbe: '#CFE6F3', hell: '#FFFFFF', dunkel: '#6F8A9B', titel: 'Ass im Ärmel', effekt: 'Funkelglanz', rahmen: 'Pik-Ecken', hintergrund: 'Mitternacht' },
+  { id: 'kreuz', name: 'Kreuz', rot: false, farbe: '#EBC660', hell: '#FDEBB0', dunkel: '#9E7520', titel: 'Sticht alles', effekt: 'Lichtstrahlen', rahmen: 'Goldkrone', hintergrund: 'Goldbrokat' },
+  { id: 'joker', name: 'Joker', rot: false, farbe: '#C9A8FF', hell: '#FFFFFF', dunkel: '#7B5BC4', titel: 'Unberechenbar', effekt: 'Holo', rahmen: 'Regenbogen', hintergrund: 'Schillernde Nacht' },
 ];
 export const rangVonId = id => RAENGE.find(r => r.id === id);
 
-export const KARTENFARBEN = [
-  { id: 'karo', name: 'Karo', rot: true },
-  { id: 'herz', name: 'Herz', rot: true },
-  { id: 'pik', name: 'Pik', rot: false },
-  { id: 'kreuz', name: 'Kreuz', rot: false },
+// Stufen innerhalb einer Farbe
+export const BILDER = [
+  { id: 'bube', name: 'Bube', kurz: 'B' },
+  { id: 'dame', name: 'Dame', kurz: 'D' },
+  { id: 'koenig', name: 'König', kurz: 'K' },
+  { id: 'ass', name: 'Ass', kurz: 'A' },
 ];
 
-// Was gibt es, und ab welcher Kartenfarbe des Rangs (0 = Karo … 3 = Kreuz)?
+// Was gibt es, und ab welcher Stufe innerhalb der Farbe (0 = Bube … 3 = Ass)?
 export const ARTEN = [
   { id: 'farbe', name: 'Namensfarbe', ab: 0 },
   { id: 'titel', name: 'Titel', ab: 1 },
@@ -39,8 +40,8 @@ export function stufeVon(ruhm) {
 export function stufeInfo(i) {
   const joker = i >= JOKER;
   const rang = RAENGE[joker ? 4 : Math.floor(i / 4)];
-  const kf = joker ? null : KARTENFARBEN[i % 4];
-  return { i, rang, kf, name: joker ? 'Joker' : `${kf.name}-${rang.name}`, ab: SCHWELLEN[i], bis: SCHWELLEN[i + 1] ?? null };
+  const bild = joker ? null : BILDER[i % 4];
+  return { i, rang, bild, name: joker ? 'Joker' : `${rang.name}-${bild.name}`, ab: SCHWELLEN[i], bis: SCHWELLEN[i + 1] ?? null };
 }
 
 export function ruhmInfo(ruhm = 0) {
@@ -80,7 +81,7 @@ export function bestesFrei(ruhm) {
 
 export const belohnungName = (art, rangId) => {
   const r = rangVonId(rangId);
-  if (art === 'farbe') return `Namensfarbe ${r.name}`;
+  if (art === 'farbe') return `Namensfarbe ${r.name}`;  // z. B. „Namensfarbe Herz“
   if (art === 'titel') return `Titel „${r.titel}“`;
   if (art === 'effekt') return `Effekt ${r.effekt}`;
   if (art === 'rahmen') return `Rahmen ${r.rahmen}`;
@@ -98,29 +99,47 @@ const SYMBOL = {
 export const symbol = (id, x, y, s, fill) => `<g transform="translate(${x} ${y}) scale(${(s / 24).toFixed(3)})" fill="${fill}">${SYMBOL[id]}</g>`;
 export const symbolSvg = (id, klasse = '') => `<svg class="kf-symbol ${klasse}" viewBox="0 0 24 24" aria-hidden="true">${symbol(id, 0, 0, 24, 'currentColor')}</svg>`;
 
+// Figuren für die Bildkarten (eigene, schlichte Zeichnungen): Bube mit Federhut, Dame mit Diadem, König mit Krone und Bart, Joker mit Narrenkappe
+function figur(id, tinte, kfId) {
+  const gold = '#D7A63A', haut = '#F3D9BD';
+  const brust = kfId ? symbol(kfId, 19, 36, 6, '#FBF6EA') : '';
+  const schultern = `<path d="M14 45.4c0-7.4 3.5-11.4 8-11.4s8 4 8 11.4Z" fill="${tinte}"/>`;
+  const kopf = `<circle cx="22" cy="27" r="5.2" fill="${haut}" stroke="${tinte}" stroke-width=".9"/>`;
+  if (id === 'koenig') return `${schultern}${brust}${kopf}
+    <path d="M17.4 29.4c.6 3.6 2.4 5.3 4.6 5.3s4-1.7 4.6-5.3c-1.4 1-3 1.4-4.6 1.4s-3.2-.4-4.6-1.4Z" fill="${tinte}"/>
+    <path d="M16.2 22.6 15.6 15.4l3.3 2.8L22 13.2l3.1 5 3.3-2.8-.6 7.2Z" fill="${gold}" stroke="#7A5A17" stroke-width=".6"/>`;
+  if (id === 'dame') return `<path d="M15.4 31.8c-.8-5.6.3-11 6.6-11.2 6.3.2 7.4 5.6 6.6 11.2-1.6-.6-2.2-2.4-2.4-4.2H17.8c-.2 1.8-.8 3.6-2.4 4.2Z" fill="${tinte}"/>${schultern}${brust}${kopf}
+    <path d="M17.2 22.6c1.4-1.7 3-2.5 4.8-2.5s3.4.8 4.8 2.5l-1.2-3-1.8 1.4L22 18l-1.8 3-1.8-1.4Z" fill="${gold}" stroke="#7A5A17" stroke-width=".5"/>`;
+  if (id === 'bube') return `${schultern}${brust}${kopf}
+    <path d="M15.6 24.2c0-3.6 2.8-5.6 6.6-5.6s6.4 1.8 6.6 4.4c-2.2-.8-4.4-1.1-6.6-1.1s-4.4.7-6.6 2.3Z" fill="${tinte}"/>
+    <path d="M27.4 19.6c2.4-3.4 5-4.6 7.2-4.4-1.4 1.6-3.4 3.6-6.2 5.6Z" fill="${gold}"/>`;
+  // Joker: Narrenkappe mit drei Schellen
+  return `${schultern}${kopf}
+    <path d="M16.4 24.6c-1.6-3.4-3.8-5.4-6.4-6 2.6-1.4 6.2-.6 8.8 2.4.6-3.6 2-6.2 3.2-7.4 1.2 1.2 2.6 3.8 3.2 7.4 2.6-3 6.2-3.8 8.8-2.4-2.6.6-4.8 2.6-6.4 6Z" fill="${tinte}"/>
+    <circle cx="10" cy="18.6" r="1.5" fill="${gold}"/><circle cx="22" cy="12.8" r="1.5" fill="${gold}"/><circle cx="34" cy="18.6" r="1.5" fill="${gold}"/>`;
+}
+
 export function wappen(ruhm, { groesse = 28, stufe = null, titel = true } = {}) {
   const s = stufeInfo(stufe ?? stufeVon(ruhm || 0));
-  const r = s.rang, joker = !s.kf, id = r.id;
-  const sym = joker ? 'stern' : s.kf.id;
-  const tinte = joker ? `url(#qbw-tinte)` : (s.kf.rot ? '#C8333F' : '#1D2125');
+  const r = s.rang, joker = !s.bild, id = r.id, bild = joker ? 'joker' : s.bild.id;
+  const sym = joker ? 'stern' : r.id;
+  const tinte = joker ? `url(#qbw-tinte)` : (r.rot ? '#C8333F' : '#1D2125');
   const flaeche = joker ? 'url(#qbw-holo)' : '#FBF6EA';
   const defs = `<defs>
     <linearGradient id="qbw-rand-${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${r.hell}"/><stop offset=".45" stop-color="${r.farbe}"/><stop offset="1" stop-color="${r.dunkel}"/></linearGradient>
     ${joker ? `<linearGradient id="qbw-holo" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFD9E6"/><stop offset=".25" stop-color="#FFF1C2"/><stop offset=".5" stop-color="#D3FBE6"/><stop offset=".75" stop-color="#D2E7FF"/><stop offset="1" stop-color="#EBDCFF"/></linearGradient>
     <linearGradient id="qbw-tinte" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#E0457B"/><stop offset=".5" stop-color="#7A4DE0"/><stop offset="1" stop-color="#1E8FD6"/></linearGradient>` : ''}
   </defs>`;
-  const ecke = `<text x="8.6" y="15.2" font-size="9" font-weight="800" fill="${tinte}" font-family="var(--display, sans-serif)">${joker ? 'J' : r.kurz}</text>${symbol(sym, 7.2, 16.4, 6.4, tinte)}`;
-  const deko = id === 'koenig'
-    ? `<path d="M14.5 6.2 16.6 1.6l3.4 2.8L22 .6l2 3.8 3.4-2.8 2.1 4.6Z" fill="url(#qbw-rand-${id})" stroke="#6E5214" stroke-width=".5"/>`
-    : id === 'ass' ? `<path d="m38.5 1 1.3 3.6 3.7 1.3-3.7 1.3-1.3 3.7-1.3-3.7-3.7-1.3 3.7-1.3Z" fill="#fff" class="wappen-funkel"/>`
+  const ecke = `<text x="8.6" y="15.2" font-size="9" font-weight="800" fill="${tinte}" font-family="var(--display, sans-serif)">${joker ? 'J' : s.bild.kurz}</text>${symbol(sym, 7.2, 16.4, 6.4, tinte)}`;
+  const deko = bild === 'ass' ? `<path d="m38.5 1 1.3 3.6 3.7 1.3-3.7 1.3-1.3 3.7-1.3-3.7-3.7-1.3 3.7-1.3Z" fill="#fff" class="wappen-funkel"/>`
     : joker ? `<path d="m39 1 1.4 3.7 3.8 1.4-3.8 1.4L39 11.3l-1.4-3.8-3.8-1.4 3.8-1.4Z" fill="#FFE9A8" class="wappen-funkel"/>` : '';
   const hoehe = Math.round(groesse * 58 / 44);
-  return `<svg class="wappen wappen-${id}" width="${groesse}" height="${hoehe}" viewBox="0 0 44 58" role="img" aria-label="${s.name}">${titel ? `<title>${s.name}</title>` : ''}${defs}
+  return `<svg class="wappen wappen-${id} wappen-${bild}" width="${groesse}" height="${hoehe}" viewBox="0 0 44 58" role="img" aria-label="${s.name}">${titel ? `<title>${s.name}</title>` : ''}${defs}
     <rect x="5" y="5.5" width="34" height="48" rx="5" fill="rgba(0,0,0,.35)" transform="translate(1.2 1.6)"/>
     <rect x="5" y="5.5" width="34" height="48" rx="5" fill="${flaeche}" stroke="url(#qbw-rand-${id})" stroke-width="2.6"/>
     <rect x="8.2" y="8.7" width="27.6" height="41.6" rx="2.6" fill="none" stroke="${r.farbe}" stroke-opacity=".45" stroke-width=".7"/>
     ${ecke}<g transform="rotate(180 22 29.5)">${ecke}</g>
-    ${symbol(sym, 12.5, 20, 19, tinte)}
+    ${bild === 'ass' ? symbol(sym, 12.5, 20, 19, tinte) : figur(bild, tinte, joker ? null : r.id)}
     ${deko}
   </svg>`;
 }
@@ -131,18 +150,18 @@ const verteilt = (n, f) => Array.from({ length: n }, (_, i) => f(i, ((i * 37) % 
 export function effektHtml(rangId) {
   if (!rangId) return '';
   let innen = '';
-  if (rangId === 'bube') innen = verteilt(16, (i, a, b) => `<i style="--x:${a * 100}%;--t:${(2.4 + b * 2.6).toFixed(2)}s;--d:${(-b * 4).toFixed(2)}s;--g:${(3 + (i % 3)).toFixed(0)}px"></i>`).join('');
-  if (rangId === 'dame') innen = verteilt(10, (i, a, b) => `<i style="--x:${a * 92}%;--t:${(7 + b * 5).toFixed(2)}s;--d:${(-b * 10).toFixed(2)}s;--r:${(a * 80 - 40).toFixed(0)}deg">${symbolSvg(['herz', 'karo', 'pik', 'kreuz'][i % 4], i % 4 < 2 ? 'rot' : 'schwarz')}</i>`).join('');
-  if (rangId === 'koenig') innen = '<b class="strahlen"></b><b class="schein"></b>';
-  if (rangId === 'ass') innen = '<b class="glanz"></b>' + verteilt(9, (i, a, b) => `<i style="--x:${6 + a * 88}%;--y:${8 + b * 84}%;--t:${(2 + b * 2).toFixed(2)}s;--d:${(-a * 3).toFixed(2)}s">${symbolSvg('stern')}</i>`).join('');
+  if (rangId === 'karo') innen = verteilt(16, (i, a, b) => `<i style="--x:${a * 100}%;--t:${(2.4 + b * 2.6).toFixed(2)}s;--d:${(-b * 4).toFixed(2)}s;--g:${(3 + (i % 3)).toFixed(0)}px"></i>`).join('');
+  if (rangId === 'herz') innen = verteilt(10, (i, a, b) => `<i style="--x:${a * 92}%;--t:${(7 + b * 5).toFixed(2)}s;--d:${(-b * 10).toFixed(2)}s;--r:${(a * 80 - 40).toFixed(0)}deg">${symbolSvg(['herz', 'karo', 'pik', 'kreuz'][i % 4], i % 4 < 2 ? 'rot' : 'schwarz')}</i>`).join('');
+  if (rangId === 'kreuz') innen = '<b class="strahlen"></b><b class="schein"></b>';
+  if (rangId === 'pik') innen = '<b class="glanz"></b>' + verteilt(9, (i, a, b) => `<i style="--x:${6 + a * 88}%;--y:${8 + b * 84}%;--t:${(2 + b * 2).toFixed(2)}s;--d:${(-a * 3).toFixed(2)}s">${symbolSvg('stern')}</i>`).join('');
   if (rangId === 'joker') innen = '<b class="holo"></b><b class="glanz"></b>' + verteilt(8, (i, a, b) => `<i style="--x:${a * 94}%;--y:${b * 90}%;--t:${(2.5 + b * 2).toFixed(2)}s;--d:${(-a * 3).toFixed(2)}s">${symbolSvg(['stern', 'herz', 'karo', 'pik', 'kreuz'][i % 5])}</i>`).join('');
   return `<div class="effekt e-${rangId}" aria-hidden="true">${innen}</div>`;
 }
 
 // Verzierungen für den Kartenrahmen
 export function rahmenDeko(rangId) {
-  if (rangId === 'dame') return `<div class="rahmen-deko" aria-hidden="true">${['lo', 'ro', 'lu', 'ru'].map(p => `<span class="${p}">${symbolSvg('herz')}</span>`).join('')}</div>`;
-  if (rangId === 'ass') return `<div class="rahmen-deko" aria-hidden="true">${['lo', 'ro', 'lu', 'ru'].map(p => `<span class="${p}">${symbolSvg('pik')}</span>`).join('')}</div>`;
-  if (rangId === 'koenig') return `<div class="rahmen-deko" aria-hidden="true"><span class="krone"><svg viewBox="0 0 30 16"><path d="M2 15 0 3l7.5 5L15 0l7.5 8L30 3l-2 12Z" fill="currentColor"/></svg></span></div>`;
+  if (rangId === 'herz') return `<div class="rahmen-deko" aria-hidden="true">${['lo', 'ro', 'lu', 'ru'].map(p => `<span class="${p}">${symbolSvg('herz')}</span>`).join('')}</div>`;
+  if (rangId === 'pik') return `<div class="rahmen-deko" aria-hidden="true">${['lo', 'ro', 'lu', 'ru'].map(p => `<span class="${p}">${symbolSvg('pik')}</span>`).join('')}</div>`;
+  if (rangId === 'kreuz') return `<div class="rahmen-deko" aria-hidden="true"><span class="krone"><svg viewBox="0 0 30 16"><path d="M2 15 0 3l7.5 5L15 0l7.5 8L30 3l-2 12Z" fill="currentColor"/></svg></span></div>`;
   return '';
 }

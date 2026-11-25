@@ -1,23 +1,23 @@
-import { VERSION } from './config.js?v=0.8.0';
+import { VERSION } from './config.js?v=0.8.1';
 import {
   online, nameFehler, registrieren, anmelden, abmelden, sitzungHolen, profilLaden, profilSpeichern,
-  bestenliste, letzteSpiele, spieleSeit, alleProfile, sprintEintragen, sprintBestenliste, rangVon, spielerAnzahl, spieleVon, sb,
-} from './server.js?v=0.8.0';
-import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.8.0';
-import { Raum, codeNeu, STANDARD, TIPPFEHLER_ABZUG } from './raum.js?v=0.8.0';
-import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.8.0';
+  bestenliste, spieleSeit, alleProfile, sprintEintragen, sprintBestenliste, rangVon, spielerAnzahl, spieleVon, sb,
+} from './server.js?v=0.8.1';
+import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.8.1';
+import { Raum, codeNeu, STANDARD, TIPPFEHLER_ABZUG } from './raum.js?v=0.8.1';
+import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.8.1';
 import {
-  KATEGORIEN, KATEGORIE_REIHE, kategorieVon, optionSchluessel, richtigeWahl, umrisseDa, umrisseLaden,
+  KATEGORIEN, KATEGORIE_REIHE, SPRINT_REIHE, kategorieVon, optionSchluessel, richtigeWahl, umrisseDa, umrisseLaden,
   sprintFrage, pruefeFrage, fragenVorladen, kanon,
-} from './kategorien.js?v=0.8.0';
-import { LAENDER } from './laender.js?v=0.8.0';
-import { auswahlfeld } from './auswahlfeld.js?v=0.8.0';
-import { KATEGORIE_SYMBOL } from './symbole.js?v=0.8.0';
-import { konfetti } from './konfetti.js?v=0.8.0';
+} from './kategorien.js?v=0.8.1';
+import { LAENDER } from './laender.js?v=0.8.1';
+import { auswahlfeld } from './auswahlfeld.js?v=0.8.1';
+import { KATEGORIE_SYMBOL } from './symbole.js?v=0.8.1';
+import { konfetti } from './konfetti.js?v=0.8.1';
 import {
-  RAENGE, ARTEN, JOKER, ruhmInfo, stufeVon, stufeInfo, wappen, effektHtml, rahmenDeko, stilVon, istFrei, freiAb, neuFrei,
-  belohnungName, rangVonId, symbol, SCHWELLEN,
-} from './ruhm.js?v=0.8.0';
+  RAENGE, BILDER, ARTEN, JOKER, ruhmInfo, stufeVon, stufeInfo, wappen, effektHtml, rahmenDeko, stilVon, istFrei, freiAb, neuFrei,
+  belohnungName, rangVonId, symbol, symbolSvg, SCHWELLEN,
+} from './ruhm.js?v=0.8.1';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -51,6 +51,22 @@ let aktuellerScreen = null;
 function zeige(name) {
   document.querySelectorAll('.screen').forEach(s => { s.hidden = s.id !== 's-' + name; });
   if (aktuellerScreen !== name) { aktuellerScreen = name; scrollTo(0, 0); } // neue Seite beginnt oben
+  ruhmMiniZeichnen();
+}
+
+// Ruhm-Leiste oben in Bude, Sprint und Lernen: aktuelle Karte, Balken, was bis zur nächsten fehlt
+function ruhmMiniZeichnen() {
+  const el = $('ruhm-mini');
+  if (!el) return;
+  const zeigen = !!ich && ['bude', 'sprintwahl', 'lernen'].includes(aktuellerScreen);
+  el.hidden = !zeigen;
+  if (!zeigen) return;
+  const info = ruhmInfo(ich.ruhm || 0), zahl = n => n.toLocaleString('de-DE');
+  el.style.setProperty('--rang', info.rang.farbe);
+  el.innerHTML = `${wappen(info.ruhm, { groesse: 24, titel: false })}
+    <span class="rm-text"><b class="nf-${info.rang.id}">${info.name}</b><small>${info.bis ? `noch ${zahl(info.fehlt)} bis ${stufeInfo(info.i + 1).name}` : 'ganz oben'}</small></span>
+    <span class="ruhm-balken"><i style="--anteil:${info.anteil.toFixed(3)}"></i></span>
+    <span class="rm-zahl">${zahl(info.ruhm)}<small>Ruhm</small></span>`;
 }
 
 // kleine Effekte
@@ -193,6 +209,11 @@ function anmeldenAufbauen() {
     };
   });
 
+  // Hinweis, wenn die Feststelltaste an ist
+  const pw = $('anmelde-form').passwort;
+  const feststell = e => { if (e.getModifierState) $('feststell-hinweis').hidden = !e.getModifierState('CapsLock'); };
+  pw.addEventListener('keydown', feststell); pw.addEventListener('keyup', feststell);
+  pw.addEventListener('blur', () => { $('feststell-hinweis').hidden = true; });
   $('anmelde-form').onsubmit = async e => {
     e.preventDefault();
     const f = e.target;
@@ -281,6 +302,7 @@ const mitspieler = () => ich || gastIch();
 
 function chipZeichnen() {
   hintergrundSetzen();
+  ruhmMiniZeichnen();
   const chip = $('profil-chip');
   $('dock').hidden = !ich && !gast;
   if (!ich) {
@@ -293,8 +315,11 @@ function chipZeichnen() {
     if (raum) { raum.verlassen(); raum = null; }
     lobbyStopp();
     await abmelden();
+    // nach dem Abmelden auf die Anmeldeseite, nicht als Gast weiter
+    gast = false;
+    try { localStorage.removeItem(GAST); } catch { /* egal */ }
     ich = null; chipZeichnen();
-    history.replaceState({ qbTiefe: 0 }, '', '#/');
+    history.replaceState({ qbTiefe: 0 }, '', '#/anmelden');
     route(true);
   };
 }
@@ -308,7 +333,6 @@ function budeZeigen() {
   if (lobbyAus) lobbyAus();
   lobbyAus = lobbyAbo(raeumeZeichnen);
   bestenLaden();
-  letzteLaden();
 }
 
 function raeumeZeichnen(raeume) {
@@ -486,27 +510,6 @@ async function bestenLaden() {
   }
 }
 
-async function letzteLaden() {
-  const ul = $('letzte-liste');
-  try {
-    const spiele = await letzteSpiele();
-    ul.innerHTML = spiele.length ? spiele.map(s => {
-      const sp = s.spieler || [];
-      const erster = sp[0];
-      if (!erster) return '';
-      if (s.kategorie === 'spiele') return ''; // alte Spiele-Runden (Snake) nicht mehr anzeigen
-      const kat = KATEGORIEN[s.kategorie]?.name;
-      const wo = kat ? ` bei ${esc(kat)}` : '';
-      const text = sp.length > 1
-        ? `<b>${esc(erster.name)}</b> gewinnt${wo} mit ${erster.pkt.toLocaleString('de-DE')} Punkten gegen ${sp.length - 1 === 1 ? '1 andere Person' : `${sp.length - 1} andere`}`
-        : `<b>${esc(erster.name)}</b> hat${wo} allein ${erster.pkt.toLocaleString('de-DE')} Punkte geholt`;
-      return `<li class="letzte-zeile"><span class="lz-avatar" aria-hidden="true">${esc(erster.avatar)}</span><span class="lz-text">${text}<small>${wann(s.am)}</small></span></li>`;
-    }).join('') : '<li class="leer">Noch kein Spiel. Das ändert sich gleich.</li>';
-  } catch (e) {
-    ul.innerHTML = `<li class="leer">${esc(e.message)}</li>`;
-  }
-}
-
 function budeAufbauen() {
   $('raum-neu').onclick = () => raumAufmachen('gemischt');
   kachelnZeichnen();
@@ -516,7 +519,7 @@ function budeAufbauen() {
   };
   $('sprint-kacheln').onclick = e => {
     const b = e.target.closest('.kachel');
-    if (b) navigieren('#/sprint/' + b.dataset.k);
+    if (b) navigieren('#/sprint/' + sprintKat(b.dataset.k));
   };
   $('beitreten-form').onsubmit = e => {
     e.preventDefault();
@@ -525,7 +528,7 @@ function budeAufbauen() {
     $('code-eingabe').value = '';
     navigieren('#/raum/' + c);
   };
-  $('besten-kategorie').innerHTML = KATEGORIE_REIHE.map(k => `<option value="${k}">${esc(KATEGORIEN[k].name)}</option>`).join('');
+  $('besten-kategorie').innerHTML = SPRINT_REIHE.map(k => `<option value="${k}">${esc(KATEGORIEN[k].name)}</option>`).join('');
   bestenFeld = auswahlfeld($('besten-kategorie'), { symbol: v => KATEGORIE_SYMBOL[v] });
   $('besten-zeit').innerHTML = saisonOptionen().map(o => `<option value="${o.wert}">${esc(o.name)}</option>`).join('');
   zeitFeld = auswahlfeld($('besten-zeit'));
@@ -549,12 +552,13 @@ function sprintRekord(k) {
 
 function kachelnHtml(mitRekord) {
   return KATEGORIE_REIHE.map(k => {
-    const rekord = mitRekord ? sprintRekord(k) : 0;
+    const kk = mitRekord ? sprintKat(k) : k; // im Sprint: Hauptstädte in der gewählten Richtung
+    const rekord = mitRekord ? sprintRekord(kk) : 0;
     return `
     <button class="kachel${mitRekord ? ' sprint-karte' : ''}" data-k="${k}">
       <span class="kachel-bild" aria-hidden="true">${kachelBild(k)}</span>
       <span class="kachel-name">${esc(KATEGORIEN[k].name).replace('Allgemeinwissen', 'Allgemein&shy;wissen')}</span>
-      <span class="kachel-text">${esc(KATEGORIEN[k].text)}</span>
+      <span class="kachel-text">${esc(KATEGORIEN[kk].text)}</span>
       ${mitRekord ? `<span class="sk-rekord${rekord ? '' : ' leer'}"><b>${rekord || '–'}</b><small>${rekord ? 'dein Rekord' : 'noch kein Rekord'}</small></span>` : ''}
     </button>`;
   }).join('');
@@ -568,6 +572,30 @@ function sprintWahlZeigen() {
   zeige('sprintwahl');
   $('sprint-kacheln').innerHTML = kachelnHtml(true);
   sprintRegionZeichnen();
+  sprintSaisonLaden();
+}
+
+// Unter den Kacheln: Top 3 der Saison je Kategorie, dazu der eigene Platz
+let sprintSaisonAbruf = 0;
+async function sprintSaisonLaden() {
+  const abruf = ++sprintSaisonAbruf;
+  const start = new Date(); start.setDate(1); start.setHours(0, 0, 0, 0);
+  const ende = new Date(start.getFullYear(), start.getMonth() + 1, 0);
+  const tage = Math.ceil((new Date(start.getFullYear(), start.getMonth() + 1, 1) - new Date()) / 86400000);
+  $('sprint-saison-info').textContent = `Saison ${MONATE[start.getMonth()]}, läuft bis ${ende.getDate()}.${ende.getMonth() + 1}., noch ${tage} ${tage === 1 ? 'Tag' : 'Tage'}`;
+  const box = $('sprint-saison');
+  if (!box.children.length) box.innerHTML = SPRINT_REIHE.map(() => '<div class="ss-karte laedt"></div>').join('');
+  let listen;
+  try { listen = await Promise.all(SPRINT_REIHE.map(k => sprintBestenliste(k, start.toISOString()).catch(() => []))); } catch { return; }
+  if (abruf !== sprintSaisonAbruf) return;
+  box.innerHTML = SPRINT_REIHE.map((k, ki) => {
+    const l = listen[ki], i = ich ? l.findIndex(p => p.id === ich.id) : -1;
+    const zeile = (p, platz) => `<li class="${platz <= 3 ? `p${platz}` : ''}${ich && p.id === ich.id ? ' ich' : ''}"><span class="ss-platz">${platz}</span>${avatarMitWappen(p, 12)}<span class="ss-name${nameKlasse(p)}">${esc(p.name)}</span><b>${p.wert}</b></li>`;
+    return `<a class="ss-karte" href="#/sprint/${k}">
+      <span class="ss-titel"><span class="raum-symbol" aria-hidden="true">${KATEGORIE_SYMBOL[k] || ''}</span>${esc(KATEGORIEN[k].name)}</span>
+      ${l.length ? `<ol>${l.slice(0, 3).map((p, j) => zeile(p, j + 1)).join('')}${i >= 3 ? zeile(l[i], i + 1) : ''}</ol>` : '<p class="ss-leer">Noch kein Sprint diese Saison. Platz 1 ist frei.</p>'}
+    </a>`;
+  }).join('');
 }
 
 function kachelBild(k) {
@@ -641,7 +669,7 @@ function lernenZeichnen() {
   $('lernen-anzahl').textContent = liste.length === 1 ? '1 Land' : `${liste.length} Länder`;
   $('lernen-raster').innerHTML = liste.length ? liste.map(l => `
     <li><button class="lern-karte" data-c="${l.code}">
-      <span class="lern-bild">${lernenArt === 'umrisse' ? umrissSvg(l.code) : `<img src="${flaggeUrl(l.code)}" alt="" loading="lazy">`}</span>
+      <span class="lern-bild">${lernenArt === 'umrisse' ? umrissSvg(l.code) : `<img src="${flaggeUrl(l.code)}" alt="" loading="lazy" decoding="async">`}</span>
       <span class="lern-name">${esc(l.name)}</span>
       ${stadtVon(l) ? `<span class="lern-stadt">${esc(stadtVon(l).replace(/ \(.*\)$/, ''))}</span>` : ''}
     </button></li>`).join('') : '<li class="leer">Nichts gefunden. Probier einen anderen Namen.</li>';
@@ -675,28 +703,81 @@ function karteZeichnen(p) {
   $('profil-titel').className = 'karten-titel' + (t ? ` nf-${t.rang}` : '');
   $('profil-titel').hidden = !t;
   const zahl = n => n.toLocaleString('de-DE');
-  $('profil-wappen').innerHTML = `${wappen(info.ruhm, { groesse: 72 })}<b class="nf-${info.rang.id}">${info.name}</b><small>${zahl(info.ruhm)} Ruhm</small>`;
+  $('profil-wappen').innerHTML = `${wappen(info.ruhm, { groesse: 72 })}<b class="nf-${info.rang.id}">${info.name}</b><small>${info.bild ? `Rang ${info.rang.name}, Stufe ${info.i % 4 + 1} von 4` : 'Höchster Rang'}</small><small>${zahl(info.ruhm)} Ruhm</small>`;
   $('profil-ruhm').innerHTML = info.bis
     ? `<div class="zeile-text"><span>Noch <b>${zahl(info.fehlt)}</b> Ruhm bis ${stufeInfo(info.i + 1).name}</span><span><b>${zahl(info.ruhm)}</b> / ${zahl(info.bis)}</span></div><div class="ruhm-balken" style="--anteil:${info.anteil.toFixed(3)}"><i></i></div>`
     : `<div class="zeile-text"><span>Ganz oben angekommen. Mehr Joker geht nicht.</span><span><b>${zahl(info.ruhm)}</b> Ruhm</span></div><div class="ruhm-balken" style="--anteil:1"><i></i></div>`;
 }
 
-function chipInhalt(art, r) {
+// ---------- Anpassen: Spielerkarte im Hochformat als Live-Vorschau, rechts Reiter mit Kacheln ----------
+let anpassenArt = 'farbe';
+let vorschauStil = null; // beim Drüberfahren: so würde es aussehen
+let auswahlStil = null;  // angetippt, aber noch nicht angelegt
+
+function hochkarteHtml(p, st) {
+  const info = ruhmInfo(p.ruhm || 0), zahl = n => (n || 0).toLocaleString('de-DE');
+  const titel = st.titel ? rangVonId(st.titel).titel : '';
+  const sprint = Math.max(0, p.sprint_rekord || 0, ...Object.values(p.rekorde || {}));
+  return `<div class="hochkarte${st.rahmen ? ` rahmen-${st.rahmen}` : ''}" style="--rang:${info.rang.farbe}">
+    <div class="hk-flaeche${st.hintergrund ? ` hgf-${st.hintergrund}` : ''}"></div>
+    ${effektHtml(st.effekt)}${rahmenDeko(st.rahmen)}
+    <span class="hk-ecke lo">${wappen(p.ruhm, { groesse: 30 })}</span>
+    <span class="hk-ecke ru">${wappen(p.ruhm, { groesse: 30 })}</span>
+    <div class="hk-inhalt">
+      <span class="hk-avatar">${avatarHtml(p)}</span>
+      <b class="hk-name${st.farbe ? ` nf-${st.farbe}` : ''}">${esc(p.name)}</b>
+      ${titel ? `<span class="hk-titel nf-${st.titel}">${esc(titel)}</span>` : '<span class="hk-titel leer">kein Titel</span>'}
+      <span class="hk-rang"><b class="nf-${info.rang.id}">${info.name}</b>, ${zahl(info.ruhm)} Ruhm</span>
+      <span class="hk-werte"><span><b>${zahl(p.spiele)}</b>Spiele</span><span><b>${zahl(p.siege)}</b>Siege</span><span><b>${sprint}</b>Sprint</span></span>
+    </div>
+  </div>`;
+}
+const stilGleich = (a, b) => ARTEN.every(x => (a[x.id] || '') === (b[x.id] || ''));
+const stilAllesFrei = st => ARTEN.every(x => !st[x.id] || istFrei(x.id, st[x.id], ich.ruhm || 0));
+function hochkarteZeichnen() {
+  if (!ich || !$('hochkarte')) return;
+  const jetzt = stilVon(ich), auswahl = auswahlStil || jetzt;
+  $('hochkarte').innerHTML = hochkarteHtml(ich, vorschauStil || auswahl);
+  const geaendert = !!auswahlStil && !stilGleich(auswahlStil, jetzt), frei = stilAllesFrei(auswahl);
+  $('anpassen-knoepfe').hidden = !geaendert;
+  $('stil-anlegen').disabled = !frei;
+  $('anpassen-unter').textContent = vorschauStil && !stilGleich(vorschauStil, auswahl) ? 'Vorschau.'
+    : geaendert ? (frei ? 'Noch nicht angelegt.' : 'Probe: Etwas davon ist noch gesperrt.')
+    : 'So sehen dich die anderen. Fahr über etwas, um es auszuprobieren.';
+  $('anpassen-unter').classList.toggle('vorschau', !!vorschauStil || geaendert);
+}
+
+const ART_NAME = { farbe: 'Namensfarbe', titel: 'Titel', effekt: 'Effekt', rahmen: 'Rahmen', hintergrund: 'Hintergrund' };
+function kachelProbe(art, r) {
+  if (!r) return '<span class="sk-probe keiner">–</span>';
+  if (art === 'farbe') return `<span class="sk-probe text nf-${r.id}">Aa</span>`;
+  if (art === 'titel') return `<span class="sk-probe text klein nf-${r.id}">„…“</span>`;
+  if (art === 'effekt') return `<span class="sk-probe effekt-probe">${effektHtml(r.id)}</span>`;
+  if (art === 'rahmen') return `<span class="sk-probe rahmen-probe ra-${r.id}"></span>`;
+  return `<span class="sk-probe hgp-${r.id}"></span>`;
+}
+function kachelName(art, r) {
   if (art === 'farbe') return `<span class="nf-${r.id}">${esc(ich.name)}</span>`;
   if (art === 'titel') return `<span class="nf-${r.id}">${esc(r.titel)}</span>`;
-  if (art === 'effekt') return esc(r.effekt);
-  if (art === 'rahmen') return `<span class="probe ra-${r.id}"></span>${esc(r.rahmen)}`;
-  return `<span class="probe hg-${r.id}"></span>${esc(r.hintergrund)}`;
+  return esc(r[art === 'effekt' ? 'effekt' : art === 'rahmen' ? 'rahmen' : 'hintergrund']);
 }
 function anpassenZeichnen() {
-  const st = stilVon(ich);
-  $('anpassen-zeilen').innerHTML = ARTEN.map(a => `<div class="stil-zeile"><span>${a.name}</span><div class="stil-wahl" data-art="${a.id}">
-      <button class="stil-chip" data-rang="" aria-pressed="${!st[a.id]}">Keiner</button>
-      ${RAENGE.map(r => {
-        const frei = istFrei(a.id, r.id, ich.ruhm || 0), ab = stufeInfo(freiAb(a.id, r.id)).name;
-        return `<button class="stil-chip" data-rang="${r.id}" aria-pressed="${st[a.id] === r.id}"${frei ? '' : ` disabled title="Frei ab ${ab}"`}>${chipInhalt(a.id, r)}${frei ? '' : `<small>ab ${ab}</small>`}</button>`;
-      }).join('')}
-    </div></div>`).join('');
+  const st = stilVon(ich), wahl = auswahlStil || st, ruhm = ich.ruhm || 0, zahl = n => n.toLocaleString('de-DE');
+  $('anpassen-reiter').innerHTML = ARTEN.map(a => {
+    const anzahl = RAENGE.filter(r => istFrei(a.id, r.id, ruhm)).length;
+    return `<button role="tab" class="umschalter-knopf${a.id === anpassenArt ? ' aktiv' : ''}" aria-selected="${a.id === anpassenArt}" data-art="${a.id}">${ART_NAME[a.id]} <small>${anzahl}/5</small></button>`;
+  }).join('');
+  const art = anpassenArt;
+  const keiner = `<button class="stil-kachel${!wahl[art] ? ' gewaehlt' : ''}${!st[art] ? ' an' : ''}" data-rang="" aria-pressed="${!wahl[art]}">${kachelProbe(art, null)}<span class="sk-text"><b>Keiner</b><small>${!st[art] ? 'angelegt' : 'nichts anzeigen'}</small></span></button>`;
+  $('stil-kacheln').innerHTML = keiner + RAENGE.map(r => {
+    const frei = istFrei(art, r.id, ruhm), an = st[art] === r.id, gewaehlt = wahl[art] === r.id;
+    const ab = freiAb(art, r.id), abName = stufeInfo(ab).name, noetig = SCHWELLEN[ab];
+    const unten = an ? '<small class="sk-an">angelegt</small>'
+      : frei ? `<small>${abName}, frei</small>`
+      : `<small>ab ${abName}</small><span class="ruhm-balken" style="--rang:${r.farbe};--anteil:${Math.min(1, ruhm / noetig).toFixed(3)}"><i></i></span><small>${zahl(ruhm)} / ${zahl(noetig)} Ruhm</small>`;
+    return `<button class="stil-kachel${gewaehlt ? ' gewaehlt' : ''}${an ? ' an' : ''}${frei ? '' : ' gesperrt'}" data-rang="${r.id}" aria-pressed="${gewaehlt}">${kachelProbe(art, r)}<span class="sk-text"><b>${kachelName(art, r)}</b>${unten}</span>${frei ? '' : '<span class="sk-schloss" aria-hidden="true">🔒</span>'}</button>`;
+  }).join('');
+  hochkarteZeichnen();
 }
 async function stilAnlegen(neu, meldung = 'Angelegt.') {
   const stil = Object.fromEntries(Object.entries(neu).filter(([, v]) => v));
@@ -704,19 +785,25 @@ async function stilAnlegen(neu, meldung = 'Angelegt.') {
     await profilSpeichern(ich.id, { stil });
     ich = { ...ich, stil };
     chipZeichnen();
-    if (!$('s-profil').hidden) { karteZeichnen(ich); anpassenZeichnen(); }
+    if (!$('s-profil').hidden) { karteZeichnen(ich); anpassenZeichnen(); ruhmeswegZeichnen(); }
     if (!$('s-bude').hidden) bestenLaden();
     toast(meldung);
   } catch (e) { toast(e.message); }
 }
+// Ruhmesweg als Tabelle: Zeilen sind die Kartenfarben (Ränge), Spalten Bube bis Ass, jede Stufe schaltet eine Sache frei
+const FREI_NACH_STUFE = ['Namensfarbe', 'Titel', 'Karten-Effekt', 'Rahmen + Hintergrund'];
 function ruhmeswegZeichnen() {
-  const jetzt = stufeVon(ich.ruhm || 0);
-  $('ruhmesweg').innerHTML = SCHWELLEN.map((ab, i) => {
-    const s = stufeInfo(i);
-    return `<li class="${i < jetzt ? 'erreicht' : i === jetzt ? 'aktuell' : 'gesperrt'}" style="--rang:${s.rang.farbe}">${wappen(0, { stufe: i, groesse: 34 })}<b>${s.name}</b><span>${ab.toLocaleString('de-DE')}</span></li>`;
-  }).join('');
-  const akt = $('ruhmesweg').querySelector('.aktuell');
-  if (akt) $('ruhmesweg').scrollLeft = akt.offsetLeft - $('ruhmesweg').clientWidth / 2 + 32;
+  const jetzt = stufeVon(ich.ruhm || 0), zahl = n => n.toLocaleString('de-DE');
+  const zustand = i => i < jetzt ? 'erreicht' : i === jetzt ? 'aktuell' : 'gesperrt';
+  const belohnung = (r, f) => [esc(r.name), `„${esc(r.titel)}“`, esc(r.effekt), `${esc(r.rahmen)}, ${esc(r.hintergrund)}`][f];
+  const kopf = `<div class="rw-ecke"></div>${BILDER.map((b, f) => `<div class="rw-kopf"><b>${b.name}</b><small>${FREI_NACH_STUFE[f]}</small></div>`).join('')}`;
+  const zeilen = RAENGE.slice(0, 4).map((r, ri) => `<div class="rw-rang nf-${r.id}"><span class="rw-farbe ${r.rot ? 'rot' : ''}">${symbolSvg(r.id)}</span>${r.name}</div>${[0, 1, 2, 3].map(f => {
+    const i = ri * 4 + f;
+    return `<div class="rw-zelle ${zustand(i)}" style="--rang:${r.farbe}">${wappen(0, { stufe: i, groesse: 28 })}<span><b>${zahl(SCHWELLEN[i])}</b><small>${belohnung(r, f)}</small></span>${i === jetzt ? '<i class="rw-du">du</i>' : ''}</div>`;
+  }).join('')}`).join('');
+  const joker = RAENGE[4];
+  const jz = `<div class="rw-rang nf-joker">Joker</div><div class="rw-zelle rw-joker ${zustand(JOKER)}" style="--rang:${joker.farbe}">${wappen(0, { stufe: JOKER, groesse: 28 })}<span><b>${zahl(SCHWELLEN[JOKER])}</b><small>Alles im Joker-Stil: schillernder Name, „${esc(joker.titel)}“, Holo-Effekt, Regenbogenrahmen und Hintergrund</small></span>${jetzt === JOKER ? '<i class="rw-du">du</i>' : ''}</div>`;
+  $('ruhmesweg').innerHTML = kopf + zeilen + jz;
 }
 
 // ---------- Ruhm nach Spiel und Sprint, Aufstieg ----------
@@ -731,15 +818,8 @@ async function ruhmNachladen(vorher) {
   }
   if (!p || !ich || p.id !== ich.id) return null;
   ich = { ...ich, ...p };
+  ruhmMiniZeichnen();
   return (p.ruhm || 0) - vorher;
-}
-function ruhmChip(box, plus) {
-  const info = ruhmInfo(ich.ruhm || 0);
-  box.style.setProperty('--rang', info.rang.farbe);
-  box.innerHTML = `${wappen(info.ruhm, { groesse: 20 })}<span class="plus">+${plus}</span> Ruhm
-    <span class="ruhm-balken" style="--anteil:${info.anteil.toFixed(3)}"><i></i></span>
-    <small>${info.bis ? `noch ${info.fehlt.toLocaleString('de-DE')} bis ${stufeInfo(info.i + 1).name}` : 'Joker erreicht'}</small>`;
-  box.hidden = false;
 }
 // Stufe mit der zuletzt gesehenen vergleichen; beim ersten Mal (nachgerechneter Ruhm) einmalig zeigen
 function ruhmPruefen() {
@@ -767,16 +847,16 @@ function aufstiegZeigen(alt, neu, erstesMal) {
     <p class="ruhm-zahl">${(ich.ruhm || 0).toLocaleString('de-DE')} Ruhm</p>
     ${zeigen.length ? `<ul class="aufstieg-neu">${zeigen.map((n, i) => `<li style="--i:${i}"><span class="nf-${n.rang}">${esc(belohnungName(n.art, n.rang))}</span><small>neu</small></li>`).join('')}</ul>` : ''}
     ${neues.length > zeigen.length ? `<p class="unterzeile">und ${neues.length - zeigen.length} weitere im Profil</p>` : ''}
-    <div class="zeile mitte">${neues.length ? '<button class="knopf haupt" id="aufstieg-anlegen">Gleich anlegen</button>' : ''}<button class="knopf zweit" id="aufstieg-weiter">${neues.length ? 'Später' : 'Weiter'}</button></div>`;
+    <div class="zeile mitte">${neues.length ? '<button class="knopf haupt" id="aufstieg-ansehen">Im Profil ansehen</button>' : ''}<button class="knopf zweit" id="aufstieg-weiter">Weiter</button></div>`;
   dlg.showModal();
   setTimeout(() => konfetti(neu >= JOKER ? 3 : 2), 650);
   $('aufstieg-weiter').onclick = () => dlg.close();
-  const anlegen = $('aufstieg-anlegen');
-  if (anlegen) anlegen.onclick = () => {
-    const stil = { ...stilVon(ich) };
-    for (const n of neues) stil[n.art] = n.rang;
+  const ansehen = $('aufstieg-ansehen');
+  if (ansehen) ansehen.onclick = () => {
     dlg.close();
-    stilAnlegen(stil, 'Angelegt. Ändern kannst du alles im Profil.');
+    anpassenArt = neues[neues.length - 1]?.art || 'farbe';
+    navigieren('#/profil');
+    setTimeout(() => $('anpassen')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 600);
   };
 }
 
@@ -798,12 +878,29 @@ function profilAufbauen() {
     $('profil-editor').hidden = false;
   };
   $('profil-abbrechen').onclick = () => { $('profil-editor').hidden = true; };
-  $('anpassen-zeilen').onclick = e => {
-    const b = e.target.closest('.stil-chip');
-    if (!b || b.disabled || b.getAttribute('aria-pressed') === 'true') return;
-    const art = b.parentElement.dataset.art;
-    stilAnlegen({ ...stilVon(ich), [art]: b.dataset.rang });
+  $('anpassen-reiter').onclick = e => {
+    const b = e.target.closest('[data-art]');
+    if (!b) return;
+    anpassenArt = b.dataset.art; vorschauStil = null;
+    anpassenZeichnen();
   };
+  const probieren = b => { vorschauStil = { ...(auswahlStil || stilVon(ich)), [anpassenArt]: b.dataset.rang || undefined }; hochkarteZeichnen(); };
+  $('stil-kacheln').addEventListener('mouseover', e => { const b = e.target.closest('.stil-kachel'); if (b) probieren(b); });
+  $('stil-kacheln').addEventListener('mouseleave', () => { vorschauStil = null; hochkarteZeichnen(); });
+  // Antippen wählt nur aus (Vorschau auf der Karte), angelegt wird erst mit „Anlegen“
+  $('stil-kacheln').onclick = e => {
+    const b = e.target.closest('.stil-kachel');
+    if (!b) return;
+    auswahlStil = { ...(auswahlStil || stilVon(ich)), [anpassenArt]: b.dataset.rang || undefined };
+    vorschauStil = null;
+    anpassenZeichnen();
+  };
+  $('stil-anlegen').onclick = () => {
+    if (!auswahlStil || !stilAllesFrei(auswahlStil)) return;
+    const neu = auswahlStil; auswahlStil = null;
+    stilAnlegen(neu);
+  };
+  $('stil-verwerfen').onclick = () => { auswahlStil = null; vorschauStil = null; anpassenZeichnen(); };
   $('profil-speichern').onclick = async () => {
     try {
       await profilSpeichern(ich.id, { avatar: profilWahl.avatar, farbe: profilWahl.farbe });
@@ -835,7 +932,7 @@ async function profilZeigen(id) {
   $('profil-seit').textContent = `Dabei seit ${datum(p.erstellt)}, zuletzt aktiv ${wann(p.zuletzt)}`;
   karteZeichnen(p);
   $('anpassen').hidden = !eigenes; $('ruhm-karte').hidden = !eigenes;
-  if (eigenes) { anpassenZeichnen(); ruhmeswegZeichnen(); }
+  if (eigenes) { auswahlStil = null; vorschauStil = null; anpassenZeichnen(); ruhmeswegZeichnen(); }
 
   const schnitt = p.spiele ? Math.round(p.punkte / p.spiele) : 0;
   const werte = [
@@ -855,7 +952,7 @@ async function profilZeigen(id) {
       ['Siege', rang(rSiege, 'noch kein Sieg')], ['Punkte', rang(rPunkte, 'noch keine Punkte')],
     ].map(([n, w]) => `<li><span>${n}</span><span>${w}</span></li>`).join('');
     const rekorde = { ...(p.sprint_rekord ? { flaggen: p.sprint_rekord } : {}), ...(p.rekorde || {}) };
-    const mitRekord = KATEGORIE_REIHE.filter(k => rekorde[k] > 0);
+    const mitRekord = SPRINT_REIHE.filter(k => rekorde[k] > 0);
     $('profil-rekorde').innerHTML = mitRekord.length
       ? mitRekord.map(k => `<li><span>${esc(KATEGORIEN[k].name)}</span><span><b>${rekorde[k]}</b> <span class="neben">richtig in 60 s</span></span></li>`).join('')
       : '<li class="leer">Noch kein Sprint gespielt.</li>';
@@ -924,6 +1021,7 @@ function raumAufbauen() {
         raum.einstellen({ kategorie: s.value, auswahl: kat.standard, zeit: kat.zeit, modus: kat.tippen ? 'tippen' : 'auswahl' });
         return;
       }
+      if (s.dataset.e === 'richtung') { raum.einstellen({ kategorie: s.value === 'stadt' ? 'stadtland' : 'hauptstaedte' }); return; }
       const wert = ['runden', 'zeit'].includes(s.dataset.e) ? Number(s.value) : s.value;
       raum.einstellen({ [s.dataset.e]: wert });
     };
@@ -1008,6 +1106,11 @@ function raumZeichnen() {
     }).join('');
     if ($('einst-auswahl').dataset.fuer !== r.einst.kategorie) { $('einst-auswahl').innerHTML = auswahlHtml; $('einst-auswahl').dataset.fuer = r.einst.kategorie; }
     document.querySelectorAll('#einst select').forEach(s => { s.value = String(r.einst[s.dataset.e] ?? STANDARD[s.dataset.e] ?? ''); s.disabled = !r.binHost; });
+    // Hauptstädte gibt es in zwei Richtungen; in der Kategorie-Liste steht nur „Hauptstädte“
+    const stadtKat = ['hauptstaedte', 'stadtland'].includes(r.einst.kategorie);
+    if (r.einst.kategorie === 'stadtland') $('einst-kategorie').value = 'hauptstaedte';
+    document.querySelector('.einst-richtung').hidden = !stadtKat;
+    $('einst-richtung').value = r.einst.kategorie === 'stadtland' ? 'stadt' : 'land';
     if (!kat.tippen) { $('einst-modus').value = 'auswahl'; $('einst-modus').disabled = true; }
     einstFelder.forEach(f => f.aktualisieren());
     $('los').hidden = !r.binHost;
@@ -1085,8 +1188,11 @@ function raumZeichnen() {
         setTimeout(async () => {
           const plus = await ruhmNachladen(vorher);
           if (plus == null || plus <= 0 || gezeichnet.ende !== spielId) return;
-          ruhmChip($('ende-ruhm'), plus);
-          setTimeout(ruhmPruefen, 1400);
+          const mein = liste.find(e => e.id === ich.id);
+          const sieg = !r.unentschieden && liste.length >= 2 && liste[0].id === ich.id && (mein?.pkt || 0) > 0;
+          const t = r.meineTreffer || 0;
+          ruhmAufschluesseln($('ende-ruhm'), vorher, [['Mitgespielt', 10], [`${t} richtig`, t * 3], sieg ? ['Sieg', 20] : null], plus);
+          setTimeout(ruhmPruefen, 2800);
         }, 1600);
       }
       $('podest').querySelectorAll('.wert').forEach(w => setTimeout(() => hochzaehlen(w, Number(w.dataset.pkt)), Number(w.dataset.ab || 300)));
@@ -1233,7 +1339,7 @@ async function sprintStart(kategorie = 'flaggen') {
   if (!KATEGORIEN[kategorie]) kategorie = 'flaggen';
   zeige('sprint');
   const region = REGION_KATEGORIEN.includes(kategorie) && sprintRegion !== 'alle' ? sprintRegion : null;
-  const s = { kategorie, region, punkte: 0, ende: 0, benutzt: new Set(), verpasst: [], laeuft: false, vorrat: [], frage: null };
+  const s = { kategorie, region, punkte: 0, ende: 0, benutzt: new Set(), verpasst: [], richtige: [], serie: 0, besteSerie: 0, laeuft: false, vorrat: [], frage: null };
   sprint = s;
   $('sp-laeuft').hidden = false; $('sp-ende').hidden = true;
   $('sprint-punkte').textContent = '0';
@@ -1294,7 +1400,12 @@ function punktePop() {
   plusEins($('sprint-punkte').parentElement);
 }
 
+function trefferMerken(s) {
+  s.richtige.push(s.frage);
+  s.serie++; s.besteSerie = Math.max(s.besteSerie, s.serie);
+}
 function sprintTreffer() {
+  trefferMerken(sprint);
   sprint.punkte++;
   punktePop();
   $('sprint-rueck').className = 'rueckmeldung gut'; $('sprint-rueck').textContent = zufall(SPRUCH.richtig);
@@ -1317,43 +1428,99 @@ async function sprintEnde() {
   if (s.frage && !s.verpasst.includes(s.frage) && (s.versucht || (!s.frage.o && $('sprint-eingabe').value.trim()))) s.verpasst.push(s.frage);
   const kat = KATEGORIEN[s.kategorie];
   $('sp-laeuft').hidden = true; $('sp-ende').hidden = false;
-  hochzaehlen($('sprint-ergebnis'), s.punkte, n => `${n} richtig in 60 Sekunden`);
+  $('sprint-kat').textContent = `${kat.name}${s.region ? `, ${REGIONEN_SPRINT[s.region]} (Übung)` : ''}`;
+  hochzaehlen($('sprint-ergebnis'), s.punkte, n => n);
+  // Listen: richtig und ausgelassen
+  $('sprint-richtig').innerHTML = s.richtige.map(f => `<li>${kategorieVon(f).kurz(f)}</li>`).join('');
+  $('sprint-richtig-zahl').textContent = s.richtige.length;
+  $('sprint-richtig-bereich').hidden = !s.richtige.length;
   $('sprint-verpasst').innerHTML = s.verpasst.map(f => `<li>${kategorieVon(f).kurz(f)}</li>`).join('');
-  $('sprint-verpasst-titel').hidden = !s.verpasst.length;
+  $('sprint-verpasst-zahl').textContent = s.verpasst.length;
+  $('sprint-verpasst-bereich').hidden = !s.verpasst.length;
+  const alt = s.region ? 0 : sprintRekord(s.kategorie);
+  const neuerRekord = !s.region && s.punkte > alt && s.punkte > 0;
+  // Werte
+  const wert = (zahl, text) => `<div><b>${zahl}</b><span>${text}</span></div>`;
+  const werteZeichnen = platz => {
+    $('sprint-werte').innerHTML = wert(s.punkte ? `${(60 / s.punkte).toLocaleString('de-DE', { maximumFractionDigits: 1 })} s` : '–', 'pro Treffer')
+      + wert(s.besteSerie, 'beste Serie') + wert(s.verpasst.length, 'ausgelassen')
+      + wert(s.region ? 'Übung' : !ich ? '–' : platz ?? '…', s.region ? 'zählt nicht' : !ich ? 'nur mit Konto' : 'Saisonplatz');
+  };
+  werteZeichnen(null);
+  // Vergleich mit dem Rekord
+  const max = Math.max(s.punkte, alt, 1);
+  $('sprint-vergleich').hidden = !!s.region;
+  $('sprint-vergleich').innerHTML = s.region ? '' : `
+    <div class="sv-zeile${neuerRekord ? ' neu' : ''}"><span>Jetzt</span><span class="sv-balken"><i style="--w:${(s.punkte / max).toFixed(3)}"></i></span><b>${s.punkte}</b></div>
+    <div class="sv-zeile alt"><span>${neuerRekord ? 'Alter Rekord' : 'Rekord'}</span><span class="sv-balken"><i style="--w:${(alt / max).toFixed(3)}"></i></span><b>${alt || '–'}</b></div>`;
   const rekordText = $('sprint-rekord');
-  rekordText.textContent = kat.name;
+  rekordText.classList.toggle('rekord-neu', neuerRekord);
+  rekordText.textContent = s.region ? 'Übungsrunde mit Region: Rekorde und Ruhm gibt es mit „Alle“.'
+    : neuerRekord ? (alt ? `Neuer Rekord! ${s.punkte - alt} mehr als vorher.` : 'Dein erster Rekord steht.')
+    : alt - s.punkte <= 2 && s.punkte ? `Knapp! Nur ${alt - s.punkte || 'null'} unter deinem Rekord.` : `Noch ${alt - s.punkte} bis zu deinem Rekord.`;
+  if (neuerRekord) setTimeout(() => konfetti(alt ? 3 : 2), 500);
   $('sprint-ruhm').hidden = true;
-  if (s.region) {
-    rekordText.classList.remove('rekord-neu');
-    rekordText.textContent = `${kat.name}, ${REGIONEN_SPRINT[s.region]}: Übungsrunde. Rekorde und Ruhm gibt es mit „Alle“.`;
-    return;
-  }
-  const alt = sprintRekord(s.kategorie);
-  $('sprint-ruhm').hidden = true;
+  if (s.region) return;
   if (ich && online()) {
     const vorher = ich.ruhm || 0;
     const neu = await sprintEintragen(s.punkte, s.kategorie);
     if (typeof neu === 'number') ich.rekorde = { ...(ich.rekorde || {}), [s.kategorie]: neu };
     ruhmNachladen(vorher).then(plus => {
       if (plus == null || plus <= 0 || sprint !== s) return;
-      ruhmChip($('sprint-ruhm'), plus);
-      setTimeout(ruhmPruefen, 1200);
+      ruhmAufschluesseln($('sprint-ruhm'), vorher, [['Sprint gespielt', 4], [`${s.punkte} ${s.punkte === 1 ? 'Treffer' : 'Treffer'}`, s.punkte], neuerRekord && alt ? ['Rekord verbessert', s.punkte - alt] : neuerRekord ? ['Erster Rekord', s.punkte] : null], plus);
+      setTimeout(ruhmPruefen, 2600);
     });
+    // Saisonplatz in dieser Kategorie
+    const start = new Date(); start.setDate(1); start.setHours(0, 0, 0, 0);
+    sprintBestenliste(s.kategorie, start.toISOString()).then(l => {
+      if (sprint !== s) return;
+      const i = l.findIndex(p => p.id === ich.id);
+      werteZeichnen(i >= 0 ? `#${i + 1}` : 'ab 16');
+    }).catch(() => werteZeichnen('–'));
   } else if (s.punkte > alt) {
     try { localStorage.setItem('quizbude.sprint.gast.' + s.kategorie, s.punkte); } catch { /* egal */ }
   }
-  if (sprint !== s) return;
-  rekordText.textContent = `${kat.name}: ` + (s.punkte > alt ? (alt ? `Neuer Rekord! Vorher waren es ${alt}.` : 'Dein erster Rekord steht.') : `Dein Rekord: ${alt}.`);
-  rekordText.classList.toggle('rekord-neu', s.punkte > alt && s.punkte > 0);
-  if (s.punkte > alt && s.punkte > 0) setTimeout(() => konfetti(alt ? 3 : 2), 300);
+}
+
+// Ruhm-Zuwachs Posten für Posten, Summe zählt hoch, Balken füllt sich (bei Aufstieg erst voll, dann neue Karte)
+function ruhmAufschluesseln(box, vorher, posten, gesamt) {
+  const liste = posten.filter(p => p && p[1] > 0);
+  const summe = liste.reduce((s, p) => s + p[1], 0);
+  if (summe !== gesamt) liste.push(['Sonstiges', gesamt - summe]); // falls der Server anders gerechnet hat
+  const alt = ruhmInfo(vorher), neu = ruhmInfo(vorher + gesamt), aufstieg = neu.i > alt.i;
+  const text = i => i.bis ? `noch ${i.fehlt.toLocaleString('de-DE')} bis ${stufeInfo(i.i + 1).name}` : 'Joker erreicht';
+  box.style.setProperty('--rang', alt.rang.farbe);
+  box.innerHTML = `
+    <div class="rp-kopf">${wappen(vorher, { groesse: 26 })}<b class="rp-summe">+0</b><span>Ruhm</span></div>
+    <ul class="rp-posten">${liste.map(([n, w], i) => `<li style="--i:${i}"><span>${esc(n)}</span><b>+${w}</b></li>`).join('')}</ul>
+    <div class="rp-leiste"><span class="ruhm-balken"><i style="--anteil:${alt.anteil.toFixed(3)}"></i></span><small class="rp-text">${text(alt)}</small></div>`;
+  box.hidden = false;
+  const verz = 250 + liste.length * 260;
+  setTimeout(() => hochzaehlen(box.querySelector('.rp-summe'), gesamt, n => `+${n}`), 300);
+  const balken = box.querySelector('.ruhm-balken i');
+  setTimeout(() => {
+    if (!aufstieg) { balken.style.setProperty('--anteil', neu.anteil.toFixed(3)); box.querySelector('.rp-text').textContent = text(neu); return; }
+    balken.style.setProperty('--anteil', 1);
+    setTimeout(() => {
+      box.style.setProperty('--rang', neu.rang.farbe);
+      box.querySelector('.rp-kopf .wappen').outerHTML = wappen(vorher + gesamt, { groesse: 26 });
+      balken.style.transition = 'none'; balken.style.setProperty('--anteil', 0); void balken.offsetWidth; balken.style.transition = '';
+      balken.style.setProperty('--anteil', neu.anteil.toFixed(3));
+      box.querySelector('.rp-text').textContent = `Neu: ${neu.name}! ${text(neu)}`;
+      box.classList.add('aufstieg');
+    }, 950);
+  }, verz);
 }
 
 // Region für Sprints in Flaggen, Umrisse, Hauptstädte (Übung)
-const REGION_KATEGORIEN = ['flaggen', 'umrisse', 'hauptstaedte'];
+const REGION_KATEGORIEN = ['flaggen', 'umrisse', 'hauptstaedte', 'stadtland'];
+let sprintRichtung = (() => { try { return localStorage.getItem('quizbude.sprintRichtung') === 'stadt' ? 'stadt' : 'land'; } catch { return 'land'; } })();
+const sprintKat = k => (k === 'hauptstaedte' && sprintRichtung === 'stadt' ? 'stadtland' : k);
 const REGIONEN_SPRINT = { alle: 'Alle', europa: 'Europa', afrika: 'Afrika', asien: 'Asien', amerika: 'Amerika', ozeanien: 'Ozeanien' };
 let sprintRegion = (() => { try { return localStorage.getItem('quizbude.sprintRegion') || 'alle'; } catch { return 'alle'; } })();
 if (!REGIONEN_SPRINT[sprintRegion]) sprintRegion = 'alle';
 function sprintRegionZeichnen() {
+  $('sprint-richtung').innerHTML = [['land', 'Land → Stadt'], ['stadt', 'Stadt → Land']].map(([k, n]) => `<button type="button" role="radio" class="umschalter-knopf${k === sprintRichtung ? ' aktiv' : ''}" aria-checked="${k === sprintRichtung}" data-ri="${k}">${n}</button>`).join('');
   $('sprint-region').innerHTML = Object.entries(REGIONEN_SPRINT).map(([k, n]) => `<button type="button" role="radio" class="umschalter-knopf${k === sprintRegion ? ' aktiv' : ''}" aria-checked="${k === sprintRegion}" data-r="${k}">${n}</button>`).join('');
   document.querySelectorAll('#sprint-kacheln .kachel').forEach(el => el.classList.toggle('mit-region', sprintRegion !== 'alle' && REGION_KATEGORIEN.includes(el.dataset.k)));
 }
@@ -1365,6 +1532,14 @@ function sprintAufbauen() {
     if (!b) return;
     sprintRegion = b.dataset.r;
     try { localStorage.setItem('quizbude.sprintRegion', sprintRegion); } catch { /* egal */ }
+    sprintRegionZeichnen();
+  };
+  $('sprint-richtung').onclick = e => {
+    const b = e.target.closest('[data-ri]');
+    if (!b) return;
+    sprintRichtung = b.dataset.ri;
+    try { localStorage.setItem('quizbude.sprintRichtung', sprintRichtung); } catch { /* egal */ }
+    $('sprint-kacheln').innerHTML = kachelnHtml(true);
     sprintRegionZeichnen();
   };
   $('sprint-form').onsubmit = e => {
@@ -1388,8 +1563,8 @@ function sprintAufbauen() {
       s.pauseSeit = performance.now();
       duellAufdecken($('sprint-optionen'), f, b.dataset.c);
       const rm = $('sprint-rueck');
-      if (ok) { s.punkte++; punktePop(); rm.className = 'rueckmeldung gut'; rm.textContent = `Richtig, ${groessererName(f)} ist größer.`; }
-      else { s.ende -= SPRINT_FALSCH; s.verpasst.push(f); rm.className = 'rueckmeldung schlecht'; rm.textContent = `Falsch, ${groessererName(f)} ist größer. Minus 5 Sekunden.`; }
+      if (ok) { trefferMerken(s); s.punkte++; punktePop(); rm.className = 'rueckmeldung gut'; rm.textContent = `Richtig, ${groessererName(f)} ist größer.`; }
+      else { s.ende -= SPRINT_FALSCH; s.verpasst.push(f); s.serie = 0; rm.className = 'rueckmeldung schlecht'; rm.textContent = `Falsch, ${groessererName(f)} ist größer. Minus 5 Sekunden.`; }
       setTimeout(() => {
         if (sprint !== s || !s.laeuft) return;
         s.ende += performance.now() - s.pauseSeit; s.pauseSeit = null;
@@ -1400,7 +1575,7 @@ function sprintAufbauen() {
     if (richtigeWahl(f, b.dataset.c)) { sprintTreffer(); return; }
     // falsch: richtige Antwort kurz zeigen, Zeit abziehen, weiter
     s.ende -= SPRINT_FALSCH;
-    s.verpasst.push(f);
+    s.verpasst.push(f); s.serie = 0;
     document.querySelectorAll('#sprint-optionen button').forEach(x => {
       x.disabled = true;
       if (richtigeWahl(f, x.dataset.c)) x.classList.add('richtig');
@@ -1416,7 +1591,7 @@ function sprintAufbauen() {
 function sprintUeberspringen() {
   const s = sprint;
   if (!s?.laeuft || !s.frage || s.pauseSeit) return;
-  s.verpasst.push(s.frage);
+  s.verpasst.push(s.frage); s.serie = 0;
   s.ende -= SPRINT_STRAFE;
   $('sprint-rueck').className = 'rueckmeldung';
   $('sprint-rueck').textContent = `Das war ${kategorieVon(s.frage).loesung(s.frage)}.`;

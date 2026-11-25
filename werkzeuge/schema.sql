@@ -80,12 +80,13 @@ declare
   r int;
 begin
   if auth.uid() is null then raise exception 'Nicht angemeldet'; end if;
-  if k not in ('flaggen', 'umrisse', 'hauptstaedte', 'groesser', 'wissen', 'emoji', 'gemischt') then
+  if k not in ('flaggen', 'umrisse', 'hauptstaedte', 'stadtland', 'groesser', 'wissen', 'emoji', 'gemischt') then
     raise exception 'Unbekannte Kategorie';
   end if;
   insert into public.sprint_laeufe (von, kategorie, wert) values (auth.uid(), k, w);
   update public.profile set
     sprints = sprints + 1,
+    sprint_treffer = sprint_treffer + w,
     sprint_rekord = case when k = 'flaggen' then greatest(sprint_rekord, w) else sprint_rekord end,
     rekorde = jsonb_set(rekorde, array[k], to_jsonb(greatest(coalesce((rekorde->>k)::int, 0), w))),
     zuletzt = now()
@@ -134,28 +135,29 @@ alter table public.spiele add column if not exists kategorie text;
 alter table public.profile add column if not exists ruhm int not null default 0;
 alter table public.profile add column if not exists stil jsonb not null default '{}'::jsonb;
 
--- Mitspielen 10, richtige Antwort 3, Sieg 20, Sprint 4, dazu die Summe der Sprint-Rekorde
+-- Mitspielen 10, richtige Antwort 3, Sieg 20, Sprint 4, Sprint-Treffer 1, dazu die Summe der Sprint-Rekorde
+alter table public.profile add column if not exists sprint_treffer int not null default 0;
 create or replace function public.qb_ruhm_aus(p public.profile) returns int
 language sql immutable as $$
-  select (p.spiele * 10 + p.richtig * 3 + p.siege * 20 + p.sprints * 4
+  select (p.spiele * 10 + p.richtig * 3 + p.siege * 20 + p.sprints * 4 + p.sprint_treffer
     + greatest(p.sprint_rekord, coalesce((p.rekorde->>'flaggen')::int, 0))
     + coalesce((select sum(v::int) from jsonb_each_text(p.rekorde) as e(k, v) where k <> 'flaggen' and v ~ '^[0-9]+$'), 0))::int;
 $$;
 
--- Stufe 0 bis 16: Karo-, Herz-, Pik-, Kreuz- je Bube, Dame, König, Ass, dann Joker
+-- Stufe 0 bis 16: Karo-Bube … Karo-Ass, Herz-Bube … Herz-Ass, Pik-…, Kreuz-…, dann Joker
 create or replace function public.qb_ruhm_stufe(r int) returns int
 language sql immutable as $$
   select (count(*) - 1)::int from unnest(array[0,100,250,450,700,1000,1350,1750,2200,2700,3250,3850,4500,5200,5950,6750,8000]) s where s <= r;
 $$;
 
--- Was ist ab welcher Stufe frei? Farbe ab Karo, Titel ab Herz, Effekt ab Pik, Rahmen und Hintergrund ab Kreuz
+-- Was ist ab welcher Stufe frei? Je Kartenfarbe: Namensfarbe ab Bube, Titel ab Dame, Effekt ab König, Rahmen und Hintergrund ab Ass
 create or replace function public.qb_stil_frei(art text, rang text, stufe int) returns boolean
 language sql immutable as $$
   select case
     when art not in ('farbe', 'titel', 'effekt', 'rahmen', 'hintergrund') then false
     when rang = 'joker' then stufe >= 16
-    when array_position(array['bube', 'dame', 'koenig', 'ass'], rang) is null then false
-    else stufe >= (array_position(array['bube', 'dame', 'koenig', 'ass'], rang) - 1) * 4
+    when array_position(array['karo', 'herz', 'pik', 'kreuz'], rang) is null then false
+    else stufe >= (array_position(array['karo', 'herz', 'pik', 'kreuz'], rang) - 1) * 4
       + case art when 'farbe' then 0 when 'titel' then 1 when 'effekt' then 2 else 3 end
   end;
 $$;

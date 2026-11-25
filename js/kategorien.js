@@ -1,8 +1,8 @@
-import { LAENDER } from './laender.js?v=0.8.0';
-import { WISSEN, WISSEN_THEMEN } from './wissen.js?v=0.8.0';
-import { EMOJI, EMOJI_THEMEN } from './emoji.js?v=0.8.0';
-import { kanon } from './kanon.js?v=0.8.0';
-import { LAND, AUSWAHL, pruefe, mischen, flaggeUrl, abgleichen } from './abgleich.js?v=0.8.0';
+import { LAENDER } from './laender.js?v=0.8.1';
+import { WISSEN, WISSEN_THEMEN } from './wissen.js?v=0.8.1';
+import { EMOJI, EMOJI_THEMEN } from './emoji.js?v=0.8.1';
+import { kanon } from './kanon.js?v=0.8.1';
+import { LAND, AUSWAHL, pruefe, mischen, flaggeUrl, abgleichen } from './abgleich.js?v=0.8.1';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const zahl = n => n.toLocaleString('de-DE');
@@ -12,7 +12,7 @@ let UMRISSE = null;
 let umrisseLaeuft = null;
 export function umrisseLaden() {
   if (UMRISSE) return Promise.resolve(UMRISSE);
-  umrisseLaeuft ||= import('./umrisse.js?v=0.8.0').then(m => { UMRISSE = m.UMRISSE; return UMRISSE; });
+  umrisseLaeuft ||= import('./umrisse.js?v=0.8.1').then(m => { UMRISSE = m.UMRISSE; return UMRISSE; });
   return umrisseLaeuft;
 }
 export const umrisseDa = () => !!UMRISSE;
@@ -78,6 +78,22 @@ export const KATEGORIEN = {
     richtig: (key, f) => key === f.c,
     loesung: f => LAND[f.c].stadt,
     kurz: f => `<img src="${flaggeUrl(f.c)}" alt=""><span>${esc(LAND[f.c].name)}: <b>${esc(LAND[f.c].stadt)}</b></span>`,
+  },
+
+  // Hauptstädte rückwärts: Stadt ist gegeben, das Land wird geraten (im Raum und im Sprint als Richtung von „Hauptstädte“)
+  stadtland: {
+    name: 'Hauptstadt → Land', text: 'Zu welchem Land gehört die Hauptstadt?', tippen: true, zeit: 15, land: true,
+    auswahlen: LAENDER_AUSWAHL, standard: 'bekannt',
+    pool: a => laenderPool(a, l => l.stadt),
+    frage: (l, mitOptionen) => ({ k: 'stadtland', c: l.code, ...(mitOptionen && { o: mischen([l.code, ...nachbarn(l, x => x.stadt).map(x => x.code)]) }) }),
+    hinweis: () => 'Zu welchem Land gehört diese Hauptstadt?',
+    bild: f => `<div class="bild-land bild-stadt"><span class="stadt-name">${esc(LAND[f.c].stadt)}</span></div>`,
+    option: (key) => esc(LAND[key].name),
+    pruefe: (text, f) => pruefe(text, f.c),
+    richtig: (key, f) => key === f.c,
+    loesung: f => LAND[f.c].name,
+    nachher: f => `<img class="info-flagge" src="${flaggeUrl(f.c)}" alt="">`,
+    kurz: f => `<img src="${flaggeUrl(f.c)}" alt=""><span><b>${esc(LAND[f.c].stadt)}</b>: ${esc(LAND[f.c].name)}</span>`,
   },
 
   groesser: {
@@ -153,7 +169,9 @@ export const KATEGORIEN = {
 const groesseres = f => (LAND[f.c].flaeche >= LAND[f.d].flaeche ? f.c : f.d);
 
 export const KATEGORIE_REIHE = ['flaggen', 'umrisse', 'hauptstaedte', 'groesser', 'wissen', 'emoji', 'gemischt'];
-export const ARTEN = ['flaggen', 'umrisse', 'hauptstaedte', 'groesser', 'wissen', 'emoji'];
+export const ARTEN = ['flaggen', 'umrisse', 'hauptstaedte', 'stadtland', 'groesser', 'wissen', 'emoji'];
+// Kategorien mit Sprint-Rekord und eigener Sprint-Bestenliste (Hauptstädte gibt es in zwei Richtungen)
+export const SPRINT_REIHE = ['flaggen', 'umrisse', 'hauptstaedte', 'stadtland', 'groesser', 'wissen', 'emoji', 'gemischt'];
 
 // Eine einzelne Frage für den Sprint. Länder-Kategorien fangen leicht an und werden mit jedem Treffer schwerer.
 export function sprintFrage(kategorie, stand, benutzt, region = null) {

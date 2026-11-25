@@ -6,7 +6,7 @@
   };
   const warte = (ms = 15) => new Promise(r => setTimeout(r, ms));
   // Ruhm wie auf dem Server: aus der Statistik berechnet
-  const ruhmAus = p => (p.spiele || 0) * 10 + (p.richtig || 0) * 3 + (p.siege || 0) * 20 + (p.sprints || 0) * 4
+  const ruhmAus = p => (p.spiele || 0) * 10 + (p.richtig || 0) * 3 + (p.siege || 0) * 20 + (p.sprints || 0) * 4 + (p.sprint_treffer || 0)
     + Math.max(p.sprint_rekord || 0, p.rekorde?.flaggen || 0)
     + Object.entries(p.rekorde || {}).filter(([k]) => k !== 'flaggen').reduce((s, [, v]) => s + (Number(v) || 0), 0);
   const mitRuhm = r => ({ ...r, ruhm: ruhmAus(r) + (r.ruhm_extra || 0), stil: r.stil || {} });
@@ -131,7 +131,7 @@
         if (name === 'sprint_eintragen') {
           const k = a.p_kategorie || 'flaggen'; let rek;
           L.set('fake.laeufe', [...L.get('fake.laeufe', []), { von: uid(), k, w: a.p_wert, am: new Date().toISOString() }]);
-          profilAendern(r => { r.sprints++; if (k === 'flaggen') r.sprint_rekord = Math.max(r.sprint_rekord, a.p_wert); r.rekorde = { ...(r.rekorde || {}), [k]: Math.max(r.rekorde?.[k] || 0, a.p_wert) }; rek = r.rekorde[k]; return r; });
+          profilAendern(r => { r.sprints++; r.sprint_treffer = (r.sprint_treffer || 0) + a.p_wert; if (k === 'flaggen') r.sprint_rekord = Math.max(r.sprint_rekord, a.p_wert); r.rekorde = { ...(r.rekorde || {}), [k]: Math.max(r.rekorde?.[k] || 0, a.p_wert) }; rek = r.rekorde[k]; return r; });
           return { data: rek, error: null };
         }
         if (name === 'sprint_bestenliste') {

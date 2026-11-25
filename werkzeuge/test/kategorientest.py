@@ -87,7 +87,6 @@ async def main():
             print(kat, 'Endstand:', pa, '| gleich bei B:', pa == pb, '| Arten:', sorted(gesehen) if gesehen else '')
             await A.click('#andere-kategorie'); await A.wait_for_selector('#p-warten:not([hidden])')
         await A.goto(BASIS + '#/'); await A.wait_for_timeout(800)
-        print('Letzte:', (await A.inner_text('#letzte-liste')).split('\n')[0])
         print('FEHLER:', fehler)
         await b.close()
 asyncio.run(main())

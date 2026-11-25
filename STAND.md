@@ -2,7 +2,7 @@
 
 ## Aktuell (25.11.2026)
 
-- **Version:** 0.8.0
+- **Version:** 0.8.1
 - **Live:** https://requiem-04.github.io/claudis-quizbude/ (Repo `requiEM-04/claudis-quizbude`, Branch `main`, GitHub Pages)
 - **Server:** Supabase-Projekt `quizbude` (Ref `jgvjjjiwfjxynbzjaxsg`, Frankfurt), E-Mail-Bestätigung aus, Realtime mit öffentlichen Kanälen.
 - **Inhalt:** Konten (Name + Passwort ab 4 Zeichen), Räume mit 4-Buchstaben-Code (live über Realtime), Flaggenraten (tippen oder 4 zur Auswahl), Flaggen-Sprint (60 s), Bestenliste (Siege, Punkte, Sprint), „Zuletzt gespielt".
@@ -50,14 +50,33 @@
   - **„Offene Räume“ und „Zuletzt gespielt“** als richtige Zeilen. Die Stile waren in 0.7.0 versehentlich mit herausgeschnitten worden.
   - Leiste unten am Handy für Gäste enger, nichts wird mehr abgeschnitten.
 
+- **Neu in 0.8.1:**
+  - **Ruhm neu geordnet:** Die Ränge sind die Kartenfarben Karo < Herz < Pik < Kreuz, in jeder Farbe Bube → Dame → König → Ass, oben der Joker. Freischaltungen je Farbe: Bube Namensfarbe, Dame Titel, König Effekt, Ass Rahmen und Hintergrund. Stil-Werte in der Datenbank heißen jetzt `karo/herz/pik/kreuz/joker` (Migration hat Bestehendes umgeschrieben).
+  - **Bildkarten** mit eigenen Figuren: Bube mit Federhut, Dame mit Diadem, König mit Krone und Bart, Joker mit Narrenkappe.
+  - **Profil:**
+    - „Anpassen“ mit großer Spielerkarte als Live-Vorschau und Reitern mit Kacheln. Antippen zeigt nur eine Vorschau, erst „Anlegen“ übernimmt. Nichts wird automatisch angelegt, auch nicht beim Aufstieg.
+    - Ruhmesweg als Tabelle ohne Scrollen.
+    - Gleichmäßige Abstände zwischen den Bereichen.
+  - **Sprint-Treffer bringen 1 Ruhm** (neue Spalte `sprint_treffer`, nachgerechnet aus `sprint_laeufe`). Am Ende steht die Aufschlüsselung als Animation: Posten, hochzählende Summe, wachsender Balken, bei Aufstieg die neue Karte. Im Raum genauso.
+  - **Sprint-Ende ausgebaut:** große Zahl, Balken „Jetzt“ gegen Rekord, vier Werte (pro Treffer, beste Serie, ausgelassen, Saisonplatz), Listen „Richtig“ und „Ausgelassen“. Nur noch der Knopf „Nochmal“.
+  - **Sprint-Seite:** unter den Kacheln die besten Sprints der Saison je Kategorie (Top 3 und der eigene Platz).
+  - **Hauptstädte in zwei Richtungen:** „Land gegeben, Hauptstadt raten“ und „Hauptstadt gegeben, Land raten“. Technisch ist das die Kategorie `stadtland` mit eigenem Rekord. Im Raum gibt es dafür die Einstellung „Richtung“, im Sprint den Umschalter „Land → Stadt / Stadt → Land“.
+  - **Ruhm-Leiste** oben in Bude, Sprint und Lernen: aktuelle Karte, Balken, „noch X bis …“.
+  - **Navigation:** Am PC ist die Leiste links am Rand, größer und mit Symbolen. Am Handy bleibt sie unten, nur mit Symbolen.
+  - **Abmelden** führt auf die Anmeldeseite, ohne Gastmodus. Hinweis bei eingeschalteter Feststelltaste.
+  - **Spielansicht** auf großen Bildschirmen deutlich größer (Fragen, Bilder, Antwortknöpfe).
+  - **„Lernen“ scrollt flüssig:** keine Schatten-Filter auf 200 Flaggen, Karten außerhalb des Bildes werden nicht gezeichnet, kein `background-attachment: fixed` mehr.
+  - „Zuletzt gespielt“ in der Bude entfernt.
+
 ## Als Nächstes (mit Colin besprochen)
 
-1. Neue Kategorie mit Weltkarte: Land oder Hauptstadt auf der Karte anklicken (Flagge und Name oben, Karte zum Ausklappen unten rechts), Punkte nach Entfernung.
-2. Colin bewertet den Ruhm (Namen, Optik, Tempo). Danach Feinschliff.
-3. Saison-Abzeichen zum Monatsende vergeben (siehe `PLAN.md`, Abschnitt 4). Die erste Saison endet am 30.11.2026.
-4. Währung, Shop und Saisonblatt nach `PLAN.md`, sobald die offenen Fragen geklärt sind.
-5. Freunde + Einladen in Räume (Einladung 15 s oben sichtbar).
-6. Emoji-Rätsel inhaltlich überarbeiten (spannender).
+1. Eigene Profilbilder statt Emojis (mit Colin zusammen gestalten).
+2. Neue Kategorie mit Weltkarte: Die Karte füllt den ganzen Bildschirm, man kann verschieben und zoomen. Doppelklick setzt den Pin und bestätigt. Oben stehen Flagge und Name. Punkte nach Entfernung, bei Ländern zählt ein Klick ins Land voll.
+3. Colin bewertet den Ruhm (Namen, Optik, Tempo). Danach Feinschliff.
+4. Saison-Abzeichen zum Monatsende vergeben (siehe `PLAN.md`, Abschnitt 4). Die erste Saison endet am 30.11.2026.
+5. Währung, Shop und Saisonblatt nach `PLAN.md`, sobald die offenen Fragen geklärt sind.
+6. Freunde + Einladen in Räume (Einladung 15 s oben sichtbar).
+7. Emoji-Rätsel inhaltlich überarbeiten (spannender).
 
 - **Insider-Fragen** (BAUPART, Ticketsystem): wartet auf Colins Antwort, ob Salvatore und Ali einverstanden sind. Wenn ja, nicht ins öffentliche Repo, sondern in Supabase nur für angemeldete Spieler.
 - **Regel:** In der Seite, in Patchnotes und im Repo nie erwähnen, woher Ideen stammen.
