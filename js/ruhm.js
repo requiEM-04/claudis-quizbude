@@ -51,8 +51,19 @@ export function ruhmInfo(ruhm = 0) {
 
 export function freiAb(art, rangId) {
   if (rangId === 'joker') return JOKER;
-  return RAENGE.findIndex(r => r.id === rangId) * 4 + ARTEN.find(a => a.id === art).ab;
+  const i = RAENGE.findIndex(r => r.id === rangId);
+  return i < 0 ? Infinity : i * 4 + ARTEN.find(a => a.id === art).ab;
 }
+
+// Sonder-Hintergründe, die nicht am Ruhm hängen. Winterzauber: ab 1. Dezember 2026 für alle Konten,
+// die bis Ende Dezember 2026 angelegt wurden (bleibt danach für immer).
+const WINTER_AB = new Date('2026-12-01T00:00:00+01:00'), WINTER_BIS = new Date('2027-01-01T00:00:00+01:00');
+export const SONDER_HG = [
+  { id: 'weihnacht', hintergrund: 'Winterzauber', farbe: '#CFE3EE', ab: WINTER_AB,
+    hinweis: 'Ab 1. Dezember für alle, die bis Ende Dezember dabei sind',
+    frei: p => new Date() >= WINTER_AB && (!p?.erstellt || new Date(p.erstellt) < WINTER_BIS) },
+];
+export const sonderFrei = (id, p) => !!SONDER_HG.find(s => s.id === id)?.frei(p);
 export const istFrei = (art, rangId, ruhm) => stufeVon(ruhm) >= freiAb(art, rangId);
 
 // Was wird mit Stufe i neu frei?
@@ -65,7 +76,10 @@ export function neuFrei(i) {
 // Gewählter Stil eines Spielers; nur was wirklich freigeschaltet ist, zählt
 export function stilVon(p) {
   const st = p?.stil || {}, aus = {};
-  for (const a of ARTEN) if (st[a.id] && istFrei(a.id, st[a.id], p.ruhm || 0)) aus[a.id] = st[a.id];
+  for (const a of ARTEN) {
+    const v = st[a.id];
+    if (v && (istFrei(a.id, v, p.ruhm || 0) || (a.id === 'hintergrund' && sonderFrei(v, p)))) aus[a.id] = v;
+  }
   return aus;
 }
 

@@ -7,7 +7,7 @@
 <meta name="description" content="Flaggen raten in der Pause, allein oder zusammen im Raum.">
 <meta name="theme-color" content="#1B1E21">
 <link rel="icon" href="bilder/icon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="css/stil.css?v=0.9.9">
+<link rel="stylesheet" href="css/stil.css?v=0.10.0">
 </head>
 <body>
 <!-- Ladebildschirm: steht sofort, bis Schriften, Bilder und Effekte bereit sind -->
@@ -149,11 +149,13 @@
         <div class="umschalter profil-reiter" role="tablist" id="profil-reiter">
           <button role="tab" class="umschalter-knopf aktiv" data-tab="uebersicht" aria-selected="true">Übersicht</button>
           <button role="tab" class="umschalter-knopf" data-tab="anpassen" aria-selected="false">Anpassen</button>
+          <button role="tab" class="umschalter-knopf" data-tab="abzeichen" aria-selected="false">Abzeichen</button>
           <button role="tab" class="umschalter-knopf" data-tab="ruhm" aria-selected="false">Ruhmesweg</button>
         </div>
 
         <div class="profil-tab" data-tab="uebersicht">
           <dl class="werte" id="profil-werte"></dl>
+          <section class="karte profil-abzeichen-box"><h2>Abzeichen</h2><div class="abz-kompakt" id="profil-abzeichen"></div></section>
           <div class="profil-raster">
             <section class="karte">
               <h2>Platzierungen</h2>
@@ -178,6 +180,19 @@
           <div class="stil-kacheln" id="stil-kacheln"></div>
         </div>
 
+        <div class="profil-tab" data-tab="abzeichen" id="abzeichen-karte" hidden>
+          <section class="abz-oben">
+            <div class="abz-oben-text">
+              <h2>Auf deiner Karte</h2>
+              <p>Bis zu drei Abzeichen oder Medaillen ersetzen auf deiner Karte Spiele, Siege und Sprint. Klick auf ein erreichtes Abzeichen legt es drauf, nochmal klicken nimmt es runter.</p>
+            </div>
+            <div class="abz-vitrine" id="abz-vitrine"></div>
+          </section>
+          <h3 class="abz-titel">Saison-Medaillen</h3>
+          <div class="abz-medaillen" id="abz-medaillen"></div>
+          <h3 class="abz-titel">Abzeichen <small>Gewöhnlich, Selten, Episch, Legendär, Mythisch</small></h3>
+          <div class="abz-raster" id="abz-raster"></div>
+        </div>
         <div class="profil-tab" data-tab="ruhm" id="ruhm-karte" hidden>
           <p class="ruhm-erklaerung">Du spielst dich durch die Kartenfarben Karo, Herz, Pik und Kreuz, in jeder Farbe vom Bube bis zum Ass. Ganz oben wartet der Joker. Jede Karte schaltet etwas frei.</p>
           <ul class="ruhm-quellen">
@@ -368,7 +383,7 @@
 </nav>
 <div class="toast" id="toast" role="status" hidden></div>
 
-<script src="vendor/supabase.js?v=0.9.9"></script>
-<script type="module" src="js/app.js?v=0.9.9"></script>
+<script src="vendor/supabase.js?v=0.10.0"></script>
+<script type="module" src="js/app.js?v=0.10.0"></script>
 </body>
 </html>

@@ -1,6 +1,6 @@
-import { VERSION } from './config.js?v=0.9.9';
-import { adminClient, adminAnmelden } from './server.js?v=0.9.9';
-import { ruhmInfo, wappen, stilVon } from './ruhm.js?v=0.9.9';
+import { VERSION } from './config.js?v=0.10.0';
+import { adminClient, adminAnmelden } from './server.js?v=0.10.0';
+import { ruhmInfo, wappen, stilVon } from './ruhm.js?v=0.10.0';
 
 // Admin-Bereich: eigenes Konto, eigene Sitzung (quizbude.admin), alles läuft über admin_*-Funktionen mit Protokoll
 const $ = id => document.getElementById(id);
@@ -17,7 +17,7 @@ const KAT = { flaggen: 'Flaggen', karte: 'Weltkarte', umrisse: 'Umrisse', haupts
 const AKTION = {
   umbenennen: 'umbenannt', passwort: 'Passwort gesetzt', sperren: 'gesperrt', entsperren: 'entsperrt',
   aus_bestenliste: 'aus der Bestenliste genommen', in_bestenliste: 'wieder in die Bestenliste', deaktivieren: 'deaktiviert',
-  aktivieren: 'wieder aktiviert', ruhm: 'Ruhm geändert', einstellung: 'Einstellung geändert',
+  aktivieren: 'wieder aktiviert', ruhm: 'Ruhm geändert', einstellung: 'Einstellung geändert', einrichtung: 'Admin-Passwort festgelegt',
 };
 
 // ---------- Kleinkram ----------
@@ -115,7 +115,7 @@ function drin() {
 }
 
 async function allesLaden() {
-  await Promise.all([spielerLaden(), uebersichtLaden(), konfigLaden(), protokollLaden()]);
+  await Promise.all([spielerLaden(), uebersichtLaden(), konfigLaden(), protokollLaden(), saisonLaden()]);
 }
 
 // ---------- Reiter ----------
@@ -345,6 +345,31 @@ $('ad-neue-konten').onchange = async e => {
   catch (err) { e.target.checked = !an; toast(err.message, true); }
 };
 
+// ---------- Saison: die Seite schließt beendete Monate von selbst ab, hier geht es zur Sicherheit von Hand ----------
+const MONATE = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
+async function saisonLaden() {
+  const jetzt = new Date(), vor = new Date(jetzt.getFullYear(), jetzt.getMonth() - 1, 1);
+  const saison = `${vor.getFullYear()}-${String(vor.getMonth() + 1).padStart(2, '0')}`;
+  const knopf = $('ad-saison-knopf');
+  knopf.dataset.saison = saison;
+  if (saison < '2026-11') {
+    const ende = new Date(jetzt.getFullYear(), jetzt.getMonth() + 1, 0);
+    $('ad-saison-text').textContent = `Die erste Saison (${MONATE[jetzt.getMonth()]}) läuft noch bis ${ende.getDate()}.${ende.getMonth() + 1}. Danach vergibt die Seite die Medaillen von selbst.`;
+    knopf.disabled = true; return;
+  }
+  const { data } = await sb.from('saisons').select('abgeschlossen').eq('saison', saison).maybeSingle();
+  const name = `${MONATE[vor.getMonth()]} ${vor.getFullYear()}`;
+  $('ad-saison-text').textContent = data ? `Saison ${name} ist abgeschlossen (${datum(data.abgeschlossen)}).` : `Saison ${name} ist vorbei, die Medaillen sind aber noch nicht vergeben.`;
+  knopf.disabled = !!data;
+}
+$('ad-saison-knopf').onclick = async () => {
+  const saison = $('ad-saison-knopf').dataset.saison;
+  const ok = await fragen({ titel: 'Saison abschließen?', text: `Die Top 3 der Saison ${saison} bekommen ihre Medaillen. Das passiert nur einmal.`, knopf: 'Abschließen' });
+  if (!ok) return;
+  try { const n = await rpc('saison_abschliessen', { p_saison: saison }); toast(`${n} Medaillen vergeben.`); saisonLaden(); protokollLaden(); }
+  catch (err) { toast(err.message, true); }
+};
+
 // ---------- Protokoll ----------
 function logZeile(l) {
   let was = AKTION[l.aktion] || l.aktion;
@@ -352,6 +377,7 @@ function logZeile(l) {
   if (l.aktion === 'umbenennen') was = `umbenannt: ${esc(d.alt)} → ${esc(d.neu)}`;
   if (l.aktion === 'ruhm') was = `${d.menge > 0 ? '+' : ''}${zahl(d.menge)} Ruhm, jetzt ${zahl(d.neu)}`;
   if (l.aktion === 'sperren') was = `gesperrt ${new Date(d.bis).getFullYear() > 9000 ? 'ohne Enddatum' : 'bis ' + datum(d.bis)}${d.grund ? ` (${esc(d.grund)})` : ''}`;
+  if (l.aktion === 'saison') was = `Saison ${esc(d.saison)} abgeschlossen, ${zahl(d.abzeichen)} Medaillen vergeben`;
   if (l.aktion === 'einstellung') was = d.schluessel === 'nachricht' ? (d.wert?.an ? `Nachricht an alle: „${esc(d.wert.text)}“` : 'Nachricht an alle ausgeblendet') : `Neue Konten ${d.wert?.an ? 'erlaubt' : 'geschlossen'}`;
   const wer = l.ziel ? `<button data-id="${l.ziel}" class="ad-log-name">${esc(l.ziel_name || 'gelöscht')}</button>` : '';
   return `<li><span class="ad-li-zeit">${datum(l.am)}</span><span>${wer}${wer ? ' ' : ''}${was}</span></li>`;

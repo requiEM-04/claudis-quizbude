@@ -1,25 +1,26 @@
-import { VERSION } from './config.js?v=0.9.9';
+import { VERSION } from './config.js?v=0.10.0';
 import {
   online, nameFehler, registrieren, anmelden, abmelden, sitzungHolen, profilLaden, profilSpeichern,
   bestenliste, spieleSeit, alleProfile, sprintEintragen, sprintBestenliste, rangVon, spielerAnzahl, spieleVon, sb,
-  adminAnmelden, istAdminName, konfigLaden, adminEinrichten, einrichtungOffen,
-} from './server.js?v=0.9.9';
-import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.9.9';
-import { Raum, codeNeu, STANDARD, TIPPFEHLER_ABZUG } from './raum.js?v=0.9.9';
-import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.9.9';
+  adminAnmelden, istAdminName, konfigLaden, adminEinrichten, einrichtungOffen, abzeichenVon, saisonAbschliessen,
+} from './server.js?v=0.10.0';
+import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.10.0';
+import { Raum, codeNeu, STANDARD, TIPPFEHLER_ABZUG } from './raum.js?v=0.10.0';
+import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.10.0';
 import {
   KATEGORIEN, KATEGORIE_REIHE, SPRINT_REIHE, kategorieVon, optionSchluessel, richtigeWahl, umrisseDa, umrisseLaden,
   sprintFrage, pruefeFrage, fragenVorladen, kanon,
-} from './kategorien.js?v=0.9.9';
-import { LAENDER } from './laender.js?v=0.9.9';
-import { auswahlfeld } from './auswahlfeld.js?v=0.9.9';
-import { KATEGORIE_SYMBOL } from './symbole.js?v=0.9.9';
-import { konfetti } from './konfetti.js?v=0.9.9';
-import { karteBauen, karteLaden, auswerten } from './weltkarte.js?v=0.9.9';
+} from './kategorien.js?v=0.10.0';
+import { LAENDER } from './laender.js?v=0.10.0';
+import { auswahlfeld } from './auswahlfeld.js?v=0.10.0';
+import { KATEGORIE_SYMBOL } from './symbole.js?v=0.10.0';
+import { konfetti } from './konfetti.js?v=0.10.0';
+import { karteBauen, karteLaden, auswerten } from './weltkarte.js?v=0.10.0';
+import { STUFEN, ERFOLGE, erfolgStand, emblem, wertungName, saisonName, saisonKurz, vitrineLesen } from './abzeichen.js?v=0.10.0';
 import {
-  RAENGE, BILDER, ARTEN, JOKER, ruhmInfo, stufeVon, stufeInfo, wappen, effektHtml, rahmenDeko, stilVon, istFrei, freiAb, neuFrei,
+  RAENGE, BILDER, ARTEN, JOKER, SONDER_HG, sonderFrei, ruhmInfo, stufeVon, stufeInfo, wappen, effektHtml, rahmenDeko, stilVon, istFrei, freiAb, neuFrei,
   belohnungName, rangVonId, symbol, symbolSvg, SCHWELLEN,
-} from './ruhm.js?v=0.9.9';
+} from './ruhm.js?v=0.10.0';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -132,6 +133,36 @@ const avatarMitWappen = (p, g = 15) => hatRuhm(p) ? `<span class="mit-wappen">${
 function hintergrundSetzen() {
   const hg = ich ? stilVon(ich).hintergrund : '';
   if (hg) document.body.dataset.hg = hg; else delete document.body.dataset.hg;
+  // Winterzauber: zwei Schnee-Ebenen, die per transform fallen (kein Neuzeichnen)
+  let schnee = document.getElementById('schnee');
+  if (hg === 'weihnacht' && !schnee) {
+    schnee = document.createElement('div');
+    schnee.id = 'schnee'; schnee.className = 'schnee'; schnee.setAttribute('aria-hidden', 'true');
+    schnee.innerHTML = '<i></i><i></i>';
+    document.body.prepend(schnee);
+  } else if (hg !== 'weihnacht' && schnee) schnee.remove();
+}
+
+// Im Dezember einmal zeigen: Winterzauber ist freigeschaltet (nicht automatisch anlegen)
+function winterHinweis() {
+  if (!ich || ich.gast || !sonderFrei('weihnacht', ich) || stilVon(ich).hintergrund === 'weihnacht') return;
+  const jetzt = new Date();
+  if (jetzt.getMonth() !== 11) return;
+  const schluessel = 'quizbude.winter.' + ich.id;
+  try { if (localStorage.getItem(schluessel)) return; } catch { return; }
+  const dlg = $('aufstieg');
+  if (dlg.open || (raum && ['countdown', 'frage', 'aufloesung'].includes(raum.phase)) || sprint?.laeuft) { setTimeout(winterHinweis, 5000); return; }
+  try { localStorage.setItem(schluessel, '1'); } catch { /* egal */ }
+  $('aufstieg-inhalt').style.setProperty('--rang', '#CFE3EE');
+  $('aufstieg-inhalt').innerHTML = `
+    <div class="winter-vorschau hgf-weihnacht"><span class="schnee mini"><i></i><i></i></span></div>
+    <p class="ueber">Ein Geschenk zum Dezember</p>
+    <h2 id="aufstieg-titel">Winterzauber</h2>
+    <p class="unterzeile">Ein Hintergrund für alle, die bis Ende Dezember dabei sind. Er bleibt dir auch danach.</p>
+    <div class="zeile mitte"><button class="knopf haupt" id="aufstieg-ansehen">Anlegen</button><button class="knopf zweit" id="aufstieg-weiter">Später</button></div>`;
+  dlg.showModal();
+  $('aufstieg-weiter').onclick = () => dlg.close();
+  $('aufstieg-ansehen').onclick = () => { dlg.close(); stilAnlegen({ ...stilVon(ich), hintergrund: 'weihnacht' }, 'Winterzauber angelegt.'); };
 }
 
 function wann(iso) {
@@ -396,6 +427,8 @@ async function profilHolen(user) {
   chipZeichnen();
   lobbyStart();
   setTimeout(ruhmPruefen, 900);
+  setTimeout(saisonPruefen, 1600);
+  setTimeout(winterHinweis, 4500);
 }
 
 const AUS_ICON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>';
@@ -542,13 +575,15 @@ async function saisonWertung(von, bis) {
 
 // Saison-Abzeichen: kleine Medaillen-Karte mit Platz und Monat
 const MEDAILLE = { 1: ['#FDEBB0', '#E2C487', '#9E7520'], 2: ['#F4F7F9', '#C3CACF', '#6E777D'], 3: ['#F3CDA9', '#C99A6E', '#7D5634'] };
+let medailleNr = 0; // jede Medaille eigene Verlaufs-ID: sonst greift der Browser auf eine ausgeblendete zurück
 function abzeichenSvg(platz, monat) {
   const [h, m, d] = MEDAILLE[platz];
-  return `<svg viewBox="0 0 40 48" aria-hidden="true"><defs><linearGradient id="qba-${platz}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${h}"/><stop offset=".5" stop-color="${m}"/><stop offset="1" stop-color="${d}"/></linearGradient></defs>
-    <rect x="4" y="3" width="32" height="42" rx="5" fill="#22262A" stroke="url(#qba-${platz})" stroke-width="2.4"/>
+  const gid = `qba-${platz}-${++medailleNr}`;
+  return `<svg viewBox="0 0 40 48" aria-hidden="true"><defs><linearGradient id="${gid}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${h}"/><stop offset=".5" stop-color="${m}"/><stop offset="1" stop-color="${d}"/></linearGradient></defs>
+    <rect x="4" y="3" width="32" height="42" rx="5" fill="#22262A" stroke="url(#${gid})" stroke-width="2.4"/>
     <rect x="7.5" y="6.5" width="25" height="35" rx="2.5" fill="none" stroke="${m}" stroke-opacity=".4" stroke-width=".7"/>
-    ${platz === 1 ? `<path d="M13 9.5 15 6l3 2.4L20 5l2 3.4L25 6l2 3.5Z" fill="url(#qba-1)"/>` : symbol(platz === 2 ? 'herz' : 'karo', 16, 6.5, 8, m)}
-    <text x="20" y="29" text-anchor="middle" font-size="15" font-weight="800" fill="url(#qba-${platz})" font-family="var(--display, sans-serif)">${platz}</text>
+    ${platz === 1 ? `<path d="M13 9.5 15 6l3 2.4L20 5l2 3.4L25 6l2 3.5Z" fill="url(#${gid})"/>` : symbol(platz === 2 ? 'herz' : 'karo', 16, 6.5, 8, m)}
+    <text x="20" y="29" text-anchor="middle" font-size="15" font-weight="800" fill="url(#${gid})" font-family="var(--display, sans-serif)">${platz}</text>
     <text x="20" y="38.5" text-anchor="middle" font-size="6" font-weight="700" fill="${m}" font-family="var(--schrift, sans-serif)">${monat}</text>
   </svg>`;
 }
@@ -652,7 +687,7 @@ async function spielerFenster(id, platz) {
   innen.innerHTML = '<p class="sf-laden">Wird geladen …</p>';
   if (!d.open) d.showModal();
   try {
-    const p = await profilLaden(id);
+    const [p, med] = await Promise.all([profilLaden(id), abzeichenVon(id).catch(() => [])]);
     if (!p) throw new Error('Das Profil gibt es nicht mehr.');
     const allzeit = zeit === 'allzeit';
     let spiele;
@@ -681,7 +716,8 @@ async function spielerFenster(id, platz) {
         <button class="sf-zu" type="button" data-sf="zu" aria-label="Schließen"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
       </header>
       <div class="sf-raster">
-        <div class="sf-karte">${hochkarteHtml(p, stilVon(p))}</div>
+        <div class="sf-karte">${hochkarteHtml(p, stilVon(p), med)}
+          ${med.length ? `<div class="sf-medaillen">${med.slice(0, 6).map(m => `<span title="Platz ${m.platz}, ${esc(wertungName(m.wertung))}, Saison ${esc(saisonName(m.saison))}">${abzeichenSvg(m.platz, saisonKurz(m.saison))}</span>`).join('')}</div>` : ''}</div>
         <div class="sf-rechts">
           <table class="sf-tabelle">
             <thead><tr><th>Kategorie</th><th>Spiele</th><th>Siege</th><th>Ø Punkte</th><th>Bestes Spiel</th><th>Sprint-Rekord</th></tr></thead>
@@ -945,7 +981,12 @@ let anpassenArt = 'farbe';
 let vorschauStil = null; // beim Drüberfahren: so würde es aussehen
 let auswahlStil = null;  // angetippt, aber noch nicht angelegt
 
-function hochkarteHtml(p, st) {
+// Ein Platz der Vitrine auf der Karte: Abzeichen oder Saison-Medaille
+function vitrineTeil(v) {
+  if (v.art === 'e') return `<span class="hk-abz st-${STUFEN[v.stufe - 1].id}" title="${esc(v.e.name)}, ${STUFEN[v.stufe - 1].name}">${emblem(v.e, v.stufe, 30)}<small>${esc(v.e.name)}</small></span>`;
+  return `<span class="hk-abz hk-medaille" title="Platz ${v.platz}, ${esc(wertungName(v.wertung))}, Saison ${esc(saisonName(v.saison))}">${abzeichenSvg(v.platz, saisonKurz(v.saison))}<small>${esc(wertungName(v.wertung))}</small></span>`;
+}
+function hochkarteHtml(p, st, medaillen = null) {
   const info = ruhmInfo(p.ruhm || 0), zahl = n => (n || 0).toLocaleString('de-DE');
   const titel = st.titel ? rangVonId(st.titel).titel : '';
   const sprint = Math.max(0, p.sprint_rekord || 0, ...Object.values(p.rekorde || {}));
@@ -959,7 +1000,11 @@ function hochkarteHtml(p, st) {
       <b class="hk-name${st.farbe ? ` nf-${st.farbe}` : ''}">${esc(p.name)}</b>
       ${titel ? `<span class="hk-titel nf-${st.titel}">${esc(titel)}</span>` : '<span class="hk-titel leer">kein Titel</span>'}
       <span class="hk-rang"><b class="nf-${info.rang.id}">${info.name}</b>, ${zahl(info.ruhm)} Ruhm</span>
-      <span class="hk-werte"><span><b>${zahl(p.spiele)}</b>Spiele</span><span><b>${zahl(p.siege)}</b>Siege</span><span><b>${sprint}</b>Sprint</span></span>
+      ${(() => {
+        const vit = vitrineLesen(p, { medaillen: medaillen?.length ?? 0 }, medaillen);
+        return vit.length ? `<span class="hk-werte hk-vitrine">${vit.map(vitrineTeil).join('')}</span>`
+          : `<span class="hk-werte"><span><b>${zahl(p.spiele)}</b>Spiele</span><span><b>${zahl(p.siege)}</b>Siege</span><span><b>${sprint}</b>Sprint</span></span>`;
+      })()}
     </div>
   </div>`;
 }
@@ -969,7 +1014,7 @@ function hochkarteZeichnen() {
   const p = profilP && ich && profilP.id === ich.id ? { ...profilP, ...ich } : profilP;
   if (!p || !$('hochkarte')) return;
   const eigen = ich && p.id === ich.id;
-  $('hochkarte').innerHTML = hochkarteHtml(p, (eigen && vorschauStil) || stilVon(p));
+  $('hochkarte').innerHTML = hochkarteHtml(p, (eigen && vorschauStil) || stilVon(p), eigen ? meineMedaillen : profilMedaillen);
 }
 
 const ART_NAME = { farbe: 'Namensfarbe', titel: 'Titel', effekt: 'Effekt', rahmen: 'Rahmen', hintergrund: 'Hintergrund' };
@@ -989,8 +1034,9 @@ function kachelName(art, r) {
 function anpassenZeichnen() {
   const st = stilVon(ich), wahl = st, ruhm = ich.ruhm || 0, zahl = n => n.toLocaleString('de-DE');
   $('anpassen-reiter').innerHTML = ARTEN.map(a => {
-    const anzahl = RAENGE.filter(r => istFrei(a.id, r.id, ruhm)).length;
-    return `<button role="tab" class="umschalter-knopf${a.id === anpassenArt ? ' aktiv' : ''}" aria-selected="${a.id === anpassenArt}" data-art="${a.id}">${ART_NAME[a.id]} <small>${anzahl}/5</small></button>`;
+    const sonder = a.id === 'hintergrund' ? SONDER_HG : [];
+    const anzahl = RAENGE.filter(r => istFrei(a.id, r.id, ruhm)).length + sonder.filter(s => s.frei(ich)).length;
+    return `<button role="tab" class="umschalter-knopf${a.id === anpassenArt ? ' aktiv' : ''}" aria-selected="${a.id === anpassenArt}" data-art="${a.id}">${ART_NAME[a.id]} <small>${anzahl}/${5 + sonder.length}</small></button>`;
   }).join('');
   const art = anpassenArt;
   const keiner = `<button class="stil-kachel${!wahl[art] ? ' gewaehlt' : ''}${!st[art] ? ' an' : ''}" data-rang="" aria-pressed="${!wahl[art]}">${kachelProbe(art, null)}<span class="sk-text"><b>Keiner</b><small>${!st[art] ? 'angelegt' : 'nichts anzeigen'}</small></span></button>`;
@@ -1001,7 +1047,11 @@ function anpassenZeichnen() {
       : frei ? `<small>${abName}, frei</small>`
       : `<small>ab ${abName}</small><span class="ruhm-balken" style="--rang:${r.farbe};--anteil:${Math.min(1, ruhm / noetig).toFixed(3)}"><i></i></span><small>${zahl(ruhm)} / ${zahl(noetig)} Ruhm</small>`;
     return `<button class="stil-kachel${gewaehlt ? ' gewaehlt' : ''}${an ? ' an' : ''}${frei ? '' : ' gesperrt'}" data-rang="${r.id}" aria-pressed="${gewaehlt}">${kachelProbe(art, r)}<span class="sk-text"><b>${kachelName(art, r)}</b>${unten}</span>${frei ? '' : '<span class="sk-schloss" aria-hidden="true">🔒</span>'}</button>`;
-  }).join('');
+  }).join('') + (art === 'hintergrund' ? SONDER_HG.map(s => {
+    const frei = s.frei(ich), an = st.hintergrund === s.id;
+    const unten = an ? '<small class="sk-an">angelegt</small>' : frei ? '<small>Geschenk, frei</small>' : `<small>${esc(s.hinweis)}</small>`;
+    return `<button class="stil-kachel sonder${an ? ' gewaehlt an' : ''}${frei ? '' : ' gesperrt'}" data-rang="${s.id}" aria-pressed="${an}">${kachelProbe(art, s)}<span class="sk-text"><b>${esc(s.hintergrund)}</b>${unten}</span>${frei ? '' : '<span class="sk-schloss" aria-hidden="true">🔒</span>'}</button>`;
+  }).join('') : '');
   hochkarteZeichnen();
 }
 async function stilAnlegen(neu, meldung = 'Angelegt.') {
@@ -1056,6 +1106,7 @@ function ruhmPruefen() {
   try { alt = localStorage.getItem(RUHM_STUFE(ich.id)); localStorage.setItem(RUHM_STUFE(ich.id), jetzt); } catch { return; }
   if (alt === null) { if ((ich.ruhm || 0) > 0) aufstiegZeigen(-1, jetzt, true); return; }
   if (jetzt > Number(alt)) aufstiegZeigen(Number(alt), jetzt, false);
+  erfolgePruefen();
 }
 function aufstiegZeigen(alt, neu, erstesMal) {
   const dlg = $('aufstieg');
@@ -1104,6 +1155,12 @@ function profilAufbauen() {
   };
   $('profil-abbrechen').onclick = () => { $('profil-editor').hidden = true; };
   $('profil-reiter').onclick = e => { const b = e.target.closest('[data-tab]'); if (b) profilTab(b.dataset.tab); };
+  for (const el of ['abz-raster', 'abz-medaillen', 'abz-vitrine']) $(el).addEventListener('click', e => {
+    const b = e.target.closest('[data-v]');
+    if (!b) return;
+    if (b.getAttribute('aria-disabled') === 'true') { toast('Das Abzeichen hast du noch nicht.'); return; }
+    vitrineUmschalten(b.dataset.v);
+  });
   $('anpassen-reiter').onclick = e => {
     const b = e.target.closest('[data-art]');
     if (!b) return;
@@ -1114,7 +1171,11 @@ function profilAufbauen() {
   $('stil-kacheln').onclick = e => {
     const b = e.target.closest('.stil-kachel');
     if (!b) return;
-    if (b.classList.contains('gesperrt')) { toast(`Noch gesperrt, frei ab ${stufeInfo(freiAb(anpassenArt, b.dataset.rang)).name}.`); return; }
+    if (b.classList.contains('gesperrt')) {
+      const sonder = SONDER_HG.find(s => s.id === b.dataset.rang);
+      toast(sonder ? `${sonder.hintergrund}: ${sonder.hinweis}.` : `Noch gesperrt, frei ab ${stufeInfo(freiAb(anpassenArt, b.dataset.rang)).name}.`);
+      return;
+    }
     if (b.getAttribute('aria-pressed') === 'true') return;
     vorschauStil = null;
     stilAnlegen({ ...stilVon(ich), [anpassenArt]: b.dataset.rang }, 'Angelegt.');
@@ -1132,6 +1193,127 @@ function profilAufbauen() {
 }
 
 let profilTabJetzt = 'uebersicht';
+// ---------- Abzeichen und Saison-Medaillen im Profil ----------
+let meineMedaillen = [], profilMedaillen = null;
+async function abzeichenLaden(p, eigenes, abruf) {
+  let med = [];
+  try { med = await abzeichenVon(p.id); } catch { /* ohne Medaillen weiter */ }
+  if (abruf !== profilAbruf) return;
+  profilMedaillen = med;
+  if (eigenes) meineMedaillen = med;
+  hochkarteZeichnen();
+  // kurze Übersicht für alle Profile: erreichte Abzeichen und Medaillen
+  const erreicht = ERFOLGE.map(e => ({ e, st: erfolgStand(e, p, { medaillen: med.length }) })).filter(x => x.st.stufe).sort((a, b) => b.st.stufe - a.st.stufe);
+  $('profil-abzeichen').innerHTML = med.map(m => `<span class="abz-mini" title="Platz ${m.platz}, ${esc(wertungName(m.wertung))}, Saison ${esc(saisonName(m.saison))}">${abzeichenSvg(m.platz, saisonKurz(m.saison))}</span>`).join('')
+    + erreicht.map(x => `<span class="abz-mini" title="${esc(x.e.name)}, ${STUFEN[x.st.stufe - 1].name}">${emblem(x.e, x.st.stufe, 34)}</span>`).join('')
+    || `<p class="leer">${eigenes ? 'Noch keine Abzeichen. Spiel ein paar Runden, die ersten kommen schnell.' : 'Noch keine Abzeichen.'}</p>`;
+  if (eigenes) abzeichenZeichnen();
+}
+
+function abzeichenZeichnen() {
+  if (!ich || !$('abz-raster')) return;
+  const vit = Array.isArray(ich.vitrine) ? ich.vitrine : [];
+  const extra = { medaillen: meineMedaillen.length }, zahl = n => Number(n).toLocaleString('de-DE');
+  const liste = vitrineLesen(ich, extra, meineMedaillen);
+  $('abz-vitrine').innerHTML = [0, 1, 2].map(i => {
+    const v = liste[i];
+    return v ? `<button class="abz-platz voll" data-v="${esc(v.id)}" title="Von der Karte nehmen">${v.art === 'e' ? emblem(v.e, v.stufe, 46) : abzeichenSvg(v.platz, saisonKurz(v.saison))}<span>${esc(v.art === 'e' ? v.e.name : wertungName(v.wertung))}</span><small>runternehmen</small></button>`
+      : `<div class="abz-platz"><span class="abz-leer">${i + 1}</span><small>frei</small></div>`;
+  }).join('');
+  $('abz-medaillen').innerHTML = meineMedaillen.length ? meineMedaillen.map(m => {
+    const id = `s:${m.saison}:${m.wertung}:${m.platz}`, an = vit.includes(id);
+    return `<button class="abz-medaille${an ? ' an' : ''}" data-v="${esc(id)}">${abzeichenSvg(m.platz, saisonKurz(m.saison))}<span><b>Platz ${m.platz}, ${esc(wertungName(m.wertung))}</b><small>Saison ${esc(saisonName(m.saison))}${an ? ', auf der Karte' : ''}</small></span></button>`;
+  }).join('') : '<p class="leer">Die Top 3 jeder Saison bekommen eine Medaille: in Punkten, Siegen und jedem Sprint. Die erste Saison endet am 30. November.</p>';
+  $('abz-raster').innerHTML = ERFOLGE.map(e => {
+    const st = erfolgStand(e, ich, extra), id = `e:${e.id}`, an = vit.includes(id);
+    const stufe = st.stufe ? STUFEN[st.stufe - 1] : null, naechste = st.naechste != null ? STUFEN[st.stufe] : null;
+    const fortschritt = naechste
+      ? `<span class="abz-balken" style="--f:${naechste.farbe};--anteil:${st.anteil.toFixed(3)}"><i></i></span><small>${zahl(st.wert)} / ${zahl(st.naechste)} ${esc(e.was)} bis ${naechste.name}</small>`
+      : `<small class="abz-max">Höchste Stufe erreicht, ${zahl(st.wert)} ${esc(e.was)}</small>`;
+    return `<button class="abz-kachel${st.stufe ? '' : ' gesperrt'}${an ? ' an' : ''}" data-v="${id}" ${st.stufe ? '' : 'aria-disabled="true"'}>
+      ${emblem(e, st.stufe, 54)}
+      <span class="abz-text"><b>${esc(e.name)}</b><span class="abz-stufe" style="--f:${stufe?.farbe || 'var(--text-3)'}">${stufe ? stufe.name : 'Noch nicht erreicht'}${an ? ' · auf der Karte' : ''}</span>${fortschritt}</span>
+    </button>`;
+  }).join('');
+}
+
+async function vitrineUmschalten(id) {
+  const alt = Array.isArray(ich.vitrine) ? ich.vitrine.filter(v => typeof v === 'string') : [];
+  let neu;
+  if (alt.includes(id)) neu = alt.filter(v => v !== id);
+  else {
+    if (id.startsWith('e:')) {
+      const e = ERFOLGE.find(x => `e:${x.id}` === id);
+      if (!e || !erfolgStand(e, ich, { medaillen: meineMedaillen.length }).stufe) { toast('Das Abzeichen hast du noch nicht.'); return; }
+    }
+    if (alt.length >= 3) { toast('Auf die Karte passen drei. Nimm erst eins runter.'); return; }
+    neu = [...alt, id];
+  }
+  try {
+    await profilSpeichern(ich.id, { vitrine: neu });
+    ich = { ...ich, vitrine: neu };
+    if (profilP?.id === ich.id) profilP = { ...profilP, vitrine: neu };
+    abzeichenZeichnen(); hochkarteZeichnen();
+    toast(neu.length > alt.length ? 'Liegt jetzt auf deiner Karte.' : 'Von der Karte genommen.');
+  } catch (e) { toast(e.message); }
+}
+
+// Neue Abzeichen-Stufe erreicht? Kurzer Hinweis (beim ersten Mal nur merken)
+function erfolgePruefen() {
+  if (!ich || ich.gast) return;
+  const extra = { medaillen: meineMedaillen.length };
+  const jetzt = Object.fromEntries(ERFOLGE.map(e => [e.id, erfolgStand(e, ich, extra).stufe]));
+  let alt = null;
+  try { alt = JSON.parse(localStorage.getItem('quizbude.erfolge.' + ich.id) || 'null'); localStorage.setItem('quizbude.erfolge.' + ich.id, JSON.stringify(jetzt)); } catch { return; }
+  if (!alt) return;
+  const neu = ERFOLGE.filter(e => jetzt[e.id] > (alt[e.id] || 0));
+  if (!neu.length) return;
+  const e = neu[0], st = STUFEN[jetzt[e.id] - 1];
+  toast(neu.length === 1 ? `Neues Abzeichen: ${e.name}, ${st.name}` : `${neu.length} neue Abzeichen, schau im Profil vorbei`);
+}
+
+// ---------- Saison: nach Monatsende abschließen, neue Medaillen feiern ----------
+async function saisonPruefen() {
+  if (!online()) return;
+  const jetzt = new Date(), vor = new Date(jetzt.getFullYear(), jetzt.getMonth() - 1, 1);
+  const saison = `${vor.getFullYear()}-${String(vor.getMonth() + 1).padStart(2, '0')}`;
+  if (saison >= '2026-11') {
+    let erledigt = null; try { erledigt = localStorage.getItem('quizbude.saison.zu'); } catch { /* egal */ }
+    if (erledigt !== saison) {
+      try { await saisonAbschliessen(saison); localStorage.setItem('quizbude.saison.zu', saison); }
+      catch (e) { console.warn('[Quizbude] Saison noch nicht abgeschlossen', e); }
+    }
+  }
+  if (!ich || ich.gast) return;
+  try { meineMedaillen = await abzeichenVon(ich.id); } catch { return; }
+  const schluessel = 'quizbude.medaillen.' + ich.id;
+  let gesehen = null; try { gesehen = localStorage.getItem(schluessel); } catch { /* egal */ }
+  const neue = meineMedaillen.filter(m => !gesehen || m.vergeben > gesehen);
+  const neuestes = meineMedaillen.reduce((x, m) => (m.vergeben > x ? m.vergeben : x), gesehen || '');
+  try { if (neuestes) localStorage.setItem(schluessel, neuestes); } catch { /* egal */ }
+  // beim allerersten Mal nur frische Medaillen zeigen (die letzten zwei Wochen)
+  const frisch = gesehen ? neue : neue.filter(m => Date.now() - new Date(m.vergeben) < 14 * 86400000);
+  if (frisch.length) setTimeout(() => medailleZeigen(frisch), 1200);
+}
+
+function medailleZeigen(neue) {
+  const dlg = $('aufstieg');
+  if (dlg.open || !ich) { setTimeout(() => medailleZeigen(neue), 3000); return; }
+  if ((raum && ['countdown', 'frage', 'aufloesung'].includes(raum.phase)) || sprint?.laeuft) { setTimeout(() => medailleZeigen(neue), 4000); return; }
+  const saison = neue[0].saison;
+  $('aufstieg-inhalt').style.setProperty('--rang', '#EBC660');
+  $('aufstieg-inhalt').innerHTML = `
+    <div class="aufstieg-buehne medaillen-buehne">${neue.slice(0, 3).map((m, i) => `<span class="mb-medaille" style="--i:${i}">${abzeichenSvg(m.platz, saisonKurz(m.saison))}</span>`).join('')}</div>
+    <p class="ueber">Saison ${esc(saisonName(saison))} ist vorbei</p>
+    <h2 id="aufstieg-titel">${neue.length === 1 ? 'Du hast eine Medaille!' : `Du hast ${neue.length} Medaillen!`}</h2>
+    <ul class="aufstieg-neu">${neue.map((m, i) => `<li style="--i:${i}"><span>Platz ${m.platz}, ${esc(wertungName(m.wertung))}</span><small>${Number(m.wert).toLocaleString('de-DE')}</small></li>`).join('')}</ul>
+    <div class="zeile mitte"><button class="knopf haupt" id="aufstieg-ansehen">Auf die Karte legen</button><button class="knopf zweit" id="aufstieg-weiter">Weiter</button></div>`;
+  dlg.showModal();
+  setTimeout(() => konfetti(3), 500);
+  $('aufstieg-weiter').onclick = () => dlg.close();
+  $('aufstieg-ansehen').onclick = () => { dlg.close(); profilTabJetzt = 'abzeichen'; navigieren('#/profil'); };
+}
+
 function profilTab(t) {
   profilTabJetzt = t;
   document.querySelectorAll('#profil-reiter [data-tab]').forEach(b => { const an = b.dataset.tab === t; b.classList.toggle('aktiv', an); b.setAttribute('aria-selected', an); });
@@ -1156,7 +1338,9 @@ async function profilZeigen(id) {
   $('profil-name').textContent = p.name;
   $('profil-seit').textContent = `Dabei seit ${datum(p.erstellt)}, zuletzt aktiv ${wann(p.zuletzt)}`;
   vorschauStil = null;
+  profilMedaillen = null;
   karteZeichnen(p);
+  abzeichenLaden(p, eigenes, abruf);
   // Anpassen und Ruhmesweg gibt es nur im eigenen Profil
   $('profil-reiter').hidden = !eigenes;
   profilTab(eigenes ? profilTabJetzt : 'uebersicht');
@@ -2018,6 +2202,7 @@ async function los() {
   }
   route(true);
   ladeEnde(vorbereitung, ladeStart);
+  if (!ich) setTimeout(saisonPruefen, 2500); // Gäste schließen eine beendete Saison genauso ab
   setTimeout(versionPruefen, 4000);
 }
 

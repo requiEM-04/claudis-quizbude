@@ -2,7 +2,7 @@
 
 ## Aktuell (25.11.2026)
 
-- **Version:** 0.9.9
+- **Version:** 0.10.0
 - **Live:** https://requiem-04.github.io/claudis-quizbude/ (Repo `requiEM-04/claudis-quizbude`, Branch `main`, GitHub Pages)
 - **Server:** Supabase-Projekt `quizbude` (Ref `jgvjjjiwfjxynbzjaxsg`, Frankfurt), E-Mail-Bestätigung aus, Realtime mit öffentlichen Kanälen.
 - **Inhalt:** Konten (Name + Passwort ab 4 Zeichen), Räume mit 4-Buchstaben-Code (live über Realtime), Flaggenraten (tippen oder 4 zur Auswahl), Flaggen-Sprint (60 s), Bestenliste (Siege, Punkte, Sprint), „Zuletzt gespielt".
@@ -127,6 +127,13 @@
   - Ruhm-Box im Endstand: Klasse „aufstieg“ kollidierte mit dem Aufstiegs-Fenster (Rand und Innenabstand weg), heißt jetzt rp-hoch und wird beim nächsten Spiel zurückgesetzt.
 
 - **0.9.9:** Falsche Antworten richten sich wieder nach der Chat-Einstellung des Gastgebers (Colin will das so, nicht ändern).
+
+- **Neu in 0.10.0:**
+  - Saison-Medaillen: Migration 003 (Tabellen abzeichen, saisons, Funktion saison_abschliessen). Nach Monatsende schließt die Seite die Saison von selbst ab (jeder Besuch löst es aus, passiert nur einmal), Admin hat einen Knopf. Top 3 in Punkten, Siegen und jedem Sprint. Einmaliger Medaillen-Moment beim nächsten Öffnen.
+  - Abzeichen (js/abzeichen.js): 15 Erfolge mit fünf Seltenheitsstufen (Gewöhnlich, Selten, Episch, Legendär, Mythisch), eigenes Emblem je Erfolg. Profil-Reiter „Abzeichen“ mit Fortschritt.
+  - Vitrine: bis zu drei Abzeichen oder Medaillen auf der Spielerkarte statt Spiele/Siege/Sprint (Spalte vitrine, Migration 004).
+  - Winterzauber (Migration 005): Hintergrund mit Lichterkette, Tannen, Sternen und Schneefall. Ab 1.12.2026 frei für alle Konten, die vor dem 1.1.2027 angelegt wurden, bleibt danach. Im Dezember einmal ein Hinweis mit Anlegen-Knopf (nicht automatisch).
+  - SVG-Verläufe mit eigener ID je Grafik (sonst greift der Browser auf ausgeblendete Kopien zurück).
 
 ## Als Nächstes (mit Colin besprochen)
 

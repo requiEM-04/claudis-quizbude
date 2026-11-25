@@ -1,5 +1,5 @@
-import { CONFIG } from './config.js?v=0.9.9';
-import { textPruefen } from './filter.js?v=0.9.9';
+import { CONFIG } from './config.js?v=0.10.0';
+import { textPruefen } from './filter.js?v=0.10.0';
 
 // ?sitzung=2 in der Adresse = zweites Konto im selben Browser (zum Testen mit zwei Tabs)
 const sitzung = new URLSearchParams(location.search).get('sitzung');
@@ -188,4 +188,17 @@ export async function letzteSpiele() {
   const { data, error } = await sb.from('spiele').select('*').order('am', { ascending: false }).limit(5);
   if (error) throw new Error(uebersetzen(error));
   return data;
+}
+
+// ---------- Saison-Medaillen ----------
+export async function abzeichenVon(userId) {
+  const { data, error } = await sb.from('abzeichen').select('saison,wertung,platz,wert,vergeben').eq('user_id', userId).order('saison', { ascending: false }).order('platz');
+  if (error) throw new Error(uebersetzen(error));
+  return data || [];
+}
+// Schließt eine beendete Saison ab (passiert nur einmal, egal wer es auslöst). Rückgabe: Anzahl neuer Medaillen
+export async function saisonAbschliessen(saison) {
+  const { data, error } = await sb.rpc('saison_abschliessen', { p_saison: saison });
+  if (error) throw new Error(error.message);
+  return data || 0;
 }
