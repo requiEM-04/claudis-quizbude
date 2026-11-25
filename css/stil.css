@@ -294,7 +294,15 @@ kbd {
 /* ---------- Kategorien in der Bude ---------- */
 .kategorien { margin-top: 52px; }
 .kategorien h2 { margin-bottom: 16px; }
-.kachel-raster { display: grid; grid-template-columns: repeat(auto-fill, minmax(158px, 1fr)); gap: 12px; }
+.kachel-raster { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+@media (min-width: 620px) { .kachel-raster { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+/* ab Laptop-Breite alle 7 Kategorien in einer Reihe, damit man nicht scrollen muss */
+@media (min-width: 1100px) {
+  .kachel-raster { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 10px; }
+  .kachel { padding: 14px 13px 15px; }
+  .kachel-name { font-size: .93rem; }
+  .kb-duell { gap: 4px; }
+}
 .kachel {
   display: grid; grid-template-rows: 78px auto 1fr; gap: 4px; text-align: left;
   padding: 14px 16px 16px; border-radius: var(--r-mittel); cursor: pointer;

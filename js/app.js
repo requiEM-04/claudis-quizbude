@@ -1,18 +1,18 @@
-import { VERSION } from './config.js?v=0.4.2';
+import { VERSION } from './config.js?v=0.4.3';
 import {
   online, nameFehler, registrieren, anmelden, abmelden, sitzungHolen, profilLaden, profilSpeichern,
   bestenliste, letzteSpiele, sprintEintragen, sprintBestenliste, rangVon, spielerAnzahl, spieleVon, sb,
-} from './server.js?v=0.4.2';
-import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.4.2';
-import { Raum, codeNeu, STANDARD } from './raum.js?v=0.4.2';
-import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.4.2';
+} from './server.js?v=0.4.3';
+import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.4.3';
+import { Raum, codeNeu, STANDARD } from './raum.js?v=0.4.3';
+import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.4.3';
 import {
   KATEGORIEN, KATEGORIE_REIHE, kategorieVon, optionSchluessel, richtigeWahl, umrisseDa, umrisseLaden,
   sprintFrage, pruefeFrage, fragenVorladen, kanon,
-} from './kategorien.js?v=0.4.2';
-import { LAENDER } from './laender.js?v=0.4.2';
-import { auswahlfeld } from './auswahlfeld.js?v=0.4.2';
-import { KATEGORIE_SYMBOL } from './symbole.js?v=0.4.2';
+} from './kategorien.js?v=0.4.3';
+import { LAENDER } from './laender.js?v=0.4.3';
+import { auswahlfeld } from './auswahlfeld.js?v=0.4.3';
+import { KATEGORIE_SYMBOL } from './symbole.js?v=0.4.3';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -329,7 +329,7 @@ function kachelnHtml(mitRekord) {
     return `
     <button class="kachel" data-k="${k}">
       <span class="kachel-bild" aria-hidden="true">${kachelBild(k)}</span>
-      <span class="kachel-name">${esc(KATEGORIEN[k].name)}</span>
+      <span class="kachel-name">${esc(KATEGORIEN[k].name).replace('Allgemeinwissen', 'Allgemein&shy;wissen')}</span>
       <span class="kachel-text">${esc(KATEGORIEN[k].text)}</span>
       ${mitRekord ? `<span class="kachel-rekord">${rekord ? `Dein Rekord: ${rekord}` : 'Noch kein Rekord'}</span>` : ''}
     </button>`;

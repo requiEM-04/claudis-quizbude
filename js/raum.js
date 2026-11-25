@@ -1,7 +1,7 @@
-import { sb, spielEintragen, spielLoggen } from './server.js?v=0.4.2';
-import { fragenBauen, pruefeFrage, richtigeWahl, fragenVorladen, KATEGORIEN, kategorieVon } from './kategorien.js?v=0.4.2';
-import { lobbyMelden, lobbyAbmelden } from './lobby.js?v=0.4.2';
-import { chatErlaubt, textPruefen } from './filter.js?v=0.4.2';
+import { sb, spielEintragen, spielLoggen } from './server.js?v=0.4.3';
+import { fragenBauen, pruefeFrage, richtigeWahl, fragenVorladen, KATEGORIEN, kategorieVon } from './kategorien.js?v=0.4.3';
+import { lobbyMelden, lobbyAbmelden } from './lobby.js?v=0.4.3';
+import { chatErlaubt, textPruefen } from './filter.js?v=0.4.3';
 
 export const STANDARD = { kategorie: 'flaggen', runden: 10, zeit: 15, auswahl: 'bekannt', modus: 'tippen', chat: 'eingeschraenkt' };
 const COUNTDOWN = 3000;
