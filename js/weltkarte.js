@@ -3,7 +3,7 @@
 let RINGE = null, STAEDTE = null;
 let laden = null;
 export function karteLaden() {
-  if (!laden) laden = import('./weltkarte-daten.js?v=0.10.3').then(m => { RINGE = m.LAENDER_RINGE; STAEDTE = m.STAEDTE; });
+  if (!laden) laden = import('./weltkarte-daten.js?v=0.11.0').then(m => { RINGE = m.LAENDER_RINGE; STAEDTE = m.STAEDTE; });
   return laden;
 }
 export const karteDa = () => !!RINGE;
