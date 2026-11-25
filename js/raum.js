@@ -1,9 +1,12 @@
-import { sb, spielEintragen, spielLoggen } from './server.js?v=0.7.0';
-import { fragenBauen, pruefeFrage, richtigeWahl, fragenVorladen, KATEGORIEN, kategorieVon } from './kategorien.js?v=0.7.0';
-import { lobbyMelden, lobbyAbmelden } from './lobby.js?v=0.7.0';
-import { chatErlaubt, textPruefen } from './filter.js?v=0.7.0';
+import { sb, spielEintragen, spielLoggen } from './server.js?v=0.8.0';
+import { stilVon } from './ruhm.js?v=0.8.0';
+import { letzteTippfehler } from './abgleich.js?v=0.8.0';
+export const TIPPFEHLER_ABZUG = 10; // Punkte Abzug je Tippfehler bei einer richtigen Antwort
+import { fragenBauen, pruefeFrage, richtigeWahl, fragenVorladen, KATEGORIEN, kategorieVon } from './kategorien.js?v=0.8.0';
+import { lobbyMelden, lobbyAbmelden } from './lobby.js?v=0.8.0';
+import { chatErlaubt, textPruefen } from './filter.js?v=0.8.0';
 
-export const STANDARD = { kategorie: 'flaggen', runden: 10, zeit: 15, auswahl: 'alle', modus: 'tippen', chat: 'eingeschraenkt', sichtbar: 'geschlossen' };
+export const STANDARD = { kategorie: 'flaggen', runden: 10, zeit: 15, auswahl: 'alle', modus: 'tippen', chat: 'eingeschraenkt', sichtbar: 'offen' };
 const COUNTDOWN = 3000;
 const AUFLOESUNG = 3500;
 
@@ -105,7 +108,9 @@ export class Raum {
       });
     });
     const { id, name, avatar, farbe } = this.ich;
-    await this.kanal.track({ id, name, avatar, farbe, seit: this.seit });
+    // Ruhm und gewählter Stil reisen mit, damit alle Wappen und Namensfarbe sehen
+    const extra = this.ich.gast ? {} : { ruhm: this.ich.ruhm || 0, stil: stilVon(this.ich) };
+    await this.kanal.track({ id, name, avatar, farbe, ...extra, seit: this.seit });
     if (alsHost) {
       this.hostId = id;
       this.lobbyAktualisieren();
@@ -133,7 +138,7 @@ export class Raum {
     for (const metas of Object.values(st)) {
       const m = metas[0];
       this.spieler.set(m.id, m);
-      this.bekannt.set(m.id, { name: m.name, avatar: m.avatar, farbe: m.farbe });
+      this.bekannt.set(m.id, { name: m.name, avatar: m.avatar, farbe: m.farbe, ruhm: m.ruhm, stil: m.stil });
     }
     if (this.hostId && !this.spieler.has(this.hostId)) this.hostWaehlen();
     if (this.binHost) {
@@ -255,7 +260,9 @@ export class Raum {
         this.vergeben.add(p.von);
         {
           const rang = this.vergeben.size;
-          this.senden('geloest', { i: p.i, id: p.von, pkt: punkteFuer(p.ms, this.dauer, rang), rang });
+          const fehler = Math.min(2, Math.max(0, Number(p.fehler) || 0));
+          const abzug = fehler * TIPPFEHLER_ABZUG;
+          this.senden('geloest', { i: p.i, id: p.von, pkt: Math.max(1, punkteFuer(p.ms, this.dauer, rang) - abzug), rang, abzug });
         }
         break;
       case 'fehl':
@@ -269,10 +276,10 @@ export class Raum {
         break;
       case 'geloest':
         if (p.i !== this.idx || this.geloest.has(p.id)) break;
-        this.geloest.set(p.id, { pkt: p.pkt, rang: p.rang });
+        this.geloest.set(p.id, { pkt: p.pkt, rang: p.rang, abzug: p.abzug || 0 });
         this.punkte.set(p.id, (this.punkte.get(p.id) || 0) + p.pkt);
         if (p.id === this.ich.id) { this.meinStatus = 'geloest'; this.meineTreffer++; }
-        this.systemZeile(`${this.bekannt.get(p.id)?.name || 'Jemand'} hat's! +${p.pkt}`);
+        this.systemZeile(`${this.bekannt.get(p.id)?.name || 'Jemand'} hat's! +${p.pkt}${p.abzug ? ` (−${p.abzug} für Tippfehler)` : ''}`);
         if (this.binHost) this.allePruefen();
         break;
       case 'gesperrt':
@@ -363,7 +370,7 @@ export class Raum {
 
   beenden() {
     const liste = [...this.punkte].map(([id, pkt]) => ({ id, pkt, ...(this.bekannt.get(id) || { name: '?' }) }));
-    for (const [id, s] of this.spieler) if (!this.punkte.has(id)) liste.push({ id, pkt: 0, name: s.name, avatar: s.avatar, farbe: s.farbe });
+    for (const [id, s] of this.spieler) if (!this.punkte.has(id)) liste.push({ id, pkt: 0, name: s.name, avatar: s.avatar, farbe: s.farbe, ruhm: s.ruhm, stil: s.stil });
     liste.sort((a, b) => b.pkt - a.pkt);
     this.senden('ende', { liste });
     if (!this.ich.gast) spielLoggen({
@@ -393,7 +400,8 @@ export class Raum {
     const ergebnis = pruefeFrage(this.frage, text);
     if (ergebnis === 'richtig') {
       this.meinStatus = 'wartet';
-      this.senden('treffer', { i: this.idx, ms: performance.now() - this.start });
+      this.tippfehler = letzteTippfehler;
+      this.senden('treffer', { i: this.idx, ms: performance.now() - this.start, fehler: letzteTippfehler });
     } else if (ergebnis === 'falsch') {
       // knappe Versuche bleiben privat, die würden die Lösung fast verraten
       const t = text.trim().slice(0, 40);

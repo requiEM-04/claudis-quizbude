@@ -185,28 +185,6 @@ label { display: grid; gap: 6px; font-weight: 600; font-size: .86rem; color: var
 }
 @keyframes hoch { from { transform: translateY(6px); opacity: 0; } 20% { opacity: 1; } to { transform: translateY(-26px); opacity: 0; } }
 .rekord-neu { color: var(--sand) !important; font-weight: 800; animation: puls .6s ease; }
-/* Podest fährt Platz für Platz hoch */
-@keyframes aufsteigen { from { transform: translateY(18px); opacity: 0; } to { transform: none; opacity: 1; } }
-.podest li { animation: aufsteigen .5s cubic-bezier(.2, .8, .2, 1) both; animation-delay: calc(var(--i, 0) * 140ms + 120ms); }
-.podest { display: grid; gap: 8px; }
-ol.podest li { background: rgba(255,255,255,.035); border: 1px solid transparent; border-radius: 16px; padding: 12px 18px 12px 12px; position: relative; overflow: hidden; }
-.podest li .wert { font: 800 1.1rem var(--display); font-variant-numeric: tabular-nums; }
-/* Platz 1 bis 3 auf dem Endstand: Medaille, Rahmen, Glanz – Platz 1 größer mit Krone */
-ol.podest li.p1 { --medaille: #E2C487; } ol.podest li.p2 { --medaille: #C3CACF; } ol.podest li.p3 { --medaille: #C99A6E; }
-ol.podest li.top { border-color: color-mix(in srgb, var(--medaille) 45%, transparent); background: linear-gradient(100deg, color-mix(in srgb, var(--medaille) 24%, transparent), rgba(255,255,255,.02) 75%); }
-ol.podest li.top .platz { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-size: .9rem; color: #1B1E21; background: radial-gradient(circle at 35% 30%, #fff8 0, transparent 45%), var(--medaille); box-shadow: 0 0 0 2px color-mix(in srgb, var(--medaille) 35%, transparent), 0 4px 10px -2px rgba(0,0,0,.6); }
-ol.podest li.top .wert { color: var(--medaille); }
-ol.podest li.top .avatar { box-shadow: 0 0 0 2px var(--medaille); }
-ol.podest li.p1 { padding: 20px 20px 18px 12px; font-size: 1.2rem; }
-ol.podest li.p1 .wert { font-size: 1.45rem; }
-ol.podest li.p1 .avatar { width: 48px; height: 48px; font-size: 1.5rem; box-shadow: 0 0 0 2px var(--medaille), 0 0 24px -2px var(--medaille); }
-ol.podest li.p1 .krone { font-size: 1.35rem; top: -19px; margin-left: -12px; }
-ol.podest li.top::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(110deg, transparent 35%, rgba(255,255,255,.18) 50%, transparent 65%); transform: translateX(-120%); animation: glanz 5.5s ease-in-out infinite; animation-delay: calc(var(--i, 0) * .5s + 1.4s); }
-ol.podest li.p1::before { content: ""; position: absolute; inset: -40% -10%; pointer-events: none; background: radial-gradient(closest-side at 18% 50%, color-mix(in srgb, var(--medaille) 30%, transparent), transparent); animation: p1-puls 3s ease-in-out infinite; }
-ol.podest li > * { position: relative; z-index: 1; }
-@keyframes p1-puls { 0%, 100% { opacity: .5; } 50% { opacity: 1; } }
-.podest li.ich .podest-name::after { content: "du"; margin-left: 8px; padding: 1px 7px; border-radius: 99px; font: 700 .7rem var(--schrift); color: var(--salbei); background: rgba(143,179,162,.15); }
-
 .podest-name { display: inline-flex; align-items: center; gap: 6px; min-width: 0; font-weight: 700; }
 
 /* richtig: kurzer grüner Schein */
@@ -330,12 +308,47 @@ legend { font-weight: 600; font-size: .86rem; color: var(--text-2); margin-botto
 .code-feld:focus-within { border-color: rgba(205,182,140,.5); }
 
 .bude-raster { display: grid; gap: 20px; margin-top: 44px; }
+.leer { color: var(--text-2); padding: 6px 0; }
+/* Offene Räume: jede Zeile Code, Infos, Knopf */
+.raum-liste, .letzte-liste { list-style: none; margin: 14px 0 0; padding: 0; container-type: inline-size; }
+.raum-zeile {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 14px; align-items: center;
+  padding: 12px 14px; border-radius: var(--r-klein); background: rgba(255,255,255,.03); border: 1px solid var(--linie);
+  transition: border-color .15s, background-color .15s;
+}
+.raum-zeile + .raum-zeile { margin-top: 8px; }
+.raum-zeile:hover { border-color: var(--linie-stark); background: rgba(255,255,255,.05); }
+.raum-zeile .code { font: 800 1rem/1 var(--display); letter-spacing: .14em; color: var(--sand); background: var(--tief); border: 1px solid var(--linie); padding: 11px 10px 11px 12px; border-radius: 12px; }
+.raum-zeile .info { display: grid; gap: 2px; min-width: 0; line-height: 1.3; }
+.raum-zeile .info strong { font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.raum-kat { display: flex; align-items: center; gap: 6px; color: var(--text-2); font-size: .86rem; min-width: 0; }
+.raum-symbol { display: inline-grid; place-items: center; width: 18px; height: 18px; flex: none; color: var(--sand); }
+.raum-symbol svg, .raum-symbol img { width: 18px; height: 18px; }
+.raum-status { display: flex; align-items: center; gap: 6px; color: var(--text-3); font-size: .8rem; }
+.raum-status::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--sand); flex: none; }
+.raum-status.wartet::before { background: var(--salbei); box-shadow: 0 0 0 0 rgba(143,179,162,.6); animation: warte-puls 2s ease-out infinite; }
+@keyframes warte-puls { 0% { box-shadow: 0 0 0 0 rgba(143,179,162,.55); } 100% { box-shadow: 0 0 0 7px rgba(143,179,162,0); } }
+@container (max-width: 360px) {
+  .raum-zeile { grid-template-columns: auto minmax(0, 1fr); }
+  .raum-zeile .knopf { grid-column: 1 / -1; justify-self: stretch; text-align: center; }
+}
+/* Zuletzt gespielt: ruhige Zeilen ohne Aufzählungspunkte */
+.letzte-zeile { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 12px; align-items: start; padding: 10px 0; }
+.letzte-zeile + .letzte-zeile { border-top: 1px solid var(--linie); }
+.lz-avatar { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-size: 1.05rem; background: var(--flaeche-hoch); }
+.lz-text { color: var(--text-2); font-size: .92rem; line-height: 1.4; }
+.lz-text b { color: var(--text); font-weight: 700; }
+.lz-text small { display: block; color: var(--text-3); font-size: .76rem; margin-top: 2px; }
 @media (min-width: 900px) { .bude-raster { grid-template-columns: 1fr 1fr; align-items: start; } }
 
 /* ---------- Bestenliste ----------
    Breite Bildschirme: schmale Spalte fest am rechten Rand, der Inhalt in der Mitte bleibt so groß wie immer.
    Sonst: unter dem Inhalt. */
-.bude-rechts { margin-top: 24px; }
+@media (min-width: 900px) and (max-width: 1099px) { .bude-rechts { grid-column: 1 / -1; } }
+@media (min-width: 1100px) and (max-width: 1559px) {
+  .bude-raster { grid-template-columns: minmax(0, 1fr) 330px; grid-template-rows: auto 1fr; }
+  .bude-rechts { grid-column: 2; grid-row: 1 / span 2; }
+}
 @media (min-width: 1860px) {
   .bude-rechts {
     position: fixed; top: 24px; right: 24px; width: 300px; margin: 0; z-index: 5;
@@ -346,13 +359,13 @@ legend { font-weight: 600; font-size: .86rem; color: var(--text-2); margin-botto
   .bude-rechts { position: fixed; top: 24px; right: 20px; width: 290px; margin: 0; z-index: 5; max-height: calc(100vh - 48px); overflow-y: auto; scrollbar-width: thin; border-radius: var(--r-gross); }
   body:has(#s-bude:not([hidden])) main { margin-left: max(0px, calc((100vw - 330px - var(--breite)) / 2)); margin-right: 0; }
 }
-@media (max-width: 1559px) {
+@media (min-width: 900px) and (max-width: 1099px) {
   .bude-rechts .besten-felder { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 8px; }
 }
 .besten-karte { padding: 18px 16px 16px; }
 .besten-kopf { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
 .besten-kopf h2 { margin: 0; font-size: 1.15rem; }
-/* kleine Zeitraum-Auswahl wie bei Pokélings */
+/* kleine Zeitraum-Auswahl */
 .besten-kopf .feld { min-width: 0; }
 .besten-kopf .feld-knopf { padding: .34em .6em .34em .75em; font-size: .78rem; border-radius: 99px; gap: 4px; color: var(--sand); background: rgba(205,182,140,.08); border-color: rgba(205,182,140,.25); }
 .besten-kopf .feld-pfeil { width: 14px; height: 14px; }
@@ -361,7 +374,7 @@ legend { font-weight: 600; font-size: .86rem; color: var(--text-2); margin-botto
 .umschalter.voll .umschalter-knopf { flex: 1; }
 .besten-kategorie { margin: 10px 0 0; display: block; }
 .besten-kategorie .feld { width: 100%; }
-@media (max-width: 1559px) {
+@media (min-width: 900px) and (max-width: 1099px) {
   .besten-karte .umschalter.voll { max-width: 440px; }
   .besten-kategorie .feld { width: min(100%, 280px); }
 }
@@ -380,7 +393,10 @@ legend { font-weight: 600; font-size: .86rem; color: var(--text-2); margin-botto
 .bf-avatar .avatar { width: 36px; height: 36px; font-size: 1.15rem; }
 .bf-mitte { display: grid; min-width: 0; line-height: 1.2; }
 .bf-name { font-weight: 700; font-size: .92rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.bf-unter { font-size: .74rem; color: var(--text-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bf-unter { font-size: .72rem; color: var(--text-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bf-titel { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: .72rem; }
+.bf-wert { display: grid; justify-items: end; line-height: 1.1; }
+.bf-wert small { margin-left: 0 !important; font-size: .64rem !important; }
 .bf-wert { font: 800 1rem var(--display); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
 .bf-wert small { font: 600 .7rem var(--schrift); color: var(--text-3); margin-left: 3px; }
 /* Platz 1 bis 3: Medaillen-Farbe, Glanz, Medaille statt Zahl */
@@ -476,6 +492,19 @@ kbd {
 .kb-duell img:first-child { height: 38px; }
 .kb-duell b { font-size: .72rem; color: var(--text-3); font-weight: 700; }
 .kb-emoji { font-size: 2.5rem; line-height: 1; white-space: nowrap; }
+/* Bude: kompakte Kacheln */
+#kachel-raster .kachel { grid-template-rows: 46px auto 1fr; gap: 3px; padding: 12px 13px 13px; }
+#kachel-raster .kachel-bild { height: 46px; }
+#kachel-raster .kachel-name { font-size: .92rem; }
+#kachel-raster .kachel-text { font-size: .76rem; line-height: 1.3; }
+#kachel-raster .kb-faecher { transform: scale(.7); transform-origin: left center; }
+#kachel-raster .kb-umriss { height: 44px; }
+#kachel-raster .kb-text { font-size: 1.3rem; }
+#kachel-raster .kb-gross { font-size: 2.4rem; }
+#kachel-raster .kb-emoji { font-size: 1.75rem; }
+#kachel-raster .kb-duell img { height: 18px; }
+#kachel-raster .kb-duell img:first-child { height: 26px; }
+#kachel-raster .kb-duell b { font-size: .62rem; }
 
 .kategorien-kopf { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-bottom: 8px; }
 .kategorien-kopf h2 { margin: 0; }
@@ -488,6 +517,11 @@ kbd {
   padding: 22px 12px 16px; min-height: 340px;
 }
 .sprint-karte .kachel-bild { height: 132px; justify-content: center; }
+.sprint-region { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin: 0 0 18px; }
+.sprint-region .sr-titel { font-weight: 800; }
+.sprint-region small { flex-basis: 100%; color: var(--text-3); font-size: .8rem; }
+.sprint-karte.mit-region::after { content: "Übung"; position: absolute; top: 10px; right: 10px; padding: 2px 8px; border-radius: 99px; font: 800 .68rem var(--schrift); color: var(--salbei); background: rgba(143,179,162,.14); }
+.sprint-karte { position: relative; }
 .sprint-karte .kachel-name { font-size: 1.05rem; margin-top: 6px; }
 .sprint-karte .kachel-text { max-width: 16ch; }
 .sprint-karte .kb-faecher { width: 120px; height: 84px; }
@@ -608,9 +642,61 @@ img[src$="/np.svg"] { border-radius: 0 !important; }
 .wackeln { animation: wackeln .35s; }
 @keyframes wackeln { 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
 
-.podest { list-style: none; margin: 0; padding: 0; width: min(100%, 480px); text-align: left; }
-.podest li { display: grid; grid-template-columns: 30px auto 1fr auto; gap: 12px; align-items: center; padding: 10px 14px; border-radius: var(--r-klein); }
-.podest li .platz { font: 800 1.05rem var(--display); color: var(--text-3); text-align: center; }
+/* ---------- Siegertreppchen am Spielende ---------- */
+.podest { width: min(100%, 560px); margin: 4px auto 0; }
+.treppe { display: flex; justify-content: center; align-items: flex-end; gap: 10px; padding-top: 56px; position: relative; }
+.treppe::after { content: ""; position: absolute; left: 6%; right: 6%; bottom: -10px; height: 22px; border-radius: 50%; background: radial-gradient(closest-side, rgba(0,0,0,.55), transparent); z-index: -1; }
+.stufe { --medaille: #8E969C; width: 150px; display: flex; flex-direction: column; align-items: center; text-align: center; min-width: 0; }
+.stufe.s1 { --medaille: #E2C487; --h: 118px; order: 2; width: 172px; }
+.stufe.s2 { --medaille: #C3CACF; --h: 84px; order: 1; }
+.stufe.s3 { --medaille: #C99A6E; --h: 60px; order: 3; }
+.t-kopf { position: relative; isolation: isolate; animation: t-kopf .6s cubic-bezier(.2, 1.5, .4, 1) var(--dk) both; }
+.t-kopf .avatar { width: 64px; height: 64px; font-size: 2rem; box-shadow: 0 0 0 3px var(--medaille), 0 12px 26px -10px rgba(0,0,0,.8); }
+.s1 .t-kopf .avatar { width: 88px; height: 88px; font-size: 2.8rem; box-shadow: 0 0 0 3px var(--medaille), 0 0 34px -4px color-mix(in srgb, var(--medaille) 70%, transparent), 0 14px 30px -10px rgba(0,0,0,.8); }
+.t-name { margin-top: 12px; max-width: 100%; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; animation: t-text .4s ease calc(var(--dk) + 150ms) both; }
+.s1 .t-name { font-size: 1.15rem; }
+.t-wappen { position: absolute; right: -8px; bottom: -6px; animation: t-text .4s ease calc(var(--dk) + 350ms) both; }
+.s1 .t-wappen { right: -4px; }
+.t-titel { margin-top: 1px; animation: t-text .4s ease calc(var(--dk) + 180ms) both; }
+.t-name .du, .rest .du { margin-left: 6px; padding: 1px 7px; border-radius: 99px; font: 700 .68rem var(--schrift); color: var(--salbei); background: rgba(143,179,162,.15); vertical-align: 2px; }
+.t-wert { font: 800 1.15rem var(--display); font-variant-numeric: tabular-nums; color: var(--medaille); margin: 2px 0 10px; animation: t-text .4s ease calc(var(--dk) + 200ms) both; }
+.s1 .t-wert { font-size: 1.5rem; }
+.t-block {
+  width: 100%; height: var(--h); border-radius: 14px 14px 3px 3px; position: relative; overflow: hidden;
+  display: grid; place-items: start center; padding-top: 10px; transform-origin: bottom;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--medaille) 62%, #2B2F34) 0 6px, color-mix(in srgb, var(--medaille) 22%, #262A2F) 6px, #1E2226 100%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.4), 0 18px 30px -18px rgba(0,0,0,.9);
+  animation: t-block .55s cubic-bezier(.2, .9, .3, 1) var(--ds) both;
+}
+.t-block span { font: 800 2.1rem/1 var(--display); color: var(--medaille); text-shadow: 0 2px 0 rgba(0,0,0,.45); }
+.s1 .t-block span { font-size: 2.7rem; }
+.t-block::after { content: ""; position: absolute; inset: 0; background: linear-gradient(110deg, transparent 35%, rgba(255,255,255,.14) 50%, transparent 65%); transform: translateX(-120%); animation: glanz 5s ease-in-out calc(var(--ds) + 1.6s) infinite; }
+/* Strahlen hinter Platz 1 */
+.t-strahlen { position: absolute; left: 50%; top: 50%; width: 260px; height: 260px; margin: -130px 0 0 -130px; z-index: -1; pointer-events: none; border-radius: 50%;
+  background: repeating-conic-gradient(rgba(226,196,135,.22) 0 7deg, transparent 7deg 22deg);
+  -webkit-mask: radial-gradient(closest-side, #000 25%, transparent); mask: radial-gradient(closest-side, #000 25%, transparent);
+  animation: t-strahlen-rein .9s ease calc(var(--dk) + 500ms) both, t-drehen 18s linear infinite; }
+/* Krone fällt auf Platz 1, Funken spritzen beim Aufprall */
+.t-krone { position: absolute; left: 50%; top: -40px; width: 1.2em; margin-left: -.6em; font-size: 2.3rem; line-height: 1; z-index: 2; filter: drop-shadow(0 4px 5px rgba(0,0,0,.6));
+  animation: t-krone-fall .75s cubic-bezier(.3, 1.5, .5, 1) calc(var(--dk) + 450ms) both, krone-schweben 3.4s ease-in-out calc(var(--dk) + 1.4s) infinite, krone-blitz 4.5s ease-in-out calc(var(--dk) + 2s) infinite; }
+.funke { position: absolute; left: 50%; top: 60%; width: 6px; height: 6px; margin: -3px; border-radius: 50%; background: #FFE3A3; box-shadow: 0 0 8px #FFD27A; opacity: 0;
+  animation: t-funke .7s ease-out calc(var(--dk) + 1.05s) both; }
+@keyframes t-block { from { transform: scaleY(0); } to { transform: none; } }
+@keyframes t-kopf { from { transform: translateY(-40px) scale(.4); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes t-text { from { transform: translateY(6px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes t-krone-fall { 0% { transform: translateY(-140px) rotate(-35deg) scale(1.5); opacity: 0; } 55% { transform: translateY(6px) rotate(8deg) scale(1); opacity: 1; } 75% { transform: translateY(-4px) rotate(-3deg); } 100% { transform: none; opacity: 1; } }
+@keyframes t-funke { 0% { opacity: 1; transform: rotate(var(--w)) translateY(0) scale(1); } 100% { opacity: 0; transform: rotate(var(--w)) translateY(-46px) scale(.3); } }
+@keyframes t-strahlen-rein { from { opacity: 0; transform: scale(.4); } to { opacity: 1; transform: none; } }
+@keyframes t-drehen { to { rotate: 360deg; } }
+/* Plätze ab 4: ruhige Liste ohne Kästen */
+.rest { list-style: none; margin: 22px auto 0; padding: 0; width: min(100%, 420px); }
+.rest li { display: grid; grid-template-columns: 26px 32px 1fr auto; gap: 10px; align-items: center; padding: 9px 4px; border-top: 1px solid var(--linie); animation: t-text .4s ease calc(1.2s + var(--i) * 100ms) both; }
+.rest li:first-child { border-top: 0; }
+.rest .platz { font: 800 .95rem var(--display); color: var(--text-3); text-align: center; }
+.rest .avatar { width: 32px; height: 32px; font-size: 1rem; }
+.rest .wert { font: 800 1rem var(--display); font-variant-numeric: tabular-nums; }
+.rest li.ich .podest-name { color: var(--salbei); }
+@media (max-width: 560px) { .stufe { width: 104px; } .stufe.s1 { width: 120px; } .t-strahlen { width: 200px; height: 200px; margin: -100px 0 0 -100px; } }
 
 
 .seite h2 { font-size: 1.1rem; }
@@ -783,6 +869,168 @@ img[src$="/np.svg"] { border-radius: 0 !important; }
   .dock-name { display: none; }
   .dock-link { padding: .6em .9em; }
 }
+@media (max-width: 460px) {
+  .dock { max-width: calc(100vw - 12px); gap: 2px; padding: 5px; }
+  .dock-link { padding: .55em .7em; font-size: .9rem; }
+  .dock-trenner { margin: 0 3px; }
+  .dock-marke img { width: 32px; height: 32px; }
+  .dock-gast .avatar { display: none; }
+  #profil-chip .knopf.klein { padding: .45em .8em; }
+}
+/* =====================================================================
+   Ruhm: Wappen, Namensfarben, Effekte, Rahmen, Hintergründe
+   ===================================================================== */
+.wappen { display: inline-block; flex: none; vertical-align: middle; overflow: visible; filter: drop-shadow(0 2px 3px rgba(0,0,0,.45)); }
+.wappen-joker { animation: holo-dreh 6s linear infinite; }
+@keyframes holo-dreh { to { filter: drop-shadow(0 2px 3px rgba(0,0,0,.45)) hue-rotate(360deg); } }
+.wappen-funkel { transform-box: fill-box; transform-origin: center; animation: funkel 2.4s ease-in-out infinite; }
+@keyframes funkel { 0%, 100% { opacity: .35; transform: scale(.6); } 50% { opacity: 1; transform: scale(1.1); } }
+.kf-symbol { width: 1em; height: 1em; display: inline-block; vertical-align: -.12em; }
+
+/* Namensfarben */
+.nf-bube { color: #E9A570; } .nf-dame { color: #F3B3CB; } .nf-koenig { color: #EECB6A; } .nf-ass { color: #D9EEFA; text-shadow: 0 0 10px rgba(207,230,243,.35); }
+.nf-joker { background: linear-gradient(90deg, #FF8FB1, #FFD36E, #7CE3A1, #7CC8FF, #C9A8FF, #FF8FB1); background-size: 300% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: holo-text 5s linear infinite; }
+@keyframes holo-text { to { background-position: 300% 0; } }
+.titel-zeile { font-size: .74rem; font-weight: 700; letter-spacing: .01em; }
+
+/* Mini-Wappen am Avatar */
+.mit-wappen { position: relative; display: inline-grid; flex: none; }
+.mit-wappen > .wappen { position: absolute; right: -7px; bottom: -6px; }
+
+/* ---------- Bestenliste: Rahmen ab Kreuz ---------- */
+.besten-feld[class*=" lr-"] a { border-width: 1.5px; }
+.besten-feld.lr-bube a { border-color: #C98552; box-shadow: inset 0 0 0 1px rgba(233,165,112,.18), 0 0 16px -8px #E39A63; }
+.besten-feld.lr-dame a { border-color: #E59BB8; box-shadow: inset 0 0 0 1px rgba(240,169,195,.2), 0 0 16px -8px #F0A9C3; }
+.besten-feld.lr-koenig a { border-color: #E3BC55; box-shadow: inset 0 0 0 1px rgba(235,198,96,.25), 0 0 20px -8px #EBC660; }
+.besten-feld.lr-ass a { border-color: #BFD9E8; background: linear-gradient(100deg, rgba(10,14,22,.65), rgba(207,230,243,.06)); box-shadow: inset 0 0 0 1px rgba(235,198,96,.35), 0 0 20px -8px #CFE6F3; }
+.besten-feld.lr-joker a { border-color: transparent; background: linear-gradient(#23272C, #23272C) padding-box, linear-gradient(90deg, #FF8FB1, #FFD36E, #7CE3A1, #7CC8FF, #C9A8FF, #FF8FB1) border-box; background-size: 100% 100%, 300% 100%; animation: holo-rand 5s linear infinite; }
+@keyframes holo-rand { to { background-position: 0 0, 300% 0; } }
+
+/* ---------- Seitenhintergründe ---------- */
+body::before { content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: 0; transition: opacity .6s ease; }
+body[data-hg]::before { opacity: 1; }
+body[data-hg="bube"]::before { background: radial-gradient(1100px 700px at 50% 0%, rgba(46,120,84,.32), transparent 65%), radial-gradient(900px 500px at 50% 110%, rgba(26,84,60,.38), transparent 60%), repeating-radial-gradient(circle at 30% 30%, rgba(255,255,255,.012) 0 1px, transparent 1px 3px); }
+body[data-hg="dame"]::before { background: radial-gradient(900px 620px at 15% -5%, rgba(150,28,64,.34), transparent 60%), radial-gradient(900px 600px at 95% 105%, rgba(120,20,52,.32), transparent 60%), repeating-linear-gradient(90deg, rgba(255,255,255,.014) 0 2px, transparent 2px 9px); }
+body[data-hg="koenig"]::before { background: radial-gradient(1000px 520px at 50% -10%, rgba(235,198,96,.2), transparent 65%), radial-gradient(circle at 0 0, rgba(235,198,96,.06) 0 14px, transparent 15px) 0 0 / 64px 64px, radial-gradient(circle at 32px 32px, rgba(235,198,96,.045) 0 9px, transparent 10px) 0 0 / 64px 64px; }
+body[data-hg="ass"]::before {
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cg fill='%23CFE6F3' fill-opacity='.035'%3E%3Cpath d='M30 14c-3 5-11 9-11 15a5.5 5.5 0 0 0 9.4 3.8L27 38h6l-1.4-5.2A5.5 5.5 0 0 0 41 29c0-6-8-10-11-15Z'/%3E%3Cpath d='M90 74c-3 5-11 9-11 15a5.5 5.5 0 0 0 9.4 3.8L87 98h6l-1.4-5.2A5.5 5.5 0 0 0 101 89c0-6-8-10-11-15Z'/%3E%3C/g%3E%3C/svg%3E"), radial-gradient(1200px 700px at 50% -10%, rgba(40,70,120,.4), transparent 65%), linear-gradient(180deg, rgba(8,12,24,.55), rgba(8,12,24,.2));
+}
+body[data-hg="joker"]::before { background: radial-gradient(700px 420px at 15% 10%, rgba(255,120,170,.2), transparent 60%), radial-gradient(800px 480px at 85% 20%, rgba(120,200,255,.18), transparent 60%), radial-gradient(900px 520px at 50% 105%, rgba(150,110,255,.22), transparent 60%); background-size: 160% 160%; animation: polarlicht 22s ease-in-out infinite alternate; }
+@keyframes polarlicht { 0% { background-position: 0% 0%; } 100% { background-position: 100% 60%; } }
+
+/* ---------- Spielerkarte (Profil) ---------- */
+.spielerkarte {
+  --rang: #8E969C; position: relative; isolation: isolate; overflow: hidden;
+  display: grid; grid-template-columns: auto 1fr auto; gap: 22px; align-items: center;
+  padding: 26px 28px 22px; border-radius: var(--r-gross); border: 1px solid var(--linie);
+  background: radial-gradient(600px 300px at 100% 0%, color-mix(in srgb, var(--rang) 16%, transparent), transparent 70%), linear-gradient(180deg, #272B30, #1F2327);
+  box-shadow: var(--schatten);
+}
+.spielerkarte > * { position: relative; z-index: 2; }
+.spielerkarte .profil-titel h1 { font-size: clamp(2rem, 4.6vw, 3.2rem); }
+.spielerkarte .karten-titel { margin-top: 4px; font-weight: 800; font-size: .95rem; }
+.spielerkarte .karten-wappen { display: grid; justify-items: center; gap: 6px; text-align: center; }
+.spielerkarte .karten-wappen b { font: 800 1rem var(--display); }
+.spielerkarte .karten-wappen small { color: var(--text-3); font-size: .76rem; }
+.ruhm-leiste { grid-column: 1 / -1; display: grid; gap: 6px; }
+.ruhm-leiste .zeile-text { display: flex; justify-content: space-between; gap: 10px; font-size: .84rem; color: var(--text-2); }
+.ruhm-leiste .zeile-text b { color: var(--text); font-variant-numeric: tabular-nums; }
+.ruhm-balken { height: 10px; border-radius: 99px; background: rgba(255,255,255,.06); overflow: hidden; }
+.ruhm-balken i { display: block; height: 100%; width: calc(var(--anteil) * 100%); border-radius: inherit; background: linear-gradient(90deg, color-mix(in srgb, var(--rang) 60%, #fff 0%), var(--rang)); box-shadow: 0 0 12px -2px var(--rang); transition: width .9s cubic-bezier(.2, .8, .2, 1); }
+.spielerkarte .knopf-ecke { position: absolute; top: 14px; right: 16px; z-index: 3; }
+@media (max-width: 700px) { .spielerkarte { grid-template-columns: auto 1fr; padding: 22px 18px 18px; } .spielerkarte .karten-wappen { grid-column: 1 / -1; grid-auto-flow: column; justify-content: start; align-items: center; } }
+
+/* Kartenrahmen ab Kreuz */
+.spielerkarte.rahmen-bube { border: 2px solid #C98552; box-shadow: inset 0 0 0 4px rgba(20,22,25,.9), inset 0 0 0 5px rgba(233,165,112,.5), var(--schatten); }
+.spielerkarte.rahmen-dame { border: 2px solid #E59BB8; box-shadow: inset 0 0 0 5px rgba(20,22,25,.85), inset 0 0 0 6px rgba(240,169,195,.45), var(--schatten); }
+.spielerkarte.rahmen-koenig { border: 2.5px solid #E3BC55; box-shadow: inset 0 0 0 5px rgba(20,22,25,.85), inset 0 0 0 6px rgba(235,198,96,.55), 0 0 30px -12px #EBC660, var(--schatten); }
+.spielerkarte.rahmen-ass { border: 2.5px solid #1A1D21; box-shadow: 0 0 0 1.5px #E3BC55, inset 0 0 0 5px rgba(10,12,16,.9), inset 0 0 0 6px rgba(207,230,243,.5), 0 0 30px -12px #CFE6F3, var(--schatten); }
+.spielerkarte.rahmen-joker { border: 3px solid transparent; background: linear-gradient(180deg, #272B30, #1F2327) padding-box, linear-gradient(90deg, #FF8FB1, #FFD36E, #7CE3A1, #7CC8FF, #C9A8FF, #FF8FB1) border-box; background-size: 100% 100%, 300% 100%; animation: holo-rand 5s linear infinite; }
+.rahmen-deko { position: absolute; inset: 0; pointer-events: none; z-index: 3; }
+.rahmen-deko span { position: absolute; width: 18px; height: 18px; color: #F0A9C3; filter: drop-shadow(0 2px 3px rgba(0,0,0,.5)); }
+.rahmen-ass .rahmen-deko span { color: #E3BC55; }
+.rahmen-deko .lo { left: 10px; top: 10px; } .rahmen-deko .ro { right: 10px; top: 10px; } .rahmen-deko .lu { left: 10px; bottom: 10px; transform: rotate(180deg); } .rahmen-deko .ru { right: 10px; bottom: 10px; transform: rotate(180deg); }
+.rahmen-deko .kf-symbol { width: 100%; height: 100%; }
+.rahmen-deko .krone { left: 50%; top: -1px; width: 44px; height: 22px; margin-left: -22px; color: #EBC660; }
+.rahmen-deko .krone svg { width: 100%; height: 100%; }
+
+/* Karten-Effekte ab Pik */
+.effekt { position: absolute; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; border-radius: inherit; }
+.effekt i, .effekt b { position: absolute; display: block; }
+.e-bube i { left: var(--x); bottom: -8px; width: var(--g); height: var(--g); border-radius: 50%; background: #F4B07A; box-shadow: 0 0 8px #E39A63; animation: funken-auf var(--t) linear var(--d) infinite; }
+@keyframes funken-auf { 0% { transform: translateY(0); opacity: 0; } 15% { opacity: 1; } 100% { transform: translateY(-260px) translateX(20px); opacity: 0; } }
+.e-dame i { left: var(--x); bottom: -30px; width: 22px; height: 22px; opacity: .22; animation: karten-auf var(--t) ease-in-out var(--d) infinite; }
+.e-dame i .rot { color: #F0A9C3; } .e-dame i .schwarz { color: #DCE2E6; }
+.e-dame i .kf-symbol { width: 100%; height: 100%; }
+@keyframes karten-auf { 0% { transform: translateY(0) rotate(0); opacity: 0; } 20% { opacity: .3; } 100% { transform: translateY(-300px) rotate(var(--r)); opacity: 0; } }
+.e-koenig .strahlen { left: 50%; top: -60%; width: 900px; height: 900px; margin-left: -450px; background: repeating-conic-gradient(from 0deg, rgba(235,198,96,.14) 0 6deg, transparent 6deg 20deg); -webkit-mask: radial-gradient(closest-side, #000 10%, transparent 75%); mask: radial-gradient(closest-side, #000 10%, transparent 75%); animation: t-drehen 40s linear infinite; }
+.e-koenig .schein { inset: 0; background: radial-gradient(500px 220px at 50% -20%, rgba(255,226,140,.18), transparent 70%); animation: p-puls 4s ease-in-out infinite; }
+@keyframes p-puls { 0%, 100% { opacity: .6; } 50% { opacity: 1; } }
+.e-ass .glanz, .e-joker .glanz { inset: 0; background: linear-gradient(110deg, transparent 38%, rgba(255,255,255,.16) 50%, transparent 62%); transform: translateX(-100%); animation: glanz-lauf 4.5s ease-in-out infinite; }
+@keyframes glanz-lauf { 0%, 55% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+.e-ass i, .e-joker i { left: var(--x); top: var(--y); width: 14px; height: 14px; color: #EAF6FF; animation: funkel var(--t) ease-in-out var(--d) infinite; }
+.e-ass i .kf-symbol, .e-joker i .kf-symbol { width: 100%; height: 100%; }
+.e-joker i { color: #FFE3F0; }
+.e-joker .holo { inset: 0; background: linear-gradient(115deg, rgba(255,120,170,.14), rgba(255,220,110,.1), rgba(120,230,170,.12), rgba(120,190,255,.14), rgba(190,150,255,.14)); background-size: 300% 300%; mix-blend-mode: screen; animation: holo-flaeche 8s ease-in-out infinite alternate; }
+@keyframes holo-flaeche { to { background-position: 100% 100%; } }
+
+/* ---------- Ruhmesweg ---------- */
+.ruhmesweg { display: flex; gap: 8px; overflow-x: auto; padding: 14px 2px 8px; scrollbar-width: thin; }
+.ruhmesweg li { list-style: none; flex: none; width: 64px; display: grid; justify-items: center; gap: 4px; text-align: center; font-size: .68rem; color: var(--text-3); }
+.ruhmesweg li.gesperrt .wappen { filter: grayscale(1) brightness(.55); opacity: .7; }
+.ruhmesweg li.aktuell { color: var(--text); }
+.ruhmesweg li.aktuell .wappen { transform: scale(1.12); filter: drop-shadow(0 0 10px var(--rang)); }
+.ruhmesweg li b { font-weight: 700; line-height: 1.2; }
+.ruhmesweg { margin: 0; }
+
+/* ---------- Anpassen ---------- */
+.anpassen h2 { margin-bottom: 4px; }
+.anpassen .unterzeile { margin: 0 0 14px; }
+.stil-zeile { display: grid; grid-template-columns: 130px 1fr; gap: 12px; align-items: start; padding: 12px 0; border-top: 1px solid var(--linie); }
+.stil-zeile:first-of-type { border-top: 0; }
+.stil-zeile > span { font-weight: 700; padding-top: 7px; }
+.stil-wahl { display: flex; flex-wrap: wrap; gap: 8px; }
+.stil-chip { display: inline-flex; align-items: center; gap: 7px; padding: 7px 12px; border-radius: 12px; border: 1px solid var(--linie); background: rgba(255,255,255,.03); color: var(--text); font: 600 .84rem var(--schrift); cursor: pointer; transition: border-color .15s, background-color .15s, transform .1s; }
+.stil-chip:hover:not(:disabled) { border-color: var(--linie-stark); background: rgba(255,255,255,.06); }
+.stil-chip[aria-pressed="true"] { border-color: var(--sand); background: rgba(205,182,140,.12); box-shadow: 0 0 0 1px var(--sand) inset; }
+.stil-chip:disabled { cursor: not-allowed; opacity: .5; }
+.stil-chip small { color: var(--text-3); font-weight: 600; }
+.stil-chip .probe { width: 22px; height: 16px; border-radius: 4px; flex: none; }
+.probe.hg-bube { background: radial-gradient(circle at 50% 0, #2E7854, #17251E); } .probe.hg-dame { background: radial-gradient(circle at 0 0, #96203F, #22161B); }
+.probe.hg-koenig { background: radial-gradient(circle at 50% 0, #9E7A2A, #221F17); } .probe.hg-ass { background: radial-gradient(circle at 50% 0, #28466F, #0C1018); }
+.probe.hg-joker { background: linear-gradient(120deg, #FF8FB1, #FFD36E, #7CE3A1, #7CC8FF, #C9A8FF); }
+.probe.ra-bube { border: 2px solid #C98552; } .probe.ra-dame { border: 2px solid #E59BB8; } .probe.ra-koenig { border: 2px solid #E3BC55; } .probe.ra-ass { border: 2px solid #1A1D21; box-shadow: 0 0 0 1px #E3BC55; } .probe.ra-joker { border: 2px solid #C9A8FF; }
+@media (max-width: 620px) { .stil-zeile { grid-template-columns: 1fr; gap: 6px; } .stil-zeile > span { padding: 0; } }
+
+/* ---------- Ruhm am Spielende ---------- */
+.ende-ruhm { display: flex; width: fit-content; max-width: 100%; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px; margin: 16px auto 0; padding: 8px 14px 8px 10px; border-radius: 99px; background: rgba(255,255,255,.04); border: 1px solid var(--linie); font-weight: 700; font-size: .9rem; animation: t-text .4s ease both; }
+.ende-ruhm .plus { color: var(--sand); font: 800 1rem var(--display); }
+.ende-ruhm .ruhm-balken { width: 90px; height: 7px; }
+.ende-ruhm small { color: var(--text-3); font-weight: 600; }
+
+/* ---------- Aufstieg ---------- */
+.aufstieg { border: 0; padding: 0; background: transparent; max-width: min(92vw, 440px); overflow: visible; }
+.aufstieg::backdrop { background: radial-gradient(circle at 50% 40%, rgba(20,22,26,.6), rgba(8,9,11,.92)); backdrop-filter: blur(4px); }
+.aufstieg-inhalt { --rang: #EBC660; position: relative; display: grid; justify-items: center; gap: 10px; text-align: center; padding: 34px 30px 26px; border-radius: var(--r-gross); background: linear-gradient(180deg, #282C31, #1E2226); border: 1px solid var(--linie-stark); box-shadow: 0 40px 80px -30px rgba(0,0,0,.9); color: var(--text); }
+.aufstieg-buehne { position: relative; width: 150px; height: 190px; display: grid; place-items: center; perspective: 700px; }
+.aufstieg-buehne::before { content: ""; position: absolute; inset: -60px; border-radius: 50%; background: repeating-conic-gradient(color-mix(in srgb, var(--rang) 28%, transparent) 0 8deg, transparent 8deg 22deg); -webkit-mask: radial-gradient(closest-side, #000 20%, transparent); mask: radial-gradient(closest-side, #000 20%, transparent); animation: t-strahlen-rein .8s ease .5s both, t-drehen 20s linear infinite; }
+.aufstieg-buehne .wappen { position: relative; filter: drop-shadow(0 14px 22px rgba(0,0,0,.6)); animation: karte-dreh 1.1s cubic-bezier(.2, .9, .3, 1.15) .15s both; }
+@keyframes karte-dreh { 0% { transform: rotateY(540deg) scale(.3); opacity: 0; } 60% { opacity: 1; } 100% { transform: rotateY(0) scale(1); opacity: 1; } }
+.aufstieg-inhalt .ueber { color: var(--text-3); font-weight: 700; font-size: .85rem; animation: t-text .4s ease .9s both; }
+.aufstieg-inhalt h2 { font-size: 2rem; animation: t-text .4s ease 1s both; }
+.aufstieg-inhalt .ruhm-zahl { color: var(--text-2); animation: t-text .4s ease 1.1s both; }
+.aufstieg-neu { list-style: none; margin: 6px 0 4px; padding: 0; display: grid; gap: 6px; width: 100%; }
+.aufstieg-neu li { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 7px 12px; border-radius: 10px; background: rgba(255,255,255,.04); font-weight: 700; font-size: .88rem; text-align: left; animation: t-text .4s ease calc(1.2s + var(--i) * 120ms) both; }
+.aufstieg-neu li small { flex: none; padding: 1px 8px; border-radius: 99px; background: rgba(205,182,140,.15); color: var(--sand); font-weight: 800; font-size: .68rem; }
+.aufstieg-inhalt .unterzeile { margin: 0; font-size: .85rem; }
+.aufstieg-inhalt .zeile { margin-top: 8px; animation: t-text .4s ease 1.5s both; }
+
+/* ---------- Saison-Abzeichen (Vorschau in der Bestenliste) ---------- */
+.saison-abzeichen { display: flex; justify-content: space-around; gap: 6px; margin: 12px 0 0; padding: 10px 4px 2px; }
+.saison-abzeichen figure { margin: 0; display: grid; justify-items: center; gap: 4px; font-size: .68rem; color: var(--text-3); font-weight: 700; }
+.saison-abzeichen svg { width: 40px; height: 48px; filter: drop-shadow(0 4px 6px rgba(0,0,0,.5)); }
+.besten-saison-ende { color: var(--text-3); font-size: .72rem; margin: 6px 2px 0; }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; }
 }

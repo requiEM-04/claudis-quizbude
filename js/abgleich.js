@@ -1,5 +1,5 @@
-import { LAENDER } from './laender.js?v=0.7.0';
-import { kanon } from './kanon.js?v=0.7.0';
+import { LAENDER } from './laender.js?v=0.8.0';
+import { kanon } from './kanon.js?v=0.8.0';
 
 export const LAND = Object.fromEntries(LAENDER.map(l => [l.code, l]));
 const WEM = new Map();
@@ -20,10 +20,14 @@ function abstand(a, b) {
   return d[m][n];
 }
 
+// Wie viele Tippfehler hatte die letzte als richtig gewertete Antwort? (0 = exakt)
+export let letzteTippfehler = 0;
+
 // Vergleicht eine Eingabe mit einer Liste erlaubter Antworten (schon kanonisiert).
 // gehoertAnderem(k) sagt, ob die exakte Eingabe zu einer anderen Lösung passt. Ergebnis: 'richtig' | 'knapp' | 'falsch' | 'leer'
 export function abgleichen(eingabe, antworten, gehoertAnderem = () => false) {
   const k = kanon(eingabe);
+  letzteTippfehler = 0;
   if (k.length < 2) return 'leer';
   if (antworten.includes(k)) return 'richtig';
   if (gehoertAnderem(k)) return 'falsch';
@@ -33,7 +37,7 @@ export function abgleichen(eingabe, antworten, gehoertAnderem = () => false) {
     if (Math.abs(a.length - k.length) > 3) continue;
     best = Math.min(best, abstand(a, k));
   }
-  if (best <= grenze) return 'richtig';
+  if (best <= grenze) { letzteTippfehler = best; return 'richtig'; }
   if (k.length >= 4 && best <= grenze + 1) return 'knapp';
   return 'falsch';
 }

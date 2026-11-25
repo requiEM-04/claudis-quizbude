@@ -78,6 +78,11 @@ async def main():
             offen = await pg.evaluate('quizbude.sprint.frage')
             await pg.evaluate('quizbude.sprint.ende = performance.now() + 200')
             await pg.wait_for_selector('#sp-ende:not([hidden])', timeout=5000); await pg.wait_for_timeout(400)
+            try:
+                await pg.wait_for_selector('#sprint-ruhm:not([hidden])', timeout=4000)
+                print(kat, 'Ruhm am Ende:', (await pg.inner_text('#sprint-ruhm')).replace('\n', ' '))
+            except Exception:
+                print(kat, 'Ruhm am Ende: nicht sichtbar')
             verpasst = await pg.evaluate('quizbude.sprint.verpasst')
             print(kat, 'Ergebnis:', await pg.inner_text('#sprint-ergebnis'), '|', await pg.inner_text('#sprint-rekord'),
                   '| ausgelassen:', len(verpasst), '| offene Frage dabei:', offen in verpasst)

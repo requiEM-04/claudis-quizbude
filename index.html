@@ -7,7 +7,7 @@
 <meta name="description" content="Flaggen raten in der Pause, allein oder zusammen im Raum.">
 <meta name="theme-color" content="#1B1E21">
 <link rel="icon" href="bilder/icon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="css/stil.css?v=0.7.0">
+<link rel="stylesheet" href="css/stil.css?v=0.8.0">
 </head>
 <body>
 <main>
@@ -81,38 +81,43 @@
         <h2>Zuletzt gespielt</h2>
         <ul id="letzte-liste" class="letzte-liste"></ul>
       </section>
+      <!-- Bestenliste: ab 1560 px fest am rechten Rand, darunter dritte Spalte neben den Räumen -->
+      <aside class="bude-rechts" aria-labelledby="besten-titel">
+        <section class="karte besten-karte">
+          <div class="besten-kopf">
+            <h2 id="besten-titel">Bestenliste</h2>
+            <select id="besten-zeit" aria-label="Zeitraum"></select>
+          </div>
+          <div class="umschalter klein voll" role="tablist" id="besten-reiter">
+            <button role="tab" class="umschalter-knopf aktiv" data-spalte="punkte" aria-selected="true">Punkte</button>
+            <button role="tab" class="umschalter-knopf" data-spalte="siege" aria-selected="false">Siege</button>
+            <button role="tab" class="umschalter-knopf" data-spalte="sprint" aria-selected="false">Sprint</button>
+          </div>
+          <p class="besten-saison-ende" id="besten-saison-ende" hidden></p>
+        <div class="saison-abzeichen" id="besten-abzeichen" hidden></div>
+        <label class="besten-kategorie" hidden><select id="besten-kategorie" aria-label="Sprint-Kategorie"></select></label>
+          <ol id="besten-liste" class="besten-felder"></ol>
+          <div class="besten-ich" id="besten-ich" hidden></div>
+          <p class="besten-fuss" id="besten-fuss"></p>
+        </section>
+      </aside>
     </div>
     </div>
 
-    <!-- Bestenliste: am rechten Rand (breite Bildschirme), sonst unter dem Inhalt -->
-    <aside class="bude-rechts" aria-labelledby="besten-titel">
-      <section class="karte besten-karte">
-        <div class="besten-kopf">
-          <h2 id="besten-titel">Bestenliste</h2>
-          <select id="besten-zeit" aria-label="Zeitraum"></select>
-        </div>
-        <div class="umschalter klein voll" role="tablist" id="besten-reiter">
-          <button role="tab" class="umschalter-knopf aktiv" data-spalte="punkte" aria-selected="true">Punkte</button>
-          <button role="tab" class="umschalter-knopf" data-spalte="siege" aria-selected="false">Siege</button>
-          <button role="tab" class="umschalter-knopf" data-spalte="sprint" aria-selected="false">Sprint</button>
-        </div>
-        <label class="besten-kategorie" hidden><select id="besten-kategorie" aria-label="Sprint-Kategorie"></select></label>
-        <ol id="besten-liste" class="besten-felder"></ol>
-        <div class="besten-ich" id="besten-ich" hidden></div>
-        <p class="besten-fuss" id="besten-fuss"></p>
-      </section>
-    </aside>
   </section>
 
   <!-- Profil -->
   <section class="screen" id="s-profil" hidden>
-    <div class="profil-kopf">
+    <div class="spielerkarte" id="spielerkarte">
       <span class="avatar riesig" id="profil-avatar"></span>
       <div class="profil-titel">
         <h1 id="profil-name"></h1>
+        <p class="karten-titel" id="profil-titel"></p>
         <p class="unterzeile" id="profil-seit"></p>
+        <button class="knopf zweit klein" id="profil-bearbeiten" hidden>Avatar ändern</button>
       </div>
-      <button class="knopf zweit klein" id="profil-bearbeiten" hidden>Avatar ändern</button>
+      <div class="karten-wappen" id="profil-wappen"></div>
+      <div class="ruhm-leiste" id="profil-ruhm"></div>
     </div>
     <div class="karte profil-editor" id="profil-editor" hidden>
       <div class="avatar-wahl" id="profil-avatar-wahl"></div>
@@ -122,6 +127,16 @@
         <button class="knopf zweit klein" id="profil-abbrechen">Abbrechen</button>
       </div>
     </div>
+    <section class="karte anpassen" id="anpassen" hidden>
+      <h2>Anpassen</h2>
+      <p class="unterzeile">Was du mit Ruhm freigespielt hast, kannst du hier anlegen. Alle sehen es in der Bestenliste und im Raum.</p>
+      <div id="anpassen-zeilen"></div>
+    </section>
+    <section class="karte ruhm-karte" id="ruhm-karte" hidden>
+      <h2>Ruhmesweg</h2>
+      <p class="unterzeile">Ruhm gibt es fürs Mitspielen (10), für jede richtige Antwort im Raum (3), für Siege (20) und für jeden Sprint (4). Deine Sprint-Rekorde zählen obendrauf.</p>
+      <ol class="ruhmesweg" id="ruhmesweg"></ol>
+    </section>
     <dl class="werte" id="profil-werte"></dl>
     <div class="profil-raster">
       <section class="karte">
@@ -184,7 +199,7 @@
               <label>Antworten <select data-e="modus" id="einst-modus"><option value="tippen">Selbst tippen</option><option value="auswahl">Zur Auswahl</option></select></label>
               <label>Runden <select data-e="runden"><option>5</option><option>10</option><option>15</option><option>20</option><option>30</option></select></label>
               <label>Zeit pro Frage <select data-e="zeit"><option value="10">10 s</option><option value="15">15 s</option><option value="20">20 s</option><option value="30">30 s</option></select></label>
-              <label>Raum <select data-e="sichtbar"><option value="geschlossen">Geschlossen, nur mit Code</option><option value="offen">Offen, in der Bude sichtbar</option></select></label>
+              <label>Raum <select data-e="sichtbar"><option value="offen">Offen, in der Bude sichtbar</option><option value="geschlossen">Geschlossen, nur mit Code</option></select></label>
               <label>Chat <select data-e="chat"><option value="eingeschraenkt">Eingeschränkt</option><option value="offen">Offen</option></select></label>
             </div>
             <button class="knopf haupt gross" id="los">Los geht's</button>
@@ -207,7 +222,8 @@
 
           <div class="phase" id="p-ende">
             <h2 class="phase-titel" id="ende-titel">Endstand</h2>
-            <ol class="podest" id="podest"></ol>
+            <div class="podest" id="podest"></div>
+            <div class="ende-ruhm" id="ende-ruhm" hidden></div>
             <div class="zeile mitte">
               <button class="knopf haupt" id="nochmal">Nochmal</button>
               <button class="knopf zweit" id="andere-kategorie">Andere Kategorie</button>
@@ -233,6 +249,11 @@
     <div class="lernen-kopf">
       <h1>Sprint</h1>
       <p class="unterzeile">Allein gegen die Uhr, ganz ohne Raum: 60 Sekunden, so viele wie möglich. Überspringen kostet 2 Sekunden. <button class="tasten-knopf text" type="button">Alle Tasten anzeigen</button></p>
+    </div>
+    <div class="sprint-region">
+      <span class="sr-titel">Region</span>
+      <div class="umschalter klein" role="radiogroup" id="sprint-region" aria-label="Region für Flaggen, Umrisse und Hauptstädte"></div>
+      <small id="sprint-region-hinweis">Gilt für Flaggen, Umrisse und Hauptstädte. Mit Region ist der Sprint eine Übung, Rekorde zählen nur bei „Alle“.</small>
     </div>
     <div class="kachel-raster" id="sprint-kacheln"></div>
   </section>
@@ -260,6 +281,7 @@
         <div class="phase" id="sp-ende" hidden>
           <h2 class="phase-titel" id="sprint-ergebnis"></h2>
           <p class="phase-text" id="sprint-rekord"></p>
+          <div class="ende-ruhm" id="sprint-ruhm" hidden></div>
           <div class="zeile mitte">
             <button class="knopf haupt" id="sprint-nochmal">Nochmal</button>
             <a class="knopf zweit" href="#/sprint">Andere Kategorie</a>
@@ -275,6 +297,7 @@
 </main>
 
 <!-- Tastenliste -->
+<dialog class="aufstieg" id="aufstieg" aria-labelledby="aufstieg-titel"><div class="aufstieg-inhalt" id="aufstieg-inhalt"></div></dialog>
 <dialog class="tasten-dialog" id="tasten-dialog" aria-labelledby="tasten-titel">
   <button class="dialog-zu" id="tasten-zu" aria-label="Schließen">×</button>
   <h2 id="tasten-titel">Tasten</h2>
@@ -298,7 +321,7 @@
 </nav>
 <div class="toast" id="toast" role="status" hidden></div>
 
-<script src="vendor/supabase.js?v=0.7.0"></script>
-<script type="module" src="js/app.js?v=0.7.0"></script>
+<script src="vendor/supabase.js?v=0.8.0"></script>
+<script type="module" src="js/app.js?v=0.8.0"></script>
 </body>
 </html>

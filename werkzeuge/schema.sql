@@ -94,23 +94,7 @@ begin
   return r;
 end $$;
 
-create or replace function public.sprint_bestenliste(p_kategorie text, p_seit timestamptz default null)
-returns table (id uuid, name text, avatar text, farbe text, wert int)
-language sql stable security definer set search_path = public as $$
-  select * from (
-    select p.id, p.name, p.avatar, p.farbe, x.wert
-    from (select von, max(wert)::int as wert from public.sprint_laeufe
-          where kategorie = p_kategorie and p_seit is not null and am >= p_seit group by von) x
-    join public.profile p on p.id = x.von
-    where x.wert > 0
-    union all
-    select p.id, p.name, p.avatar, p.farbe, (p.rekorde->>p_kategorie)::int
-    from public.profile p
-    where p_seit is null and coalesce((p.rekorde->>p_kategorie)::int, 0) > 0
-  ) t order by wert desc, name limit 15;
-$$;
-revoke all on function public.sprint_bestenliste(text, timestamptz) from public;
-grant execute on function public.sprint_bestenliste(text, timestamptz) to anon, authenticated;
+-- sprint_bestenliste: siehe Ruhm-Abschnitt unten (liefert seit 0.8.0 auch ruhm und stil)
 
 -- Verlauf der Raum-Spiele („Zuletzt gespielt") -------------------------
 create table if not exists public.spiele (
@@ -144,3 +128,74 @@ grant execute on function public.spiel_loggen(jsonb) to authenticated;
 
 -- 0.3.0: Kategorie im Verlauf (für bestehende Datenbanken)
 alter table public.spiele add column if not exists kategorie text;
+
+-- 0.8.0: Ruhm ------------------------------------------------------------
+-- Ruhm wird aus der Statistik berechnet (Trigger), damit er immer stimmt und rückwirkend für alle gilt.
+alter table public.profile add column if not exists ruhm int not null default 0;
+alter table public.profile add column if not exists stil jsonb not null default '{}'::jsonb;
+
+-- Mitspielen 10, richtige Antwort 3, Sieg 20, Sprint 4, dazu die Summe der Sprint-Rekorde
+create or replace function public.qb_ruhm_aus(p public.profile) returns int
+language sql immutable as $$
+  select (p.spiele * 10 + p.richtig * 3 + p.siege * 20 + p.sprints * 4
+    + greatest(p.sprint_rekord, coalesce((p.rekorde->>'flaggen')::int, 0))
+    + coalesce((select sum(v::int) from jsonb_each_text(p.rekorde) as e(k, v) where k <> 'flaggen' and v ~ '^[0-9]+$'), 0))::int;
+$$;
+
+-- Stufe 0 bis 16: Karo-, Herz-, Pik-, Kreuz- je Bube, Dame, König, Ass, dann Joker
+create or replace function public.qb_ruhm_stufe(r int) returns int
+language sql immutable as $$
+  select (count(*) - 1)::int from unnest(array[0,100,250,450,700,1000,1350,1750,2200,2700,3250,3850,4500,5200,5950,6750,8000]) s where s <= r;
+$$;
+
+-- Was ist ab welcher Stufe frei? Farbe ab Karo, Titel ab Herz, Effekt ab Pik, Rahmen und Hintergrund ab Kreuz
+create or replace function public.qb_stil_frei(art text, rang text, stufe int) returns boolean
+language sql immutable as $$
+  select case
+    when art not in ('farbe', 'titel', 'effekt', 'rahmen', 'hintergrund') then false
+    when rang = 'joker' then stufe >= 16
+    when array_position(array['bube', 'dame', 'koenig', 'ass'], rang) is null then false
+    else stufe >= (array_position(array['bube', 'dame', 'koenig', 'ass'], rang) - 1) * 4
+      + case art when 'farbe' then 0 when 'titel' then 1 when 'effekt' then 2 else 3 end
+  end;
+$$;
+
+create or replace function public.qb_profil_ruhm() returns trigger
+language plpgsql as $$
+declare st int; k text; v text;
+begin
+  new.ruhm := public.qb_ruhm_aus(new);
+  if new.stil is null or jsonb_typeof(new.stil) <> 'object' then new.stil := '{}'::jsonb; end if;
+  st := public.qb_ruhm_stufe(new.ruhm);
+  for k, v in select key, value from jsonb_each_text(new.stil) loop
+    if v is null or v = '' then continue; end if;
+    if not public.qb_stil_frei(k, v, st) then raise exception 'Das ist noch nicht freigeschaltet.'; end if;
+  end loop;
+  return new;
+end $$;
+drop trigger if exists qb_profil_ruhm on public.profile;
+create trigger qb_profil_ruhm before insert or update on public.profile for each row execute function public.qb_profil_ruhm();
+grant update (avatar, farbe, stil) on public.profile to authenticated;
+
+-- alle Konten nachrechnen (der Trigger setzt den Wert)
+update public.profile set ruhm = 0;
+
+-- Sprint-Bestenliste liefert jetzt auch Ruhm und Stil
+drop function if exists public.sprint_bestenliste(text, timestamptz);
+create or replace function public.sprint_bestenliste(p_kategorie text, p_seit timestamptz default null)
+returns table (id uuid, name text, avatar text, farbe text, ruhm int, stil jsonb, wert int)
+language sql stable security definer set search_path = public as $$
+  select * from (
+    select p.id, p.name, p.avatar, p.farbe, p.ruhm, p.stil, x.wert
+    from (select von, max(wert)::int as wert from public.sprint_laeufe
+          where kategorie = p_kategorie and p_seit is not null and am >= p_seit group by von) x
+    join public.profile p on p.id = x.von
+    where x.wert > 0
+    union all
+    select p.id, p.name, p.avatar, p.farbe, p.ruhm, p.stil, (p.rekorde->>p_kategorie)::int
+    from public.profile p
+    where p_seit is null and coalesce((p.rekorde->>p_kategorie)::int, 0) > 0
+  ) t order by wert desc, name limit 15;
+$$;
+revoke all on function public.sprint_bestenliste(text, timestamptz) from public;
+grant execute on function public.sprint_bestenliste(text, timestamptz) to anon, authenticated;

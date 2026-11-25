@@ -82,7 +82,8 @@ async def main():
                 await A.wait_for_function(f'quizbude.raum.phase !== "frage" || quizbude.raum.idx !== {idx}', timeout=15000)
                 if kat == 'gemischt' and art not in gesehen:
                     await A.wait_for_timeout(300); await A.screenshot(path=f'{BILDER}/k_aufl_{art}.png'); gesehen.add(art)
-            pa = (await A.inner_text('#podest')).replace('\n', ' '); pb = (await B.inner_text('#podest')).replace('\n', ' ')
+            ohne_du = "(() => { const k = document.getElementById('podest').cloneNode(true); k.querySelectorAll('.du').forEach(e => e.remove()); document.body.append(k); const t = k.innerText; k.remove(); return t; })()"
+            pa = (await A.evaluate(ohne_du)).replace('\n', ' '); pb = (await B.evaluate(ohne_du)).replace('\n', ' ')
             print(kat, 'Endstand:', pa, '| gleich bei B:', pa == pb, '| Arten:', sorted(gesehen) if gesehen else '')
             await A.click('#andere-kategorie'); await A.wait_for_selector('#p-warten:not([hidden])')
         await A.goto(BASIS + '#/'); await A.wait_for_timeout(800)

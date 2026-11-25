@@ -1,8 +1,8 @@
-import { LAENDER } from './laender.js?v=0.7.0';
-import { WISSEN, WISSEN_THEMEN } from './wissen.js?v=0.7.0';
-import { EMOJI, EMOJI_THEMEN } from './emoji.js?v=0.7.0';
-import { kanon } from './kanon.js?v=0.7.0';
-import { LAND, AUSWAHL, pruefe, mischen, flaggeUrl, abgleichen } from './abgleich.js?v=0.7.0';
+import { LAENDER } from './laender.js?v=0.8.0';
+import { WISSEN, WISSEN_THEMEN } from './wissen.js?v=0.8.0';
+import { EMOJI, EMOJI_THEMEN } from './emoji.js?v=0.8.0';
+import { kanon } from './kanon.js?v=0.8.0';
+import { LAND, AUSWAHL, pruefe, mischen, flaggeUrl, abgleichen } from './abgleich.js?v=0.8.0';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const zahl = n => n.toLocaleString('de-DE');
@@ -12,7 +12,7 @@ let UMRISSE = null;
 let umrisseLaeuft = null;
 export function umrisseLaden() {
   if (UMRISSE) return Promise.resolve(UMRISSE);
-  umrisseLaeuft ||= import('./umrisse.js?v=0.7.0').then(m => { UMRISSE = m.UMRISSE; return UMRISSE; });
+  umrisseLaeuft ||= import('./umrisse.js?v=0.8.0').then(m => { UMRISSE = m.UMRISSE; return UMRISSE; });
   return umrisseLaeuft;
 }
 export const umrisseDa = () => !!UMRISSE;
@@ -156,12 +156,14 @@ export const KATEGORIE_REIHE = ['flaggen', 'umrisse', 'hauptstaedte', 'groesser'
 export const ARTEN = ['flaggen', 'umrisse', 'hauptstaedte', 'groesser', 'wissen', 'emoji'];
 
 // Eine einzelne Frage für den Sprint. Länder-Kategorien fangen leicht an und werden mit jedem Treffer schwerer.
-export function sprintFrage(kategorie, stand, benutzt) {
+export function sprintFrage(kategorie, stand, benutzt, region = null) {
   const k = kategorie === 'gemischt' ? ARTEN[Math.floor(Math.random() * ARTEN.length)] : kategorie;
   const kat = KATEGORIEN[k];
   const leicht = kat.land && (stand < 8 || (stand < 16 && Math.random() < 0.5));
   const id = x => `${k}:${x.code ?? x.n}`;
-  let pool = kat.pool(leicht ? 'bekannt' : kat.land ? 'alle' : 'alle').filter(x => !benutzt.has(id(x)));
+  // mit Region (Übung): nur Länder dieser Region, sonst erst bekannte, dann alle
+  let pool = (kat.land && region ? kat.pool(region) : kat.pool(leicht ? 'bekannt' : 'alle')).filter(x => !benutzt.has(id(x)));
+  if (!pool.length && kat.land && region) { for (const b of [...benutzt]) if (b.startsWith(k + ':')) benutzt.delete(b); pool = kat.pool(region); }
   if (!pool.length) pool = kat.pool('alle').filter(x => !benutzt.has(id(x)));
   if (!pool.length) { for (const b of [...benutzt]) if (b.startsWith(k + ':')) benutzt.delete(b); pool = kat.pool('alle'); }
   const x = pool[Math.floor(Math.random() * pool.length)];

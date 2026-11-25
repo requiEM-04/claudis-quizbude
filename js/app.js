@@ -1,19 +1,23 @@
-import { VERSION } from './config.js?v=0.7.0';
+import { VERSION } from './config.js?v=0.8.0';
 import {
   online, nameFehler, registrieren, anmelden, abmelden, sitzungHolen, profilLaden, profilSpeichern,
   bestenliste, letzteSpiele, spieleSeit, alleProfile, sprintEintragen, sprintBestenliste, rangVon, spielerAnzahl, spieleVon, sb,
-} from './server.js?v=0.7.0';
-import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.7.0';
-import { Raum, codeNeu, STANDARD } from './raum.js?v=0.7.0';
-import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.7.0';
+} from './server.js?v=0.8.0';
+import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.8.0';
+import { Raum, codeNeu, STANDARD, TIPPFEHLER_ABZUG } from './raum.js?v=0.8.0';
+import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.8.0';
 import {
   KATEGORIEN, KATEGORIE_REIHE, kategorieVon, optionSchluessel, richtigeWahl, umrisseDa, umrisseLaden,
   sprintFrage, pruefeFrage, fragenVorladen, kanon,
-} from './kategorien.js?v=0.7.0';
-import { LAENDER } from './laender.js?v=0.7.0';
-import { auswahlfeld } from './auswahlfeld.js?v=0.7.0';
-import { KATEGORIE_SYMBOL } from './symbole.js?v=0.7.0';
-import { konfetti } from './konfetti.js?v=0.7.0';
+} from './kategorien.js?v=0.8.0';
+import { LAENDER } from './laender.js?v=0.8.0';
+import { auswahlfeld } from './auswahlfeld.js?v=0.8.0';
+import { KATEGORIE_SYMBOL } from './symbole.js?v=0.8.0';
+import { konfetti } from './konfetti.js?v=0.8.0';
+import {
+  RAENGE, ARTEN, JOKER, ruhmInfo, stufeVon, stufeInfo, wappen, effektHtml, rahmenDeko, stilVon, istFrei, freiAb, neuFrei,
+  belohnungName, rangVonId, symbol, SCHWELLEN,
+} from './ruhm.js?v=0.8.0';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -95,6 +99,16 @@ function toast(text) {
 function farbe(f) { return /^#[0-9a-fA-F]{6}$/.test(f || '') ? f : FARBEN[0]; }
 function avatarHtml(p) {
   return `<span class="avatar" style="background:${farbe(p?.farbe)}">${esc(p?.avatar || '🙂')}</span>`;
+}
+
+// ---------- Ruhm im Alltag: Namensfarbe, Titel, Wappen am Avatar, Hintergrund ----------
+const hatRuhm = p => p && !p.gast && typeof p.ruhm === 'number';
+const nameKlasse = p => { const f = hatRuhm(p) && stilVon(p).farbe; return f ? ` nf-${f}` : ''; };
+const titelVon = p => { const t = hatRuhm(p) && stilVon(p).titel; return t ? { text: rangVonId(t).titel, rang: t } : null; };
+const avatarMitWappen = (p, g = 15) => hatRuhm(p) ? `<span class="mit-wappen">${avatarHtml(p)}${wappen(p.ruhm, { groesse: g })}</span>` : avatarHtml(p);
+function hintergrundSetzen() {
+  const hg = ich ? stilVon(ich).hintergrund : '';
+  if (hg) document.body.dataset.hg = hg; else delete document.body.dataset.hg;
 }
 
 function wann(iso) {
@@ -244,6 +258,7 @@ async function profilHolen(user) {
   ich = p;
   chipZeichnen();
   lobbyStart();
+  setTimeout(ruhmPruefen, 900);
 }
 
 const AUS_ICON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>';
@@ -265,14 +280,15 @@ function gastIch() {
 const mitspieler = () => ich || gastIch();
 
 function chipZeichnen() {
+  hintergrundSetzen();
   const chip = $('profil-chip');
   $('dock').hidden = !ich && !gast;
   if (!ich) {
-    chip.innerHTML = gast ? `<span class="dock-gast">${avatarHtml({ avatar: '👤', farbe: '#353B3F' })}${esc(gastIch().name)}</span><a class="knopf zweit klein" href="#/anmelden">Anmelden</a>` : '';
+    chip.innerHTML = gast ? `<span class="dock-gast">${avatarHtml({ avatar: '👤', farbe: '#353B3F' })}<span class="dock-name">${esc(gastIch().name)}</span></span><a class="knopf zweit klein" href="#/anmelden">Anmelden</a>` : '';
     return;
   }
   const aufProfil = (location.hash || '#/') === '#/profil';
-  chip.innerHTML = `<a class="dock-ich${aufProfil ? ' aktiv' : ''}" href="#/profil" title="Mein Profil">${avatarHtml(ich)}<span class="dock-name">${esc(ich.name)}</span></a><button class="dock-aus" id="abmelden" title="Abmelden" aria-label="Abmelden">${AUS_ICON}</button>`;
+  chip.innerHTML = `<a class="dock-ich${aufProfil ? ' aktiv' : ''}" href="#/profil" title="Mein Profil">${avatarHtml(ich)}<span class="dock-name${nameKlasse(ich)}">${esc(ich.name)}</span></a><button class="dock-aus" id="abmelden" title="Abmelden" aria-label="Abmelden">${AUS_ICON}</button>`;
   $('abmelden').onclick = async () => {
     if (raum) { raum.verlassen(); raum = null; }
     lobbyStopp();
@@ -298,16 +314,47 @@ function budeZeigen() {
 function raeumeZeichnen(raeume) {
   const liste = $('raum-liste');
   if (!raeume.length) {
-    liste.innerHTML = '<li class="leer">Gerade ist kein Raum offen. Neue Räume sind erst geschlossen, der Gastgeber kann sie im Warteraum unter „Raum“ öffnen.</li>';
+    liste.innerHTML = '<li class="leer">Gerade ist kein Raum offen. Mach einen auf, dann taucht er hier für alle auf.</li>';
     return;
   }
-  liste.innerHTML = raeume.map(r => `
-    <li>
+  liste.innerHTML = raeume.map(r => {
+    const katKey = Object.keys(KATEGORIEN).find(k => KATEGORIEN[k].name === r.kategorie) || 'flaggen';
+    const wartet = r.phase === 'warten' || r.phase === 'ende';
+    return `
+    <li class="raum-zeile">
       <span class="code">${esc(r.code)}</span>
-      <span class="info"><strong>Raum von ${esc(r.host)}</strong>
-        <span>${esc(r.kategorie || 'Flaggen')}${r.auswahl ? ` (${esc(r.auswahl)})` : ''}, ${r.spieler === 1 ? '1 Person' : `${r.spieler} Leute`}, ${r.phase === 'warten' || r.phase === 'ende' ? 'wartet auf den Start' : 'spielt gerade'}</span></span>
-      <a class="knopf haupt klein" href="#/raum/${esc(r.code)}">Rein da</a>
-    </li>`).join('');
+      <span class="info">
+        <strong>Raum von ${esc(r.host)}</strong>
+        <span class="raum-kat"><span class="raum-symbol" aria-hidden="true">${KATEGORIE_SYMBOL[katKey] || ''}</span>${esc(r.kategorie || 'Flaggen')}${r.auswahl ? `, ${esc(r.auswahl)}` : ''}</span>
+        <span class="raum-status${wartet ? ' wartet' : ''}">${r.spieler === 1 ? '1 Person' : `${r.spieler} Leute`}, ${wartet ? 'wartet auf den Start' : 'spielt gerade'}</span>
+      </span>
+      <a class="knopf haupt klein" href="#/raum/${esc(r.code)}">${wartet ? 'Rein da' : 'Zuschauen'}</a>
+    </li>`;
+  }).join('');
+}
+
+// Siegertreppchen: Plätze 1–3 auf Stufen (2 links, 1 Mitte, 3 rechts), ab Platz 4 eine ruhige Liste
+const FUNKEN = [0, 60, 120, 180, 240, 300];
+function treppeHtml(liste, ichId, mitKrone) {
+  const DAUER = { 1: [700, 1050], 2: [420, 770], 3: [140, 490] }; // [Stufe, Kopf] in ms – erst Platz 3, dann 2, dann 1
+  const oben = liste.slice(0, 3).map((e, i) => {
+    const platz = i + 1, [ds, dk] = DAUER[platz];
+    const krone = platz === 1 && mitKrone && e.pkt > 0;
+    return `<div class="stufe s${platz}${e.id === ichId ? ' ich' : ''}" style="--ds:${ds}ms;--dk:${dk}ms">
+      <div class="t-kopf">
+        ${platz === 1 ? '<span class="t-strahlen" aria-hidden="true"></span>' : ''}
+        ${krone ? `<span class="t-krone" aria-hidden="true">👑${FUNKEN.map(w => `<i class="funke" style="--w:${w}deg"></i>`).join('')}</span>` : ''}
+        ${avatarHtml(e)}
+        ${hatRuhm(e) ? `<span class="t-wappen">${wappen(e.ruhm, { groesse: platz === 1 ? 24 : 20 })}</span>` : ''}
+      </div>
+      <div class="t-name"><span class="${nameKlasse(e).trim()}">${esc(e.name)}</span>${e.id === ichId ? '<span class="du">du</span>' : ''}</div>
+      ${titelVon(e) ? `<div class="t-titel titel-zeile nf-${titelVon(e).rang}">${esc(titelVon(e).text)}</div>` : ''}
+      <div class="t-wert wert" data-pkt="${e.pkt}" data-ab="${dk + 250}">0</div>
+      <div class="t-block"><span>${platz}</span></div>
+    </div>`;
+  }).join('');
+  const rest = liste.slice(3).map((e, i) => `<li class="${e.id === ichId ? 'ich' : ''}" style="--i:${i}"><span class="platz">${i + 4}</span>${avatarMitWappen(e, 13)}<span class="podest-name"><span class="${nameKlasse(e).trim()}">${esc(e.name)}</span>${e.id === ichId ? '<span class="du">du</span>' : ''}</span><span class="wert" data-pkt="${e.pkt}" data-ab="${1300 + i * 120}">0</span></li>`).join('');
+  return `<div class="treppe">${oben}</div>${rest ? `<ol class="rest">${rest}</ol>` : ''}`;
 }
 
 const SPALTE = {
@@ -353,6 +400,30 @@ async function saisonWertung(von, bis) {
   return { liste: [...summe.values()], anzahl };
 }
 
+// Saison-Abzeichen: kleine Medaillen-Karte mit Platz und Monat
+const MEDAILLE = { 1: ['#FDEBB0', '#E2C487', '#9E7520'], 2: ['#F4F7F9', '#C3CACF', '#6E777D'], 3: ['#F3CDA9', '#C99A6E', '#7D5634'] };
+function abzeichenSvg(platz, monat) {
+  const [h, m, d] = MEDAILLE[platz];
+  return `<svg viewBox="0 0 40 48" aria-hidden="true"><defs><linearGradient id="qba-${platz}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${h}"/><stop offset=".5" stop-color="${m}"/><stop offset="1" stop-color="${d}"/></linearGradient></defs>
+    <rect x="4" y="3" width="32" height="42" rx="5" fill="#22262A" stroke="url(#qba-${platz})" stroke-width="2.4"/>
+    <rect x="7.5" y="6.5" width="25" height="35" rx="2.5" fill="none" stroke="${m}" stroke-opacity=".4" stroke-width=".7"/>
+    ${platz === 1 ? `<path d="M13 9.5 15 6l3 2.4L20 5l2 3.4L25 6l2 3.5Z" fill="url(#qba-1)"/>` : symbol(platz === 2 ? 'herz' : 'karo', 16, 6.5, 8, m)}
+    <text x="20" y="29" text-anchor="middle" font-size="15" font-weight="800" fill="url(#qba-${platz})" font-family="var(--display, sans-serif)">${platz}</text>
+    <text x="20" y="38.5" text-anchor="middle" font-size="6" font-weight="700" fill="${m}" font-family="var(--schrift, sans-serif)">${monat}</text>
+  </svg>`;
+}
+function saisonKopf(von, bis, laeuft) {
+  const ende = new Date(bis - 1);
+  const tage = Math.ceil((bis - new Date()) / 86400000);
+  const monat = `${String(von.getMonth() + 1).padStart(2, '0')}/${String(von.getFullYear()).slice(2)}`;
+  $('besten-saison-ende').textContent = laeuft
+    ? `Läuft bis ${ende.getDate()}.${ende.getMonth() + 1}., ${tage <= 1 ? 'endet heute Nacht' : `noch ${tage} Tage`}`
+    : `Beendet am ${ende.getDate()}.${ende.getMonth() + 1}.${ende.getFullYear()}`;
+  $('besten-saison-ende').hidden = false;
+  $('besten-abzeichen').innerHTML = [1, 2, 3].map(pl => `<figure title="Abzeichen für Platz ${pl}">${abzeichenSvg(pl, monat)}<figcaption>Platz ${pl}</figcaption></figure>`).join('');
+  $('besten-abzeichen').hidden = false;
+}
+
 let bestenUhr = null;
 async function bestenLaden() {
   const ol = $('besten-liste'), ichBox = $('besten-ich'), fuss = $('besten-fuss');
@@ -378,20 +449,20 @@ async function bestenLaden() {
         unter = p => spalte === 'punkte' ? `${p.siege} ${p.siege === 1 ? 'Sieg' : 'Siege'} in ${p.spiele}` : `${p.punkte.toLocaleString('de-DE')} Pkt.`;
         fussText = `${w.anzahl} ${w.anzahl === 1 ? 'Spiel' : 'Spiele'} in dieser Saison`;
       }
-      if (laeuft) {
-        const tage = Math.ceil((bis - new Date()) / 86400000);
-        fussText += `${fussText.endsWith('.') ? '' : '.'} Endet ${tage <= 1 ? 'heute Nacht' : `in ${tage} Tagen`}, die Top 3 bekommen ein Abzeichen.`;
-      } else if (!fussText.endsWith('.')) fussText += '.';
+      if (!fussText.endsWith('.')) fussText += '.';
+      if (laeuft) fussText += ' Die Top 3 am Monatsende bekommen das Abzeichen der Saison.';
+      saisonKopf(von, bis, laeuft);
     }
+    if (zeit === 'allzeit') { $('besten-saison-ende').hidden = true; $('besten-abzeichen').hidden = true; }
     if (besteSpalte !== spalte) return; // inzwischen anderer Reiter
     const feld = (p, platz) => {
       const [zahl, einheit] = SPALTE[spalte](p.wert);
-      const sub = unter(p);
-      return `<li class="besten-feld${platz <= 3 ? ` top p${platz}` : ''}${ich && p.id === ich.id ? ' ich' : ''}" style="--i:${platz - 1}">
+      const sub = unter(p), titel = titelVon(p), rahmen = hatRuhm(p) && stilVon(p).rahmen;
+      return `<li class="besten-feld${platz <= 3 ? ` top p${platz}` : ''}${ich && p.id === ich.id ? ' ich' : ''}${rahmen ? ` lr-${rahmen}` : ''}" style="--i:${platz - 1}">
         <a href="#/profil/${esc(p.id)}">
           <span class="rang">${platz}</span>
-          <span class="bf-avatar">${platz === 1 ? '<span class="krone" aria-hidden="true">👑</span>' : ''}${avatarHtml(p)}</span>
-          <span class="bf-mitte"><span class="bf-name">${esc(p.name)}</span>${sub ? `<span class="bf-unter">${esc(sub)}</span>` : ''}</span>
+          <span class="bf-avatar">${platz === 1 ? '<span class="krone" aria-hidden="true">👑</span>' : ''}${avatarMitWappen(p, 14)}</span>
+          <span class="bf-mitte"><span class="bf-name${nameKlasse(p)}">${esc(p.name)}</span>${titel ? `<span class="bf-titel titel-zeile nf-${titel.rang}">${esc(titel.text)}</span>` : ''}${sub ? `<span class="bf-unter">${esc(sub)}</span>` : ''}</span>
           <span class="bf-wert">${zahl}<small>${einheit}</small></span>
         </a></li>`;
     };
@@ -406,7 +477,7 @@ async function bestenLaden() {
       else if (zeit === 'allzeit' && spalte !== 'sprint') { wert = ich[spalte] || 0; platz = await rangVon(spalte, wert); }
       else if (zeit === 'allzeit') wert = sprintRekord($('besten-kategorie').value);
       const [zahl, einheit] = SPALTE[spalte](wert);
-      ichBox.innerHTML = `<span class="rang">${platz ?? '–'}</span>${avatarHtml(ich)}<span class="bf-name">Du</span><span class="bf-wert">${wert ? `${zahl}<small>${einheit}</small>` : '<small>noch nichts</small>'}</span>`;
+      ichBox.innerHTML = `<span class="rang">${platz ?? '–'}</span>${avatarMitWappen(ich, 14)}<span class="bf-name${nameKlasse(ich)}">Du</span><span class="bf-wert">${wert ? `${zahl}<small>${einheit}</small>` : '<small>noch nichts</small>'}</span>`;
       ichBox.hidden = false;
     }
     fuss.textContent = fussText;
@@ -427,13 +498,12 @@ async function letzteLaden() {
       const kat = KATEGORIEN[s.kategorie]?.name;
       const wo = kat ? ` bei ${esc(kat)}` : '';
       const text = sp.length > 1
-        ? `${esc(erster.avatar)} ${esc(erster.name)} gewinnt${wo} mit ${erster.pkt} Punkten gegen ${sp.length - 1 === 1 ? '1 andere Person' : `${sp.length - 1} andere`}`
-        : `${esc(erster.avatar)} ${esc(erster.name)} hat${wo} allein ${erster.pkt} Punkte geholt`;
-      const w = wann(s.am);
-      return `<li>${text}, ${w}${w.endsWith('.') ? '' : '.'}</li>`;
-    }).join('') : '<li>Noch kein Spiel. Das ändert sich gleich.</li>';
+        ? `<b>${esc(erster.name)}</b> gewinnt${wo} mit ${erster.pkt.toLocaleString('de-DE')} Punkten gegen ${sp.length - 1 === 1 ? '1 andere Person' : `${sp.length - 1} andere`}`
+        : `<b>${esc(erster.name)}</b> hat${wo} allein ${erster.pkt.toLocaleString('de-DE')} Punkte geholt`;
+      return `<li class="letzte-zeile"><span class="lz-avatar" aria-hidden="true">${esc(erster.avatar)}</span><span class="lz-text">${text}<small>${wann(s.am)}</small></span></li>`;
+    }).join('') : '<li class="leer">Noch kein Spiel. Das ändert sich gleich.</li>';
   } catch (e) {
-    ul.innerHTML = `<li>${esc(e.message)}</li>`;
+    ul.innerHTML = `<li class="leer">${esc(e.message)}</li>`;
   }
 }
 
@@ -497,6 +567,7 @@ function kachelnZeichnen() {
 function sprintWahlZeigen() {
   zeige('sprintwahl');
   $('sprint-kacheln').innerHTML = kachelnHtml(true);
+  sprintRegionZeichnen();
 }
 
 function kachelBild(k) {
@@ -587,8 +658,126 @@ function lernenDetail(code) {
       <dt>Kontinent</dt><dd>${REGIONEN[l.region] || '–'}</dd>
       ${l.auch ? `<dt>Zählt auch</dt><dd>${l.auch.map(esc).join(', ')}</dd>` : ''}
     </dl>
-    <p class="detail-fuss">Kleine Tippfehler zählen beim Raten trotzdem.</p>`;
+    <p class="detail-fuss">Kleine Tippfehler zählen beim Raten trotzdem, kosten im Raum aber 10 Punkte je Fehler.</p>`;
   $('lernen-detail').showModal();
+}
+
+// ---------- Spielerkarte, Anpassen, Ruhmesweg ----------
+function karteZeichnen(p) {
+  const info = ruhmInfo(p.ruhm || 0), st = stilVon(p), k = $('spielerkarte');
+  k.className = 'spielerkarte' + (st.rahmen ? ` rahmen-${st.rahmen}` : '');
+  k.style.setProperty('--rang', info.rang.farbe);
+  k.querySelectorAll('.effekt, .rahmen-deko').forEach(e => e.remove());
+  k.insertAdjacentHTML('afterbegin', effektHtml(st.effekt) + rahmenDeko(st.rahmen));
+  $('profil-name').className = st.farbe ? `nf-${st.farbe}` : '';
+  const t = titelVon(p);
+  $('profil-titel').textContent = t ? t.text : '';
+  $('profil-titel').className = 'karten-titel' + (t ? ` nf-${t.rang}` : '');
+  $('profil-titel').hidden = !t;
+  const zahl = n => n.toLocaleString('de-DE');
+  $('profil-wappen').innerHTML = `${wappen(info.ruhm, { groesse: 72 })}<b class="nf-${info.rang.id}">${info.name}</b><small>${zahl(info.ruhm)} Ruhm</small>`;
+  $('profil-ruhm').innerHTML = info.bis
+    ? `<div class="zeile-text"><span>Noch <b>${zahl(info.fehlt)}</b> Ruhm bis ${stufeInfo(info.i + 1).name}</span><span><b>${zahl(info.ruhm)}</b> / ${zahl(info.bis)}</span></div><div class="ruhm-balken" style="--anteil:${info.anteil.toFixed(3)}"><i></i></div>`
+    : `<div class="zeile-text"><span>Ganz oben angekommen. Mehr Joker geht nicht.</span><span><b>${zahl(info.ruhm)}</b> Ruhm</span></div><div class="ruhm-balken" style="--anteil:1"><i></i></div>`;
+}
+
+function chipInhalt(art, r) {
+  if (art === 'farbe') return `<span class="nf-${r.id}">${esc(ich.name)}</span>`;
+  if (art === 'titel') return `<span class="nf-${r.id}">${esc(r.titel)}</span>`;
+  if (art === 'effekt') return esc(r.effekt);
+  if (art === 'rahmen') return `<span class="probe ra-${r.id}"></span>${esc(r.rahmen)}`;
+  return `<span class="probe hg-${r.id}"></span>${esc(r.hintergrund)}`;
+}
+function anpassenZeichnen() {
+  const st = stilVon(ich);
+  $('anpassen-zeilen').innerHTML = ARTEN.map(a => `<div class="stil-zeile"><span>${a.name}</span><div class="stil-wahl" data-art="${a.id}">
+      <button class="stil-chip" data-rang="" aria-pressed="${!st[a.id]}">Keiner</button>
+      ${RAENGE.map(r => {
+        const frei = istFrei(a.id, r.id, ich.ruhm || 0), ab = stufeInfo(freiAb(a.id, r.id)).name;
+        return `<button class="stil-chip" data-rang="${r.id}" aria-pressed="${st[a.id] === r.id}"${frei ? '' : ` disabled title="Frei ab ${ab}"`}>${chipInhalt(a.id, r)}${frei ? '' : `<small>ab ${ab}</small>`}</button>`;
+      }).join('')}
+    </div></div>`).join('');
+}
+async function stilAnlegen(neu, meldung = 'Angelegt.') {
+  const stil = Object.fromEntries(Object.entries(neu).filter(([, v]) => v));
+  try {
+    await profilSpeichern(ich.id, { stil });
+    ich = { ...ich, stil };
+    chipZeichnen();
+    if (!$('s-profil').hidden) { karteZeichnen(ich); anpassenZeichnen(); }
+    if (!$('s-bude').hidden) bestenLaden();
+    toast(meldung);
+  } catch (e) { toast(e.message); }
+}
+function ruhmeswegZeichnen() {
+  const jetzt = stufeVon(ich.ruhm || 0);
+  $('ruhmesweg').innerHTML = SCHWELLEN.map((ab, i) => {
+    const s = stufeInfo(i);
+    return `<li class="${i < jetzt ? 'erreicht' : i === jetzt ? 'aktuell' : 'gesperrt'}" style="--rang:${s.rang.farbe}">${wappen(0, { stufe: i, groesse: 34 })}<b>${s.name}</b><span>${ab.toLocaleString('de-DE')}</span></li>`;
+  }).join('');
+  const akt = $('ruhmesweg').querySelector('.aktuell');
+  if (akt) $('ruhmesweg').scrollLeft = akt.offsetLeft - $('ruhmesweg').clientWidth / 2 + 32;
+}
+
+// ---------- Ruhm nach Spiel und Sprint, Aufstieg ----------
+const RUHM_STUFE = id => 'quizbude.ruhmStufe.' + id;
+async function ruhmNachladen(vorher) {
+  if (!ich || !online()) return null;
+  let p = null;
+  for (let versuch = 0; versuch < 3; versuch++) {
+    try { p = await profilLaden(ich.id); } catch { return null; }
+    if (!p || p.ruhm !== vorher) break;
+    await new Promise(r => setTimeout(r, 1200));
+  }
+  if (!p || !ich || p.id !== ich.id) return null;
+  ich = { ...ich, ...p };
+  return (p.ruhm || 0) - vorher;
+}
+function ruhmChip(box, plus) {
+  const info = ruhmInfo(ich.ruhm || 0);
+  box.style.setProperty('--rang', info.rang.farbe);
+  box.innerHTML = `${wappen(info.ruhm, { groesse: 20 })}<span class="plus">+${plus}</span> Ruhm
+    <span class="ruhm-balken" style="--anteil:${info.anteil.toFixed(3)}"><i></i></span>
+    <small>${info.bis ? `noch ${info.fehlt.toLocaleString('de-DE')} bis ${stufeInfo(info.i + 1).name}` : 'Joker erreicht'}</small>`;
+  box.hidden = false;
+}
+// Stufe mit der zuletzt gesehenen vergleichen; beim ersten Mal (nachgerechneter Ruhm) einmalig zeigen
+function ruhmPruefen() {
+  if (!ich || ich.gast) return;
+  // nie mitten ins Spiel: während Frage, Countdown oder Sprint später nochmal schauen
+  if ((raum && ['countdown', 'frage', 'aufloesung'].includes(raum.phase)) || sprint?.laeuft) { setTimeout(ruhmPruefen, 4000); return; }
+  const jetzt = stufeVon(ich.ruhm || 0);
+  let alt = null;
+  try { alt = localStorage.getItem(RUHM_STUFE(ich.id)); localStorage.setItem(RUHM_STUFE(ich.id), jetzt); } catch { return; }
+  if (alt === null) { if ((ich.ruhm || 0) > 0) aufstiegZeigen(-1, jetzt, true); return; }
+  if (jetzt > Number(alt)) aufstiegZeigen(Number(alt), jetzt, false);
+}
+function aufstiegZeigen(alt, neu, erstesMal) {
+  const dlg = $('aufstieg');
+  if (dlg.open || !ich) return;
+  const s = stufeInfo(neu);
+  const neues = [];
+  for (let i = Math.max(0, alt + 1); i <= neu; i++) neues.push(...neuFrei(i));
+  const zeigen = neues.slice(-4);
+  $('aufstieg-inhalt').style.setProperty('--rang', s.rang.farbe);
+  $('aufstieg-inhalt').innerHTML = `
+    <div class="aufstieg-buehne">${wappen(ich.ruhm, { groesse: 112, stufe: neu })}</div>
+    <p class="ueber">${erstesMal ? 'Ruhm ist da. Alles Bisherige zählt mit.' : 'Aufstieg!'}</p>
+    <h2 id="aufstieg-titel" class="nf-${s.rang.id}">${s.name}</h2>
+    <p class="ruhm-zahl">${(ich.ruhm || 0).toLocaleString('de-DE')} Ruhm</p>
+    ${zeigen.length ? `<ul class="aufstieg-neu">${zeigen.map((n, i) => `<li style="--i:${i}"><span class="nf-${n.rang}">${esc(belohnungName(n.art, n.rang))}</span><small>neu</small></li>`).join('')}</ul>` : ''}
+    ${neues.length > zeigen.length ? `<p class="unterzeile">und ${neues.length - zeigen.length} weitere im Profil</p>` : ''}
+    <div class="zeile mitte">${neues.length ? '<button class="knopf haupt" id="aufstieg-anlegen">Gleich anlegen</button>' : ''}<button class="knopf zweit" id="aufstieg-weiter">${neues.length ? 'Später' : 'Weiter'}</button></div>`;
+  dlg.showModal();
+  setTimeout(() => konfetti(neu >= JOKER ? 3 : 2), 650);
+  $('aufstieg-weiter').onclick = () => dlg.close();
+  const anlegen = $('aufstieg-anlegen');
+  if (anlegen) anlegen.onclick = () => {
+    const stil = { ...stilVon(ich) };
+    for (const n of neues) stil[n.art] = n.rang;
+    dlg.close();
+    stilAnlegen(stil, 'Angelegt. Ändern kannst du alles im Profil.');
+  };
 }
 
 // ---------- Profil ----------
@@ -609,6 +798,12 @@ function profilAufbauen() {
     $('profil-editor').hidden = false;
   };
   $('profil-abbrechen').onclick = () => { $('profil-editor').hidden = true; };
+  $('anpassen-zeilen').onclick = e => {
+    const b = e.target.closest('.stil-chip');
+    if (!b || b.disabled || b.getAttribute('aria-pressed') === 'true') return;
+    const art = b.parentElement.dataset.art;
+    stilAnlegen({ ...stilVon(ich), [art]: b.dataset.rang });
+  };
   $('profil-speichern').onclick = async () => {
     try {
       await profilSpeichern(ich.id, { avatar: profilWahl.avatar, farbe: profilWahl.farbe });
@@ -638,6 +833,9 @@ async function profilZeigen(id) {
   $('profil-avatar').outerHTML = avatarHtml(p).replace('class="avatar"', 'class="avatar riesig" id="profil-avatar"');
   $('profil-name').textContent = p.name;
   $('profil-seit').textContent = `Dabei seit ${datum(p.erstellt)}, zuletzt aktiv ${wann(p.zuletzt)}`;
+  karteZeichnen(p);
+  $('anpassen').hidden = !eigenes; $('ruhm-karte').hidden = !eigenes;
+  if (eigenes) { anpassenZeichnen(); ruhmeswegZeichnen(); }
 
   const schnitt = p.spiele ? Math.round(p.punkte / p.spiele) : 0;
   const werte = [
@@ -745,7 +943,9 @@ function raumAufbauen() {
     const rm = $('rueckmeldung');
     if (r === 'richtig') {
       eingabe.classList.add('richtig'); eingabe.disabled = true;
-      rm.className = 'rueckmeldung gut'; rm.textContent = zufall(SPRUCH.richtig);
+      const f = raum.tippfehler || 0;
+      rm.className = 'rueckmeldung gut';
+      rm.textContent = f ? `Richtig, aber ${f === 1 ? '1 Tippfehler' : `${f} Tippfehler`}: −${f * TIPPFEHLER_ABZUG} Punkte.` : zufall(SPRUCH.richtig);
     } else if (r === 'knapp') {
       rm.className = 'rueckmeldung'; rm.textContent = zufall(SPRUCH.knapp); wackeln(eingabe);
     } else if (r === 'falsch') {
@@ -847,7 +1047,7 @@ function raumZeichnen() {
       const mein = r.geloest.get(r.ich.id);
       eingabe.disabled = true; eingabe.classList.add('richtig');
       $('rueckmeldung').className = 'rueckmeldung gut';
-      $('rueckmeldung').textContent = `Richtig! +${mein?.pkt ?? ''}${mein?.rang === 1 ? ', als Erstes' : ''}`;
+      $('rueckmeldung').textContent = `Richtig! +${mein?.pkt ?? ''}${mein?.rang === 1 ? ', als Erstes' : ''}${mein?.abzug ? ` (−${mein.abzug} für Tippfehler)` : ''}`;
     }
     if (r.phase === 'aufloesung' && gezeichnet.phase !== 'aufloesung-' + r.idx) {
       const fl = $('zeitleiste-fuellung');
@@ -878,11 +1078,18 @@ function raumZeichnen() {
     $('ende-titel').textContent = 'Endstand';
     if (gezeichnet.ende !== r.spielId) {
       gezeichnet.ende = r.spielId;
-      $('podest').innerHTML = liste.map((e, i) => {
-        const kl = [i < 3 && e.pkt > 0 ? `top p${i + 1}` : '', e.id === r.ich.id ? 'ich' : ''].filter(Boolean).join(' ');
-        return `<li style="--i:${i}"${kl ? ` class="${kl}"` : ''}><span class="platz">${i + 1}</span><span class="bf-avatar">${i === 0 && !r.unentschieden && e.pkt > 0 ? '<span class="krone" aria-hidden="true">👑</span>' : ''}${avatarHtml(e)}</span><span class="podest-name">${esc(e.name)}</span><span class="wert" data-pkt="${e.pkt}">0</span></li>`;
-      }).join('');
-      $('podest').querySelectorAll('.wert').forEach((w, i) => setTimeout(() => hochzaehlen(w, Number(w.dataset.pkt)), 250 + i * 140));
+      $('podest').innerHTML = treppeHtml(liste, r.ich.id, !r.unentschieden);
+      $('ende-ruhm').hidden = true;
+      if (ich && liste.some(e => e.id === ich.id)) {
+        const vorher = ich.ruhm || 0, spielId = r.spielId;
+        setTimeout(async () => {
+          const plus = await ruhmNachladen(vorher);
+          if (plus == null || plus <= 0 || gezeichnet.ende !== spielId) return;
+          ruhmChip($('ende-ruhm'), plus);
+          setTimeout(ruhmPruefen, 1400);
+        }, 1600);
+      }
+      $('podest').querySelectorAll('.wert').forEach(w => setTimeout(() => hochzaehlen(w, Number(w.dataset.pkt)), Number(w.dataset.ab || 300)));
       // Konfetti je nach eigenem Platz (bei mehreren Leuten)
       const platz = liste.findIndex(e => e.id === r.ich.id);
       if (liste.length >= 2 && platz >= 0 && platz <= 2 && !(r.unentschieden && platz === 0) && (liste[platz].pkt > 0)) setTimeout(() => konfetti(3 - platz), 350);
@@ -900,7 +1107,7 @@ function raumZeichnen() {
     const status = r.phase === 'frage' || r.phase === 'aufloesung'
       ? (r.geloest.has(p.id) ? '<span class="status ok" title="Gefunden">✓</span>' : r.gesperrt.has(p.id) ? '<span class="status nein" title="Daneben">✗</span>' : '<span class="status"></span>')
       : '<span class="status"></span>';
-    return `<li>${avatarHtml(p)}<span class="name">${esc(p.name)}${p.id === r.hostId ? '<span class="host">Gastgeber</span>' : ''}</span>${status}<span class="wert">${r.punkte.get(p.id) || 0}</span></li>`;
+    return `<li>${avatarMitWappen(p, 13)}<span class="name"><span class="${nameKlasse(p).trim()}">${esc(p.name)}</span>${p.id === r.hostId ? '<span class="host">Gastgeber</span>' : ''}</span>${status}<span class="wert">${r.punkte.get(p.id) || 0}</span></li>`;
   }).join('');
 
   // Chat
@@ -1025,7 +1232,8 @@ const SPRINT_COUNTDOWN = 2;  // Sekunden vor der ersten Frage
 async function sprintStart(kategorie = 'flaggen') {
   if (!KATEGORIEN[kategorie]) kategorie = 'flaggen';
   zeige('sprint');
-  const s = { kategorie, punkte: 0, ende: 0, benutzt: new Set(), verpasst: [], laeuft: false, vorrat: [], frage: null };
+  const region = REGION_KATEGORIEN.includes(kategorie) && sprintRegion !== 'alle' ? sprintRegion : null;
+  const s = { kategorie, region, punkte: 0, ende: 0, benutzt: new Set(), verpasst: [], laeuft: false, vorrat: [], frage: null };
   sprint = s;
   $('sp-laeuft').hidden = false; $('sp-ende').hidden = true;
   $('sprint-punkte').textContent = '0';
@@ -1035,7 +1243,7 @@ async function sprintStart(kategorie = 'flaggen') {
   $('sprint-optionen').innerHTML = '';
   $('sprint-form').hidden = true; $('sprint-skip').hidden = true;
   $('sprint-eingabe').classList.remove('wackeln', 'richtig');
-  $('sprint-hinweis').textContent = `${KATEGORIEN[kategorie].name}: gleich geht's los`;
+  $('sprint-hinweis').textContent = `${KATEGORIEN[kategorie].name}${region ? ` (${REGIONEN_SPRINT[region]}, Übung)` : ''}: gleich geht's los`;
   $('sprint-bild').innerHTML = `<p class="countdown" id="sprint-countdown">${SPRINT_COUNTDOWN}</p>`;
   // Während des Countdowns schon Umrisse und die ersten Bilder laden
   const laden = kategorie === 'umrisse' || kategorie === 'gemischt' ? umrisseLaden() : Promise.resolve();
@@ -1056,7 +1264,7 @@ async function sprintStart(kategorie = 'flaggen') {
 
 function sprintZiehen() {
   const s = sprint;
-  const f = sprintFrage(s.kategorie, s.punkte + s.vorrat.length, s.benutzt);
+  const f = sprintFrage(s.kategorie, s.punkte + s.vorrat.length, s.benutzt, s.region);
   fragenVorladen([f]); // Bilder schon mal laden, damit es ohne Warten weitergeht
   s.vorrat.push(f);
 }
@@ -1114,10 +1322,23 @@ async function sprintEnde() {
   $('sprint-verpasst-titel').hidden = !s.verpasst.length;
   const rekordText = $('sprint-rekord');
   rekordText.textContent = kat.name;
+  $('sprint-ruhm').hidden = true;
+  if (s.region) {
+    rekordText.classList.remove('rekord-neu');
+    rekordText.textContent = `${kat.name}, ${REGIONEN_SPRINT[s.region]}: Übungsrunde. Rekorde und Ruhm gibt es mit „Alle“.`;
+    return;
+  }
   const alt = sprintRekord(s.kategorie);
+  $('sprint-ruhm').hidden = true;
   if (ich && online()) {
+    const vorher = ich.ruhm || 0;
     const neu = await sprintEintragen(s.punkte, s.kategorie);
     if (typeof neu === 'number') ich.rekorde = { ...(ich.rekorde || {}), [s.kategorie]: neu };
+    ruhmNachladen(vorher).then(plus => {
+      if (plus == null || plus <= 0 || sprint !== s) return;
+      ruhmChip($('sprint-ruhm'), plus);
+      setTimeout(ruhmPruefen, 1200);
+    });
   } else if (s.punkte > alt) {
     try { localStorage.setItem('quizbude.sprint.gast.' + s.kategorie, s.punkte); } catch { /* egal */ }
   }
@@ -1127,7 +1348,25 @@ async function sprintEnde() {
   if (s.punkte > alt && s.punkte > 0) setTimeout(() => konfetti(alt ? 3 : 2), 300);
 }
 
+// Region für Sprints in Flaggen, Umrisse, Hauptstädte (Übung)
+const REGION_KATEGORIEN = ['flaggen', 'umrisse', 'hauptstaedte'];
+const REGIONEN_SPRINT = { alle: 'Alle', europa: 'Europa', afrika: 'Afrika', asien: 'Asien', amerika: 'Amerika', ozeanien: 'Ozeanien' };
+let sprintRegion = (() => { try { return localStorage.getItem('quizbude.sprintRegion') || 'alle'; } catch { return 'alle'; } })();
+if (!REGIONEN_SPRINT[sprintRegion]) sprintRegion = 'alle';
+function sprintRegionZeichnen() {
+  $('sprint-region').innerHTML = Object.entries(REGIONEN_SPRINT).map(([k, n]) => `<button type="button" role="radio" class="umschalter-knopf${k === sprintRegion ? ' aktiv' : ''}" aria-checked="${k === sprintRegion}" data-r="${k}">${n}</button>`).join('');
+  document.querySelectorAll('#sprint-kacheln .kachel').forEach(el => el.classList.toggle('mit-region', sprintRegion !== 'alle' && REGION_KATEGORIEN.includes(el.dataset.k)));
+}
+
 function sprintAufbauen() {
+  sprintRegionZeichnen();
+  $('sprint-region').onclick = e => {
+    const b = e.target.closest('[data-r]');
+    if (!b) return;
+    sprintRegion = b.dataset.r;
+    try { localStorage.setItem('quizbude.sprintRegion', sprintRegion); } catch { /* egal */ }
+    sprintRegionZeichnen();
+  };
   $('sprint-form').onsubmit = e => {
     e.preventDefault();
     if (!sprint?.laeuft || !sprint.frage || sprint.frage.o) return;

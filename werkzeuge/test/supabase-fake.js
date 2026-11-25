@@ -5,6 +5,11 @@
     set(k, v) { localStorage.setItem(k, JSON.stringify(v)); },
   };
   const warte = (ms = 15) => new Promise(r => setTimeout(r, ms));
+  // Ruhm wie auf dem Server: aus der Statistik berechnet
+  const ruhmAus = p => (p.spiele || 0) * 10 + (p.richtig || 0) * 3 + (p.siege || 0) * 20 + (p.sprints || 0) * 4
+    + Math.max(p.sprint_rekord || 0, p.rekorde?.flaggen || 0)
+    + Object.entries(p.rekorde || {}).filter(([k]) => k !== 'flaggen').reduce((s, [, v]) => s + (Number(v) || 0), 0);
+  const mitRuhm = r => ({ ...r, ruhm: ruhmAus(r) + (r.ruhm_extra || 0), stil: r.stil || {} });
 
   function query(table) {
     const q = { table, filters: [], orderCol: null, lim: null, updateVals: null, single: false, head: false };
@@ -30,6 +35,7 @@
             L.set('fake.' + table, rows);
             return { data: null, error: null };
           }
+          if (table === 'profile') rows = rows.map(mitRuhm);
           rows = rows.filter(r => q.filters.every(f => f(r)));
           if (q.head) return { data: null, count: rows.length, error: null };
           if (q.orderCol) rows.sort((a, b) => (q.asc ? 1 : -1) * ((a[q.orderCol] > b[q.orderCol]) - (a[q.orderCol] < b[q.orderCol])));
@@ -134,8 +140,8 @@
           const laeufe = L.get('fake.laeufe', []).filter(x => x.k === k && (!a.p_seit || x.am >= a.p_seit));
           const best = new Map(); for (const x of laeufe) best.set(x.von, Math.max(best.get(x.von) || 0, x.w));
           const rows = a.p_seit
-            ? L.get('fake.profile', []).filter(r => best.get(r.id) > 0).map(r => ({ id: r.id, name: r.name, avatar: r.avatar, farbe: r.farbe, wert: best.get(r.id) })).sort((x, y) => y.wert - x.wert).slice(0, 15)
-            : L.get('fake.profile', []).filter(r => (r.rekorde?.[k] || 0) > 0).map(r => ({ id: r.id, name: r.name, avatar: r.avatar, farbe: r.farbe, wert: r.rekorde[k] })).sort((x, y) => y.wert - x.wert).slice(0, 15);
+            ? L.get('fake.profile', []).map(mitRuhm).filter(r => best.get(r.id) > 0).map(r => ({ id: r.id, name: r.name, avatar: r.avatar, farbe: r.farbe, ruhm: r.ruhm, stil: r.stil, wert: best.get(r.id) })).sort((x, y) => y.wert - x.wert).slice(0, 15)
+            : L.get('fake.profile', []).map(mitRuhm).filter(r => (r.rekorde?.[k] || 0) > 0).map(r => ({ id: r.id, name: r.name, avatar: r.avatar, farbe: r.farbe, ruhm: r.ruhm, stil: r.stil, wert: r.rekorde[k] })).sort((x, y) => y.wert - x.wert).slice(0, 15);
           return { data: rows, error: null };
         }
         if (name === 'spiel_loggen') L.set('fake.spiele', [{ ...a.p, am: new Date().toISOString() }, ...L.get('fake.spiele', [])]);

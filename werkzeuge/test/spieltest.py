@@ -112,7 +112,8 @@ async def main():
         await warte_phase(A, 'p-ende', 10000)
         await warte_phase(Bp, 'p-ende', 10000)
         await A.wait_for_timeout(1800)  # Punkte zählen hoch
-        pa = await A.inner_text('#podest'); pb = await Bp.inner_text('#podest')
+        ohne_du = "(() => { const k = document.getElementById('podest').cloneNode(true); k.querySelectorAll('.du').forEach(e => e.remove()); document.body.append(k); const t = k.innerText; k.remove(); return t; })()"
+        pa = await A.evaluate(ohne_du); pb = await Bp.evaluate(ohne_du)
         print('Podest A:', pa.replace('\n', ' ')); print('Podest B:', pb.replace('\n', ' '))
         assert pa == pb
         await A.screenshot(path='/tmp/t_ende.png')

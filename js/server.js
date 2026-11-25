@@ -1,5 +1,5 @@
-import { CONFIG } from './config.js?v=0.7.0';
-import { textPruefen } from './filter.js?v=0.7.0';
+import { CONFIG } from './config.js?v=0.8.0';
+import { textPruefen } from './filter.js?v=0.8.0';
 
 // ?sitzung=2 in der Adresse = zweites Konto im selben Browser (zum Testen mit zwei Tabs)
 const sitzung = new URLSearchParams(location.search).get('sitzung');
@@ -94,7 +94,7 @@ export async function sprintEintragen(wert, kategorie = 'flaggen') {
 
 export async function bestenliste(spalte) {
   const { data, error } = await sb.from('profile')
-    .select('id,name,avatar,farbe,spiele,siege,punkte,richtig,sprint_rekord,rekorde')
+    .select('id,name,avatar,farbe,ruhm,stil,spiele,siege,punkte,richtig,sprint_rekord,rekorde')
     .gt(spalte, 0).order(spalte, { ascending: false }).limit(15);
   if (error) throw new Error(uebersetzen(error));
   return data;
@@ -117,7 +117,7 @@ export async function spieleSeit(seit) {
 }
 
 export async function alleProfile() {
-  const { data, error } = await sb.from('profile').select('id,name,avatar,farbe').limit(1000);
+  const { data, error } = await sb.from('profile').select('id,name,avatar,farbe,ruhm,stil').limit(1000);
   if (error) throw new Error(uebersetzen(error));
   return data || [];
 }
