@@ -51,8 +51,10 @@ a { color: inherit; }
 :focus-visible { outline: 2px solid var(--sand); outline-offset: 3px; }
 ::selection { background: rgba(205,182,140,.35); }
 
-main { width: 100%; max-width: var(--breite); margin: 0 auto; padding: 28px 24px 130px; }
-.fuss { text-align: center; font-size: .78rem; color: var(--text-3); margin-top: 64px; }
+/* Seite mindestens bildschirmhoch, die Fußzeile sitzt immer ganz unten */
+main { position: relative; width: 100%; max-width: var(--breite); min-height: 100vh; min-height: 100dvh; margin: 0 auto; padding: 28px 24px 170px; }
+.fuss { position: absolute; left: 24px; right: 24px; bottom: 108px; margin: 0; text-align: center; font-size: .74rem; line-height: 1.5; color: var(--text-3); text-wrap: balance; }
+[data-ziel] { cursor: pointer; }
 
 /* ---------- Schriftzug als Bühnenbild ---------- */
 .buehnenbild { position: relative; }
@@ -173,6 +175,7 @@ label { display: grid; gap: 6px; font-weight: 600; font-size: .86rem; color: var
 .zeile.mitte { justify-content: center; flex-wrap: wrap; }
 .fehler { color: var(--rose); font-weight: 700; margin: 0; }
 .fehler:empty { display: none; }
+.fehler.info { color: var(--salbei); }
 .hinweis { color: var(--text-2); font-size: .92rem; }
 
 /* ---------- Tastenliste ---------- */
@@ -1262,6 +1265,11 @@ body[data-hg="joker"]::before { inset: -20%; animation: polarlicht-zug 26s ease-
 .dock-link { display: inline-flex; align-items: center; gap: 7px; }
 @media (min-width: 900px) {
   body { padding-left: 112px; }
+  main { padding-bottom: 58px; }
+  .fuss { bottom: 16px; font-size: .72rem; }
+  .dock-marke img { transition: transform .45s cubic-bezier(.3, 1.4, .5, 1); }
+  .dock-marke:hover img { transform: rotate(-12deg) scale(1.06); }
+  .dock-marke.dreht img { transform: rotate(-360deg) scale(.9); transition-duration: .4s; }
   .dock {
     left: 16px; top: 50%; bottom: auto; transform: translateY(-50%);
     flex-direction: column; gap: 6px; width: 88px; padding: 14px 8px;
@@ -1291,6 +1299,8 @@ body[data-hg="joker"]::before { inset: -20%; animation: polarlicht-zug 26s ease-
   body:has(#s-bude:not([hidden])) main { margin-left: max(0px, calc((100vw - 112px - 348px - var(--breite)) / 2)) !important; margin-right: 0 !important; }
 }
 @media (min-width: 900px) and (max-width: 1299px) { :root { --breite: 1080px; } }
+/* genug Platz: rechts gleich viel Rand wie links für die Leiste, dann steht der Inhalt in der Bildschirmmitte */
+@media (min-width: 1420px) { body { padding-right: 112px; } }
 
 @media (min-width: 900px) {
   .ruhm-mini { display: grid; justify-items: center; gap: 6px; width: 72px; padding: 10px 4px 8px; margin-top: 4px; border-radius: 18px; border-top: 1px solid var(--linie); transition: background-color .15s; }

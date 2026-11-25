@@ -1,25 +1,25 @@
-import { VERSION } from './config.js?v=0.9.3';
+import { VERSION } from './config.js?v=0.9.4';
 import {
   online, nameFehler, registrieren, anmelden, abmelden, sitzungHolen, profilLaden, profilSpeichern,
   bestenliste, spieleSeit, alleProfile, sprintEintragen, sprintBestenliste, rangVon, spielerAnzahl, spieleVon, sb,
-  adminAnmelden, istAdminName, konfigLaden,
-} from './server.js?v=0.9.3';
-import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.9.3';
-import { Raum, codeNeu, STANDARD, TIPPFEHLER_ABZUG } from './raum.js?v=0.9.3';
-import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.9.3';
+  adminAnmelden, istAdminName, konfigLaden, adminEinrichten, einrichtungOffen,
+} from './server.js?v=0.9.4';
+import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.9.4';
+import { Raum, codeNeu, STANDARD, TIPPFEHLER_ABZUG } from './raum.js?v=0.9.4';
+import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.9.4';
 import {
   KATEGORIEN, KATEGORIE_REIHE, SPRINT_REIHE, kategorieVon, optionSchluessel, richtigeWahl, umrisseDa, umrisseLaden,
   sprintFrage, pruefeFrage, fragenVorladen, kanon,
-} from './kategorien.js?v=0.9.3';
-import { LAENDER } from './laender.js?v=0.9.3';
-import { auswahlfeld } from './auswahlfeld.js?v=0.9.3';
-import { KATEGORIE_SYMBOL } from './symbole.js?v=0.9.3';
-import { konfetti } from './konfetti.js?v=0.9.3';
-import { karteBauen, karteLaden, auswerten } from './weltkarte.js?v=0.9.3';
+} from './kategorien.js?v=0.9.4';
+import { LAENDER } from './laender.js?v=0.9.4';
+import { auswahlfeld } from './auswahlfeld.js?v=0.9.4';
+import { KATEGORIE_SYMBOL } from './symbole.js?v=0.9.4';
+import { konfetti } from './konfetti.js?v=0.9.4';
+import { karteBauen, karteLaden, auswerten } from './weltkarte.js?v=0.9.4';
 import {
   RAENGE, BILDER, ARTEN, JOKER, ruhmInfo, stufeVon, stufeInfo, wappen, effektHtml, rahmenDeko, stilVon, istFrei, freiAb, neuFrei,
   belohnungName, rangVonId, symbol, symbolSvg, SCHWELLEN,
-} from './ruhm.js?v=0.9.3';
+} from './ruhm.js?v=0.9.4';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -166,11 +166,39 @@ function navigieren(ziel) {
   route();
 }
 
+// Interne Links ohne href: Chrome zeigt dann unten links keine Adresse an
+function linksZaehmen(wurzel) {
+  const liste = wurzel.matches?.('a[href^="#/"]') ? [wurzel] : wurzel.querySelectorAll?.('a[href^="#/"]') || [];
+  for (const a of liste) {
+    a.dataset.ziel = a.getAttribute('href');
+    a.removeAttribute('href');
+    a.setAttribute('role', 'link');
+    if (!a.hasAttribute('tabindex')) a.tabIndex = 0;
+  }
+}
+linksZaehmen(document.body);
+new MutationObserver(ms => { for (const m of ms) for (const n of m.addedNodes) if (n.nodeType === 1) linksZaehmen(n); })
+  .observe(document.body, { childList: true, subtree: true });
+
+function linkFolgen(a) {
+  // Klick aufs Logo: Seite frisch laden (außer mitten im Raum oder Sprint)
+  if (a.classList.contains('dock-marke') && !raum && !sprint) {
+    a.classList.add('dreht');
+    setTimeout(() => { history.replaceState({ qbTiefe: 0 }, '', '#/'); location.reload(); }, 380);
+    return;
+  }
+  navigieren(a.dataset.ziel);
+}
 document.addEventListener('click', e => {
-  const a = e.target.closest('a[href^="#/"]');
+  const a = e.target.closest('[data-ziel]');
   if (!a || e.defaultPrevented || e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
   e.preventDefault();
-  navigieren(a.getAttribute('href'));
+  linkFolgen(a);
+});
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  const a = e.target.closest?.('a[data-ziel]');
+  if (a) { e.preventDefault(); linkFolgen(a); }
 });
 
 // Klasse nach dem Wackeln wieder weg: sonst wackelt das Feld erneut, sobald es nach dem Ausblenden wieder sichtbar wird
@@ -198,6 +226,7 @@ function wahlBauen(avatarEl, farbEl, zustand) {
   return markieren;
 }
 
+let adminPwErst = null; // erste Eingabe beim Festlegen des Admin-Passworts
 function anmeldenAufbauen() {
   wahlBauen($('avatar-wahl'), $('farb-wahl'), auswahl);
 
@@ -236,11 +265,30 @@ function anmeldenAufbauen() {
     knopf.disabled = true;
     // „admin“ führt in den Admin-Bereich, das normale Konto bleibt dabei angemeldet
     if (!neu && istAdminName(name)) {
-      try { await adminAnmelden(passwort); f.passwort.value = ''; location.href = 'admin.html'; }
+      fehler.classList.remove('info');
+      try {
+        // Beim allerersten Mal legst du das Admin-Passwort selbst fest, zur Sicherheit zweimal eingeben
+        if (einrichtungOffen(await konfigLaden())) {
+          if (adminPwErst === null) {
+            adminPwErst = passwort; f.passwort.value = ''; f.passwort.focus();
+            fehler.classList.add('info');
+            fehler.textContent = 'Du legst gerade dein Admin-Passwort fest. Gib es zur Bestätigung nochmal ein.';
+            return;
+          }
+          if (adminPwErst !== passwort) {
+            adminPwErst = null; f.passwort.value = '';
+            throw new Error('Die beiden Eingaben waren nicht gleich. Gib das Passwort nochmal zweimal ein.');
+          }
+          await adminEinrichten(passwort);
+          adminPwErst = null;
+        }
+        await adminAnmelden(passwort); f.passwort.value = ''; location.href = 'admin.html';
+      }
       catch (err) { fehler.textContent = err.message; }
       finally { knopf.disabled = false; }
       return;
     }
+    adminPwErst = null;
     try {
       if (neu && (await konfigLaden()).neue_konten?.an === false) throw new Error('Gerade können keine neuen Konten angelegt werden.');
       const user = anmeldeModus === 'neu'

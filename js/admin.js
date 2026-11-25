@@ -1,6 +1,6 @@
-import { VERSION } from './config.js?v=0.9.3';
-import { adminClient, adminAnmelden } from './server.js?v=0.9.3';
-import { ruhmInfo, wappen, stilVon } from './ruhm.js?v=0.9.3';
+import { VERSION } from './config.js?v=0.9.4';
+import { adminClient, adminAnmelden } from './server.js?v=0.9.4';
+import { ruhmInfo, wappen, stilVon } from './ruhm.js?v=0.9.4';
 
 // Admin-Bereich: eigenes Konto, eigene Sitzung (quizbude.admin), alles läuft über admin_*-Funktionen mit Protokoll
 const $ = id => document.getElementById(id);
@@ -89,6 +89,10 @@ async function start() {
   }
   $('ad-login').hidden = false;
   $('ad-login-form').passwort.focus();
+  const { data: k } = await sb.from('config').select('wert').eq('schluessel', 'admin_einrichtung').maybeSingle();
+  if (k?.wert?.offen && new Date(k.wert.bis) > new Date()) {
+    $('ad-login-fehler').textContent = 'Das Admin-Passwort ist noch nicht festgelegt. Melde dich dafür einmal auf der Startseite mit dem Namen admin an.';
+  }
 }
 
 $('ad-login-form').onsubmit = async e => {

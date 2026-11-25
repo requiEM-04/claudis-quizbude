@@ -92,7 +92,7 @@ async def main():
         print('Kachel-Text danach:', await pg.inner_text('#sprint-kacheln .kachel[data-k=umrisse] .sk-rekord'))
         # Raus aus laufendem Sprint -> Auswahl, dann Zurück -> Bude
         await pg.click('#sprint-kacheln .kachel[data-k=flaggen]'); await pg.wait_for_function('quizbude.sprint && quizbude.sprint.laeuft', timeout=8000)
-        await pg.click('#s-sprint a.knopf[href="#/sprint"]'); await pg.wait_for_timeout(400)
+        await pg.click('#s-sprint a.knopf[data-ziel="#/sprint"]'); await pg.wait_for_timeout(400)
         print('Raus im Sprint ->', await pg.evaluate('location.hash'), '| Sprint läuft noch:', await pg.evaluate('!!quizbude.sprint'))
         await pg.go_back(); await pg.wait_for_timeout(400)
         print('dann Zurück ->', await pg.evaluate('location.hash'), '| Bude:', not await pg.evaluate('document.getElementById("s-bude").hidden'))
@@ -137,7 +137,7 @@ async def main():
         await pg.screenshot(path=f'{BILDER}/s_einst_klappliste.png')
         await pg.keyboard.press('Escape')
         await pg.screenshot(path=f'{BILDER}/s_raum_allein.png')
-        await pg.click('a.knopf[href="#/"]'); await pg.wait_for_timeout(400)
+        await pg.click('a.knopf[data-ziel="#/"]'); await pg.wait_for_timeout(400)
         print('Raus -> ', await pg.evaluate('location.hash'), '| Tiefe:', await pg.evaluate('history.state && history.state.qbTiefe'))
 
         # Direktlink in einen Raum: Zurück führt in die Bude

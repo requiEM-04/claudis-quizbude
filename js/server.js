@@ -1,5 +1,5 @@
-import { CONFIG } from './config.js?v=0.9.3';
-import { textPruefen } from './filter.js?v=0.9.3';
+import { CONFIG } from './config.js?v=0.9.4';
+import { textPruefen } from './filter.js?v=0.9.4';
 
 // ?sitzung=2 in der Adresse = zweites Konto im selben Browser (zum Testen mit zwei Tabs)
 const sitzung = new URLSearchParams(location.search).get('sitzung');
@@ -79,6 +79,13 @@ export async function adminAnmelden(passwort, client = adminClient()) {
   if (!ok) { await client.auth.signOut(); throw new Error('Das Konto hat keine Admin-Rechte.'); }
   return client;
 }
+
+// Einmalig: Admin-Passwort beim ersten Anmelden festlegen (nur solange die Einrichtung offen ist)
+export async function adminEinrichten(passwort) {
+  const { error } = await sb.rpc('admin_einrichten', { p_pw: passwort });
+  if (error) throw new Error(error.message);
+}
+export const einrichtungOffen = k => !!(k?.admin_einrichtung?.offen && new Date(k.admin_einrichtung.bis) > new Date());
 
 // Einstellungen für alle (Nachricht an alle, neue Konten an oder aus)
 export async function konfigLaden() {

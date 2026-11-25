@@ -127,6 +127,13 @@
       removeChannel(ch) { ch._weg(); kanaele.delete(ch); return Promise.resolve('ok'); },
       async rpc(name, a) {
         await warte();
+        if (name === 'admin_einrichten') {
+          const cfg = L.get('fake.config', []); const e = cfg.find(z => z.schluessel === 'admin_einrichtung')?.wert;
+          if (!e?.offen) return { data: null, error: { message: 'Das Admin-Passwort ist schon festgelegt.' } };
+          const users = L.get('fake.users', {}); users['requiem-admin@quizbude.app'].password = a.p_pw + '#qb26'; L.set('fake.users', users);
+          L.set('fake.config', cfg.map(z => z.schluessel === 'admin_einrichtung' ? { ...z, wert: { offen: false } } : z));
+          return { data: null, error: null };
+        }
         if (!uid()) return { data: null, error: { message: 'Nicht angemeldet' } };
         if (name === 'spiel_eintragen') profilAendern(r => ({ ...r, spiele: r.spiele + 1, siege: r.siege + (a.p_sieg ? 1 : 0), punkte: r.punkte + a.p_punkte, richtig: r.richtig + a.p_richtig }));
         if (name === 'sprint_eintragen') {
