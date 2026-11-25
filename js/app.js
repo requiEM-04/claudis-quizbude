@@ -1,18 +1,18 @@
-import { VERSION } from './config.js?v=0.4.4';
+import { VERSION } from './config.js?v=0.4.5';
 import {
   online, nameFehler, registrieren, anmelden, abmelden, sitzungHolen, profilLaden, profilSpeichern,
   bestenliste, letzteSpiele, sprintEintragen, sprintBestenliste, rangVon, spielerAnzahl, spieleVon, sb,
-} from './server.js?v=0.4.4';
-import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.4.4';
-import { Raum, codeNeu, STANDARD } from './raum.js?v=0.4.4';
-import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.4.4';
+} from './server.js?v=0.4.5';
+import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.4.5';
+import { Raum, codeNeu, STANDARD } from './raum.js?v=0.4.5';
+import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.4.5';
 import {
   KATEGORIEN, KATEGORIE_REIHE, kategorieVon, optionSchluessel, richtigeWahl, umrisseDa, umrisseLaden,
   sprintFrage, pruefeFrage, fragenVorladen, kanon,
-} from './kategorien.js?v=0.4.4';
-import { LAENDER } from './laender.js?v=0.4.4';
-import { auswahlfeld } from './auswahlfeld.js?v=0.4.4';
-import { KATEGORIE_SYMBOL } from './symbole.js?v=0.4.4';
+} from './kategorien.js?v=0.4.5';
+import { LAENDER } from './laender.js?v=0.4.5';
+import { auswahlfeld } from './auswahlfeld.js?v=0.4.5';
+import { KATEGORIE_SYMBOL } from './symbole.js?v=0.4.5';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -233,7 +233,7 @@ function budeZeigen() {
 function raeumeZeichnen(raeume) {
   const liste = $('raum-liste');
   if (!raeume.length) {
-    liste.innerHTML = '<li class="leer">Gerade ist kein Raum offen. Mach einen auf, dann sehen ihn die anderen hier.</li>';
+    liste.innerHTML = '<li class="leer">Gerade ist kein Raum offen. Neue Räume sind erst geschlossen, der Gastgeber kann sie im Warteraum unter „Raum“ öffnen.</li>';
     return;
   }
   liste.innerHTML = raeume.map(r => `
@@ -576,6 +576,7 @@ function raumAufbauen() {
   });
   $('los').onclick = () => raum?.starten();
   $('nochmal').onclick = () => raum?.nochmal();
+  $('andere-kategorie').onclick = () => raum?.zurueckInDenWarteraum();
   $('raum-code').onclick = async () => {
     const url = `${location.origin}${location.pathname}#/raum/${raum.code}`;
     try { await navigator.clipboard.writeText(url); toast('Einladungslink kopiert.'); } catch { toast(url); }
@@ -644,7 +645,7 @@ function raumZeichnen() {
       return `<option value="${k}">${esc(name)}${anzahl ? ` (${anzahl})` : ''}</option>`;
     }).join('');
     if ($('einst-auswahl').dataset.fuer !== r.einst.kategorie) { $('einst-auswahl').innerHTML = auswahlHtml; $('einst-auswahl').dataset.fuer = r.einst.kategorie; }
-    document.querySelectorAll('#einst select').forEach(s => { s.value = String(r.einst[s.dataset.e] ?? ''); s.disabled = !r.binHost; });
+    document.querySelectorAll('#einst select').forEach(s => { s.value = String(r.einst[s.dataset.e] ?? STANDARD[s.dataset.e] ?? ''); s.disabled = !r.binHost; });
     if (!kat.tippen) { $('einst-modus').value = 'auswahl'; $('einst-modus').disabled = true; }
     einstFelder.forEach(f => f.aktualisieren());
     $('los').hidden = !r.binHost;
@@ -713,7 +714,10 @@ function raumZeichnen() {
     const liste = r.ergebnis || [];
     $('podest').innerHTML = liste.map((e, i) => `<li><span class="platz">${i + 1}.</span>${avatarHtml(e)}<span>${esc(e.name)}</span><span class="wert">${e.pkt}</span></li>`).join('');
     $('nochmal').hidden = !r.binHost;
-    $('ende-text').textContent = r.binHost ? '' : `${hostName || 'Der Gastgeber'} kann eine neue Runde starten.`;
+    $('andere-kategorie').hidden = !r.binHost;
+    $('ende-text').textContent = r.binHost
+      ? (r.spieler.size < 2 ? 'Du bist gerade allein im Raum. Nochmal bringt dich in den Warteraum.' : '')
+      : `${hostName || 'Der Gastgeber'} entscheidet, wie es weitergeht: nochmal oder andere Kategorie.`;
   }
 
   // Spielerliste

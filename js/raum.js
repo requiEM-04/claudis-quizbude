@@ -1,9 +1,9 @@
-import { sb, spielEintragen, spielLoggen } from './server.js?v=0.4.4';
-import { fragenBauen, pruefeFrage, richtigeWahl, fragenVorladen, KATEGORIEN, kategorieVon } from './kategorien.js?v=0.4.4';
-import { lobbyMelden, lobbyAbmelden } from './lobby.js?v=0.4.4';
-import { chatErlaubt, textPruefen } from './filter.js?v=0.4.4';
+import { sb, spielEintragen, spielLoggen } from './server.js?v=0.4.5';
+import { fragenBauen, pruefeFrage, richtigeWahl, fragenVorladen, KATEGORIEN, kategorieVon } from './kategorien.js?v=0.4.5';
+import { lobbyMelden, lobbyAbmelden } from './lobby.js?v=0.4.5';
+import { chatErlaubt, textPruefen } from './filter.js?v=0.4.5';
 
-export const STANDARD = { kategorie: 'flaggen', runden: 10, zeit: 15, auswahl: 'bekannt', modus: 'tippen', chat: 'eingeschraenkt' };
+export const STANDARD = { kategorie: 'flaggen', runden: 10, zeit: 15, auswahl: 'alle', modus: 'tippen', chat: 'eingeschraenkt', sichtbar: 'geschlossen' };
 const COUNTDOWN = 3000;
 const AUFLOESUNG = 3500;
 
@@ -136,6 +136,8 @@ export class Raum {
 
   lobbyAktualisieren() {
     if (!this.binHost || this.weg) return;
+    // Geschlossene Räume tauchen nicht unter „Offene Räume" auf, rein kommt man nur mit Code oder Link
+    if ((this.einst.sichtbar || 'geschlossen') !== 'offen') { lobbyAbmelden(); return; }
     const kat = KATEGORIEN[this.einst.kategorie] || KATEGORIEN.flaggen;
     lobbyMelden({
       code: this.code, host: this.ich.name, spieler: Math.max(1, this.spieler.size),
@@ -326,7 +328,16 @@ export class Raum {
     });
   }
 
+  // Gleiche Einstellungen, neue Fragen, alle bleiben drin. Allein geht's zurück in den Warteraum.
   nochmal() {
+    if (!this.binHost) return;
+    clearTimeout(this.timer);
+    if (this.spieler.size >= 2) this.starten();
+    else this.senden('warten', {});
+  }
+
+  // Alle zusammen zurück in den Warteraum, dort sucht der Gastgeber eine neue Kategorie aus
+  zurueckInDenWarteraum() {
     if (!this.binHost) return;
     clearTimeout(this.timer);
     this.senden('warten', {});

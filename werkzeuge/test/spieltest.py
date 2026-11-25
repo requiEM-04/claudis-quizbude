@@ -121,8 +121,10 @@ async def main():
         print('Log:', await A.evaluate('JSON.parse(localStorage.getItem("fake.spiele")).length'))
 
         # Spiel 2: Auswahl-Modus + Gastgeber geht nach Frage 1
-        await A.click('#nochmal')
-        await warte_phase(A, 'p-warten')
+        print('B am Ende:', await Bp.inner_text('#ende-text'), '| Knöpfe bei B sichtbar:', await Bp.is_visible('#nochmal'), await Bp.is_visible('#andere-kategorie'))
+        await A.click('#andere-kategorie')
+        await warte_phase(A, 'p-warten'); await warte_phase(Bp, 'p-warten')
+        print('Andere Kategorie -> beide im Warteraum, Raum:', await A.inner_text('#raum-code'), '/', await Bp.inner_text('#raum-code'), '| Spieler:', len(await spieler(A)))
         await waehle(A, '#einst [data-e=modus]', 'auswahl')
         await A.wait_for_timeout(300)
         await A.click('#los')

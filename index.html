@@ -7,7 +7,7 @@
 <meta name="description" content="Flaggen raten in der Pause, allein oder zusammen im Raum.">
 <meta name="theme-color" content="#1B1E21">
 <link rel="icon" href="bilder/icon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="css/stil.css?v=0.4.4">
+<link rel="stylesheet" href="css/stil.css?v=0.4.5">
 </head>
 <body>
 <main>
@@ -171,6 +171,7 @@
               <label>Antworten <select data-e="modus" id="einst-modus"><option value="tippen">Selbst tippen</option><option value="auswahl">Zur Auswahl</option></select></label>
               <label>Runden <select data-e="runden"><option>5</option><option>10</option><option>15</option><option>20</option><option>30</option></select></label>
               <label>Zeit pro Frage <select data-e="zeit"><option value="10">10 s</option><option value="15">15 s</option><option value="20">20 s</option><option value="30">30 s</option></select></label>
+              <label>Raum <select data-e="sichtbar"><option value="geschlossen">Geschlossen, nur mit Code</option><option value="offen">Offen, in der Bude sichtbar</option></select></label>
               <label>Chat <select data-e="chat"><option value="eingeschraenkt">Eingeschränkt</option><option value="offen">Offen</option></select></label>
             </div>
             <button class="knopf haupt gross" id="los">Los geht's</button>
@@ -196,7 +197,7 @@
             <ol class="podest" id="podest"></ol>
             <div class="zeile mitte">
               <button class="knopf haupt" id="nochmal">Nochmal</button>
-              <a class="knopf zweit" href="#/sprint">Andere Kategorie</a>
+              <button class="knopf zweit" id="andere-kategorie">Andere Kategorie</button>
             </div>
             <p class="phase-text" id="ende-text"></p>
           </div>
@@ -271,7 +272,7 @@
 </nav>
 <div class="toast" id="toast" role="status" hidden></div>
 
-<script src="vendor/supabase.js?v=0.4.4"></script>
-<script type="module" src="js/app.js?v=0.4.4"></script>
+<script src="vendor/supabase.js?v=0.4.5"></script>
+<script type="module" src="js/app.js?v=0.4.5"></script>
 </body>
 </html>

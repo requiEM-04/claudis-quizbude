@@ -83,7 +83,7 @@ async def main():
                     await A.wait_for_timeout(300); await A.screenshot(path=f'{BILDER}/k_aufl_{art}.png'); gesehen.add(art)
             pa = (await A.inner_text('#podest')).replace('\n', ' '); pb = (await B.inner_text('#podest')).replace('\n', ' ')
             print(kat, 'Endstand:', pa, '| gleich bei B:', pa == pb, '| Arten:', sorted(gesehen) if gesehen else '')
-            await A.click('#nochmal'); await A.wait_for_selector('#p-warten:not([hidden])')
+            await A.click('#andere-kategorie'); await A.wait_for_selector('#p-warten:not([hidden])')
         await A.goto(BASIS + '#/'); await A.wait_for_timeout(800)
         print('Letzte:', (await A.inner_text('#letzte-liste')).split('\n')[0])
         print('FEHLER:', fehler)

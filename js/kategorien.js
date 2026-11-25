@@ -1,8 +1,8 @@
-import { LAENDER } from './laender.js?v=0.4.4';
-import { WISSEN, WISSEN_THEMEN } from './wissen.js?v=0.4.4';
-import { EMOJI, EMOJI_THEMEN } from './emoji.js?v=0.4.4';
-import { kanon } from './kanon.js?v=0.4.4';
-import { LAND, AUSWAHL, pruefe, mischen, flaggeUrl, abgleichen } from './abgleich.js?v=0.4.4';
+import { LAENDER } from './laender.js?v=0.4.5';
+import { WISSEN, WISSEN_THEMEN } from './wissen.js?v=0.4.5';
+import { EMOJI, EMOJI_THEMEN } from './emoji.js?v=0.4.5';
+import { kanon } from './kanon.js?v=0.4.5';
+import { LAND, AUSWAHL, pruefe, mischen, flaggeUrl, abgleichen } from './abgleich.js?v=0.4.5';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const zahl = n => n.toLocaleString('de-DE');
@@ -12,7 +12,7 @@ let UMRISSE = null;
 let umrisseLaeuft = null;
 export function umrisseLaden() {
   if (UMRISSE) return Promise.resolve(UMRISSE);
-  umrisseLaeuft ||= import('./umrisse.js?v=0.4.4').then(m => { UMRISSE = m.UMRISSE; return UMRISSE; });
+  umrisseLaeuft ||= import('./umrisse.js?v=0.4.5').then(m => { UMRISSE = m.UMRISSE; return UMRISSE; });
   return umrisseLaeuft;
 }
 export const umrisseDa = () => !!UMRISSE;
@@ -37,7 +37,7 @@ function stadtPruefen(text, l) {
 export const KATEGORIEN = {
   flaggen: {
     name: 'Flaggen', text: 'Land an der Flagge erkennen', tippen: true, zeit: 15, land: true,
-    auswahlen: LAENDER_AUSWAHL, standard: 'bekannt',
+    auswahlen: LAENDER_AUSWAHL, standard: 'alle',
     pool: a => laenderPool(a),
     frage: (l, mitOptionen) => ({ k: 'flaggen', c: l.code, ...(mitOptionen && { o: mischen([l.code, ...nachbarn(l).map(x => x.code)]) }) }),
     hinweis: () => 'Welches Land ist das?',
