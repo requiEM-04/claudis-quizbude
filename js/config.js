@@ -3,4 +3,4 @@ export const CONFIG = {
   url: 'https://jgvjjjiwfjxynbzjaxsg.supabase.co',
   key: 'sb_publishable_4aARmNWYUZMedwynENMXiA_l8WJQ-WC',
 };
-export const VERSION = '0.4.0';
+export const VERSION = '0.4.1';

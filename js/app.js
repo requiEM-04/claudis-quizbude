@@ -1,18 +1,18 @@
-import { VERSION } from './config.js?v=0.4.0';
+import { VERSION } from './config.js?v=0.4.1';
 import {
   online, nameFehler, registrieren, anmelden, abmelden, sitzungHolen, profilLaden, profilSpeichern,
   bestenliste, letzteSpiele, sprintEintragen, sprintBestenliste, rangVon, spielerAnzahl, spieleVon, sb,
-} from './server.js?v=0.4.0';
-import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.4.0';
-import { Raum, codeNeu, STANDARD } from './raum.js?v=0.4.0';
-import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.4.0';
+} from './server.js?v=0.4.1';
+import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.4.1';
+import { Raum, codeNeu, STANDARD } from './raum.js?v=0.4.1';
+import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.4.1';
 import {
   KATEGORIEN, KATEGORIE_REIHE, kategorieVon, optionSchluessel, richtigeWahl, umrisseDa, umrisseLaden,
   sprintFrage, pruefeFrage, fragenVorladen, kanon,
-} from './kategorien.js?v=0.4.0';
-import { LAENDER } from './laender.js?v=0.4.0';
-import { auswahlfeld } from './auswahlfeld.js?v=0.4.0';
-import { KATEGORIE_SYMBOL } from './symbole.js?v=0.4.0';
+} from './kategorien.js?v=0.4.1';
+import { LAENDER } from './laender.js?v=0.4.1';
+import { auswahlfeld } from './auswahlfeld.js?v=0.4.1';
+import { KATEGORIE_SYMBOL } from './symbole.js?v=0.4.1';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
