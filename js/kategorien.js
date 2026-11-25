@@ -1,8 +1,8 @@
-import { LAENDER } from './laender.js?v=0.3.0';
-import { WISSEN, WISSEN_THEMEN } from './wissen.js?v=0.3.0';
-import { EMOJI, EMOJI_THEMEN } from './emoji.js?v=0.3.0';
-import { kanon } from './kanon.js?v=0.3.0';
-import { LAND, AUSWAHL, pruefe, mischen, flaggeUrl, abgleichen } from './abgleich.js?v=0.3.0';
+import { LAENDER } from './laender.js?v=0.4.0';
+import { WISSEN, WISSEN_THEMEN } from './wissen.js?v=0.4.0';
+import { EMOJI, EMOJI_THEMEN } from './emoji.js?v=0.4.0';
+import { kanon } from './kanon.js?v=0.4.0';
+import { LAND, AUSWAHL, pruefe, mischen, flaggeUrl, abgleichen } from './abgleich.js?v=0.4.0';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const zahl = n => n.toLocaleString('de-DE');
@@ -12,7 +12,7 @@ let UMRISSE = null;
 let umrisseLaeuft = null;
 export function umrisseLaden() {
   if (UMRISSE) return Promise.resolve(UMRISSE);
-  umrisseLaeuft ||= import('./umrisse.js?v=0.3.0').then(m => { UMRISSE = m.UMRISSE; return UMRISSE; });
+  umrisseLaeuft ||= import('./umrisse.js?v=0.4.0').then(m => { UMRISSE = m.UMRISSE; return UMRISSE; });
   return umrisseLaeuft;
 }
 export const umrisseDa = () => !!UMRISSE;
@@ -36,7 +36,7 @@ function stadtPruefen(text, l) {
 
 export const KATEGORIEN = {
   flaggen: {
-    name: 'Flaggen', text: 'Land an der Flagge erkennen', tippen: true, zeit: 15,
+    name: 'Flaggen', text: 'Land an der Flagge erkennen', tippen: true, zeit: 15, land: true,
     auswahlen: LAENDER_AUSWAHL, standard: 'bekannt',
     pool: a => laenderPool(a),
     frage: (l, mitOptionen) => ({ k: 'flaggen', c: l.code, ...(mitOptionen && { o: mischen([l.code, ...nachbarn(l).map(x => x.code)]) }) }),
@@ -46,10 +46,11 @@ export const KATEGORIEN = {
     pruefe: (text, f) => pruefe(text, f.c),
     richtig: (key, f) => key === f.c,
     loesung: f => LAND[f.c].name,
+    kurz: f => `<img src="${flaggeUrl(f.c)}" alt=""><span>${esc(LAND[f.c].name)}</span>`,
   },
 
   umrisse: {
-    name: 'Umrisse', text: 'Land an seiner Form erkennen', tippen: true, zeit: 15,
+    name: 'Umrisse', text: 'Land an seiner Form erkennen', tippen: true, zeit: 15, land: true,
     auswahlen: LAENDER_AUSWAHL, standard: 'bekannt',
     pool: a => laenderPool(a, l => l.umriss),
     frage: (l, mitOptionen) => ({ k: 'umrisse', c: l.code, ...(mitOptionen && { o: mischen([l.code, ...nachbarn(l, x => x.umriss).map(x => x.code)]) }) }),
@@ -62,10 +63,11 @@ export const KATEGORIEN = {
     richtig: (key, f) => key === f.c,
     loesung: f => LAND[f.c].name,
     nachher: f => `<img class="info-flagge" src="${flaggeUrl(f.c)}" alt="">`,
+    kurz: f => `${UMRISSE ? `<svg class="kurz-umriss" viewBox="0 0 100 100" aria-hidden="true"><path d="${UMRISSE[f.c]}" fill-rule="evenodd"/></svg>` : ''}<span>${esc(LAND[f.c].name)}</span>`,
   },
 
   hauptstaedte: {
-    name: 'Hauptstädte', text: 'Wie heißt die Hauptstadt?', tippen: true, zeit: 15,
+    name: 'Hauptstädte', text: 'Wie heißt die Hauptstadt?', tippen: true, zeit: 15, land: true,
     auswahlen: LAENDER_AUSWAHL, standard: 'bekannt',
     pool: a => laenderPool(a, l => l.stadt),
     frage: (l, mitOptionen) => ({ k: 'hauptstaedte', c: l.code, ...(mitOptionen && { o: mischen([l.code, ...nachbarn(l, x => x.stadt).map(x => x.code)]) }) }),
@@ -75,10 +77,11 @@ export const KATEGORIEN = {
     pruefe: (text, f) => stadtPruefen(text, LAND[f.c]),
     richtig: (key, f) => key === f.c,
     loesung: f => LAND[f.c].stadt,
+    kurz: f => `<img src="${flaggeUrl(f.c)}" alt=""><span>${esc(LAND[f.c].name)}: <b>${esc(LAND[f.c].stadt)}</b></span>`,
   },
 
   groesser: {
-    name: 'Größer oder kleiner', text: 'Welches Land ist größer?', tippen: false, zeit: 10,
+    name: 'Größer oder kleiner', text: 'Welches Land ist größer?', tippen: false, zeit: 10, land: true,
     auswahlen: LAENDER_AUSWAHL, standard: 'bekannt',
     pool: a => laenderPool(a),
     // zwei Länder, die sich deutlich genug unterscheiden
@@ -95,6 +98,7 @@ export const KATEGORIEN = {
     richtig: (key, f) => key === groesseres(f),
     loesung: f => `${LAND[groesseres(f)].name} ist größer`,
     info: f => { const [g, k] = groesseres(f) === f.c ? [f.c, f.d] : [f.d, f.c]; return `${LAND[g].name} hat ${zahl(LAND[g].flaeche)} km², ${LAND[k].name} ${zahl(LAND[k].flaeche)} km².`; },
+    kurz: f => { const g = groesseres(f), k = g === f.c ? f.d : f.c; return `<span><b>${esc(LAND[g].name)}</b> ist größer als ${esc(LAND[k].name)}</span>`; },
   },
 
   wissen: {
@@ -110,6 +114,7 @@ export const KATEGORIEN = {
     richtig: (key, f) => f.o[Number(key)] === WISSEN[f.n].a,
     loesung: f => WISSEN[f.n].a,
     info: f => WISSEN[f.n].i || '',
+    kurz: f => `<span class="kurz-frage">${esc(WISSEN[f.n].f)}</span><b>${esc(WISSEN[f.n].a)}</b>`,
   },
 
   emoji: {
@@ -127,6 +132,7 @@ export const KATEGORIEN = {
     pruefe: () => 'falsch',
     richtig: (key, f) => f.o[Number(key)] === EMOJI[f.n].a,
     loesung: f => EMOJI[f.n].a,
+    kurz: f => `<span class="kurz-emoji">${EMOJI[f.n].e}</span><b>${esc(EMOJI[f.n].a)}</b>`,
   },
 
   gemischt: {
@@ -138,6 +144,21 @@ export const KATEGORIEN = {
 const groesseres = f => (LAND[f.c].flaeche >= LAND[f.d].flaeche ? f.c : f.d);
 
 export const KATEGORIE_REIHE = ['flaggen', 'umrisse', 'hauptstaedte', 'groesser', 'wissen', 'emoji', 'gemischt'];
+export const ARTEN = ['flaggen', 'umrisse', 'hauptstaedte', 'groesser', 'wissen', 'emoji'];
+
+// Eine einzelne Frage für den Sprint. Länder-Kategorien fangen leicht an und werden mit jedem Treffer schwerer.
+export function sprintFrage(kategorie, stand, benutzt) {
+  const k = kategorie === 'gemischt' ? ARTEN[Math.floor(Math.random() * ARTEN.length)] : kategorie;
+  const kat = KATEGORIEN[k];
+  const leicht = kat.land && (stand < 8 || (stand < 16 && Math.random() < 0.5));
+  const id = x => `${k}:${x.code ?? x.n}`;
+  let pool = kat.pool(leicht ? 'bekannt' : kat.land ? 'alle' : 'alle').filter(x => !benutzt.has(id(x)));
+  if (!pool.length) pool = kat.pool('alle').filter(x => !benutzt.has(id(x)));
+  if (!pool.length) { for (const b of [...benutzt]) if (b.startsWith(k + ':')) benutzt.delete(b); pool = kat.pool('alle'); }
+  const x = pool[Math.floor(Math.random() * pool.length)];
+  benutzt.add(id(x));
+  return kat.frage(x, !kat.tippen || kategorie === 'gemischt');
+}
 
 export function fragenBauen({ kategorie = 'flaggen', auswahl, runden, modus }) {
   if (kategorie === 'gemischt') {

@@ -40,6 +40,13 @@ async def registrieren(pg, name, avatar):
     await pg.click('#anmelde-knopf')
     await pg.wait_for_selector('#s-bude:not([hidden])', timeout=5000)
 
+async def waehle(pg, sel, wert):
+    # eigene Klappliste: Knopf öffnen, dann den Eintrag mit dem passenden Index anklicken
+    i = await pg.eval_on_selector(sel, '(e, w) => [...e.options].findIndex(o => o.value === w)', wert)
+    assert i >= 0, (sel, wert)
+    await pg.click(f'{sel} + .feld .feld-knopf')
+    await pg.click(f'{sel} + .feld li[data-i="{i}"]')
+
 async def main():
     async with async_playwright() as p:
         b = await p.chromium.launch()
@@ -55,9 +62,9 @@ async def main():
         print('Lobby:', (await B.inner_text('#raum-liste')).replace('\n', ' | '))
         await B.click('#raum-liste a'); await B.wait_for_selector('#p-warten:not([hidden])')
         for kat in ['gemischt', 'flaggen', 'umrisse', 'hauptstaedte', 'groesser', 'wissen', 'emoji']:
-            await A.select_option('#einst-kategorie', kat); await A.wait_for_timeout(300)
-            await A.select_option('#einst [data-e=runden]', '10' if kat == 'gemischt' else '5')
-            await A.select_option('#einst [data-e=zeit]', '10'); await A.wait_for_timeout(300)
+            await waehle(A, '#einst-kategorie', kat); await A.wait_for_timeout(300)
+            await waehle(A, '#einst [data-e=runden]', '10' if kat == 'gemischt' else '5')
+            await waehle(A, '#einst [data-e=zeit]', '10'); await A.wait_for_timeout(300)
             if kat == 'gemischt': await A.screenshot(path=f'{BILDER}/k_warten.png')
             print(kat, 'B sieht:', await B.eval_on_selector('#einst-kategorie', 'e => e.value'), '/', await B.eval_on_selector('#einst-auswahl', 'e => e.value'), '/ modus aus:', await B.eval_on_selector('#einst-modus', 'e => e.value'))
             await A.click('#los')

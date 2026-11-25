@@ -7,9 +7,13 @@
   const warte = (ms = 15) => new Promise(r => setTimeout(r, ms));
 
   function query(table) {
-    const q = { table, filters: [], orderCol: null, lim: null, updateVals: null, single: false };
+    const q = { table, filters: [], orderCol: null, lim: null, updateVals: null, single: false, head: false };
     const api = {
-      select() { return api; },
+      select(_, o) { if (o?.head) q.head = true; return api; },
+      contains(c, werte) {
+        q.filters.push(r => werte.every(w => (r[c] || []).some(x => Object.entries(w).every(([k, v]) => x[k] === v))));
+        return api;
+      },
       eq(c, v) { q.filters.push(r => r[c] === v); return api; },
       gt(c, v) { q.filters.push(r => (r[c] || 0) > v); return api; },
       order(c, o) { q.orderCol = c; q.asc = o?.ascending; return api; },
@@ -26,6 +30,7 @@
             return { data: null, error: null };
           }
           rows = rows.filter(r => q.filters.every(f => f(r)));
+          if (q.head) return { data: null, count: rows.length, error: null };
           if (q.orderCol) rows.sort((a, b) => (q.asc ? 1 : -1) * ((a[q.orderCol] > b[q.orderCol]) - (a[q.orderCol] < b[q.orderCol])));
           if (q.lim) rows = rows.slice(0, q.lim);
           return { data: q.single ? (rows[0] || null) : rows, error: null };
@@ -52,7 +57,8 @@
         users[email] = { id, password };
         L.set('fake.users', users);
         const m = options.data;
-        L.set('fake.profile', [...L.get('fake.profile', []), { id, name: m.name, avatar: m.avatar, farbe: m.farbe, spiele: 0, siege: 0, punkte: 0, richtig: 0, sprints: 0, sprint_rekord: 0 }]);
+        const jetzt = new Date().toISOString();
+        L.set('fake.profile', [...L.get('fake.profile', []), { id, name: m.name, avatar: m.avatar, farbe: m.farbe, spiele: 0, siege: 0, punkte: 0, richtig: 0, sprints: 0, sprint_rekord: 0, rekorde: {}, erstellt: jetzt, zuletzt: jetzt }]);
         const session = { user: { id } };
         L.set(sk, session);
         return { data: { session, user: session.user }, error: null };
@@ -115,7 +121,16 @@
         await warte();
         if (!uid()) return { data: null, error: { message: 'Nicht angemeldet' } };
         if (name === 'spiel_eintragen') profilAendern(r => ({ ...r, spiele: r.spiele + 1, siege: r.siege + (a.p_sieg ? 1 : 0), punkte: r.punkte + a.p_punkte, richtig: r.richtig + a.p_richtig }));
-        if (name === 'sprint_eintragen') { let rek; profilAendern(r => { r.sprint_rekord = Math.max(r.sprint_rekord, a.p_wert); rek = r.sprint_rekord; return r; }); return { data: rek, error: null }; }
+        if (name === 'sprint_eintragen') {
+          const k = a.p_kategorie || 'flaggen'; let rek;
+          profilAendern(r => { r.sprints++; if (k === 'flaggen') r.sprint_rekord = Math.max(r.sprint_rekord, a.p_wert); r.rekorde = { ...(r.rekorde || {}), [k]: Math.max(r.rekorde?.[k] || 0, a.p_wert) }; rek = r.rekorde[k]; return r; });
+          return { data: rek, error: null };
+        }
+        if (name === 'sprint_bestenliste') {
+          const k = a.p_kategorie;
+          const rows = L.get('fake.profile', []).filter(r => (r.rekorde?.[k] || 0) > 0).map(r => ({ id: r.id, name: r.name, avatar: r.avatar, farbe: r.farbe, wert: r.rekorde[k] })).sort((x, y) => y.wert - x.wert).slice(0, 15);
+          return { data: rows, error: null };
+        }
         if (name === 'spiel_loggen') L.set('fake.spiele', [{ ...a.p, am: new Date().toISOString() }, ...L.get('fake.spiele', [])]);
         return { data: null, error: null };
       },

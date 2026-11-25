@@ -1,5 +1,6 @@
 // Erzeugt js/laender.js (Namen, Antworten, Hauptstädte, Fläche), js/umrisse.js (Silhouetten) und kopiert die Flaggen.
-// Aufruf (Ordner mit node_modules von flag-icons + world-countries als Argument):
+// Flaggen: svg-country-flags (gemeinfrei) in ihren echten Seitenverhältnissen.
+// Aufruf (Ordner mit node_modules von svg-country-flags + world-countries als Argument):
 //   node werkzeuge/daten_bauen.mjs /pfad/zu/deps
 import fs from 'node:fs';
 import path from 'node:path';
@@ -10,7 +11,7 @@ const deps = process.argv[2];
 const repo = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
 const require = createRequire(path.join(deps, 'package.json'));
 const world = require('world-countries');
-const flagDir = path.join(deps, 'node_modules/flag-icons/flags/4x3');
+const flagDir = path.join(deps, 'node_modules/svg-country-flags/svg');
 const geoDir = path.join(deps, 'node_modules/world-countries/data');
 
 // Zusätzliche Antworten, die Leute in der Pause wirklich tippen
@@ -135,6 +136,26 @@ function umriss(cca3) {
   return d.replace(/\.0(?=[ LMZ])/g, '');
 }
 
+// ---------- Flaggen ----------
+// viewBox behalten, feste Höhe 400 und passende Breite setzen: so skaliert jede Flagge sauber und behält ihr Format
+function flaggeKopieren(code) {
+  let svg = fs.readFileSync(path.join(flagDir, code.toLowerCase() + '.svg'), 'utf8');
+  const kopf = svg.match(/<svg\b[^>]*>/)[0];
+  const vb = kopf.match(/viewBox="([^"]+)"/);
+  let w, h, neuerKopf = kopf;
+  if (vb) {
+    [, , w, h] = vb[1].trim().split(/[\s,]+/).map(Number);
+  } else {
+    w = parseFloat(kopf.match(/\bwidth="([\d.]+)/)[1]); h = parseFloat(kopf.match(/\bheight="([\d.]+)/)[1]);
+    neuerKopf = neuerKopf.replace('<svg', `<svg viewBox="0 0 ${w} ${h}"`);
+  }
+  const verhaeltnis = w / h;
+  neuerKopf = neuerKopf.replace(/\s(width|height)="[^"]*"/g, '').replace('<svg', `<svg width="${Math.round(400 * verhaeltnis)}" height="400"`);
+  svg = svg.replace(kopf, neuerKopf);
+  fs.writeFileSync(path.join(repo, 'flaggen', code.toLowerCase() + '.svg'), svg);
+  return Math.round(verhaeltnis * 1000) / 1000;
+}
+
 // ---------- Länderliste ----------
 const liste = pool.map(c => {
   const code = c.cca2;
@@ -174,14 +195,14 @@ if (fehlt.length) throw new Error('Bekannt-Liste ohne Flagge: ' + fehlt);
 fs.mkdirSync(path.join(repo, 'flaggen'), { recursive: true });
 const umrisse = {};
 for (const l of liste) {
-  fs.copyFileSync(path.join(flagDir, l.code.toLowerCase() + '.svg'), path.join(repo, 'flaggen', l.code.toLowerCase() + '.svg'));
+  l.v = flaggeKopieren(l.code);
   if (l.flaeche >= 2000) { const d = umriss(l.cca3); if (d) { umrisse[l.code] = d; l.umriss = true; } }
   delete l.cca3;
   if (!l.stadt) { delete l.stadt; delete l.stadtAntworten; }
 }
 
 const kopf = '// Automatisch erzeugt von werkzeuge/daten_bauen.mjs – nicht von Hand ändern.\n'
-  + '// Länderdaten und Umrisse: world-countries (ODbL), Flaggen: flag-icons (MIT).\n';
+  + '// Länderdaten und Umrisse: world-countries (ODbL), Flaggen: svg-country-flags (gemeinfrei).\n';
 fs.writeFileSync(path.join(repo, 'js/laender.js'), kopf + 'export const LAENDER = ' + JSON.stringify(liste) + ';\n');
 // kleine Vorschau für die Kategorie-Kachel
 fs.writeFileSync(path.join(repo, 'bilder/umriss-vorschau.svg'), `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="${umrisse.IT}" fill="#CDB68C" fill-rule="evenodd"/></svg>\n`);

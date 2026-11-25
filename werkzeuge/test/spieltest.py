@@ -38,6 +38,13 @@ async def tippen(pg, text):
 async def spieler(pg):
     return await pg.eval_on_selector_all('#spieler-liste li', 'els => els.map(e => e.innerText.replace(/\\s+/g, " ").trim())')
 
+async def waehle(pg, sel, wert):
+    # eigene Klappliste: Knopf öffnen, dann den Eintrag mit dem passenden Index anklicken
+    i = await pg.eval_on_selector(sel, '(e, w) => [...e.options].findIndex(o => o.value === w)', wert)
+    assert i >= 0, (sel, wert)
+    await pg.click(f'{sel} + .feld .feld-knopf')
+    await pg.click(f'{sel} + .feld li[data-i="{i}"]')
+
 async def main():
     async with async_playwright() as p:
         b = await p.chromium.launch()
@@ -58,11 +65,19 @@ async def main():
         await Bp.screenshot(path='/tmp/t_lobby.png')
         await Bp.click('#raum-liste a')
         await warte_phase(Bp, 'p-warten')
-        await A.select_option('#einst [data-e=runden]', '5')
-        await A.select_option('#einst [data-e=zeit]', '10')
+        await waehle(A, '#einst [data-e=runden]', '5')
+        await waehle(A, '#einst [data-e=zeit]', '10')
         await Bp.wait_for_timeout(400)
         print('B sieht Runden:', await Bp.eval_on_selector('#einst [data-e=runden]', 'e => e.value + " disabled=" + e.disabled'))
         print('Spieler A:', await spieler(A))
+        # Chat: eingeschränkt (Standard) blockt Grobes, Hass immer
+        for t in ['Moin zusammen', 'du Hurensohn', 'n e g a']:
+            await Bp.fill('#chat-eingabe', t); await Bp.press('#chat-eingabe', 'Enter'); await Bp.wait_for_timeout(250)
+        await waehle(A, '#einst [data-e=chat]', 'offen'); await A.wait_for_timeout(300)
+        for t in ['du Hurensohn', 'Neger']:
+            await Bp.fill('#chat-eingabe', t); await Bp.press('#chat-eingabe', 'Enter'); await Bp.wait_for_timeout(250)
+        print('Chat bei A:', await A.eval_on_selector_all('#chat-liste li:not(.system)', 'els => els.map(e => e.innerText)'))
+        await waehle(A, '#einst [data-e=chat]', 'eingeschraenkt')
         await A.screenshot(path='/tmp/t_warten.png')
 
         # Spiel 1: tippen
@@ -80,6 +95,8 @@ async def main():
                 await tippen(A, NAME[c]); await A.wait_for_timeout(500)
                 await tippen(Bp, 'Atlantis'); await Bp.wait_for_timeout(300)
                 print('B nach falsch:', await Bp.inner_text('#rueckmeldung'))
+                await tippen(Bp, 'Neger'); await Bp.wait_for_timeout(300)
+                print('Falschantworten rechts bei A:', await A.eval_on_selector_all('#chat-liste li.daneben', 'els => els.map(e => e.innerText.replace(/\\s+/g, " "))'))
                 await A.screenshot(path='/tmp/t_frage.png')
                 await tippen(Bp, NAME[c].lower())
             elif i == 1:
@@ -106,7 +123,7 @@ async def main():
         # Spiel 2: Auswahl-Modus + Gastgeber geht nach Frage 1
         await A.click('#nochmal')
         await warte_phase(A, 'p-warten')
-        await A.select_option('#einst [data-e=modus]', 'auswahl')
+        await waehle(A, '#einst [data-e=modus]', 'auswahl')
         await A.wait_for_timeout(300)
         await A.click('#los')
         await warte_phase(Bp, 'p-frage', 8000)
@@ -115,6 +132,7 @@ async def main():
         await Bp.click(f'#optionen button[data-c="{c}"]')
         await A.click('#optionen button:not([data-c="' + c + '"])')
         await Bp.wait_for_timeout(300)
+        print('Falsch geklickt rechts bei B:', await Bp.eval_on_selector_all('#chat-liste li.daneben', 'els => els.map(e => e.innerText.replace(/\\s+/g, " ")).slice(-1)'))
         await Bp.screenshot(path='/tmp/t_auswahl.png')
         print('Status B-Liste:', await spieler(Bp))
         await A.wait_for_function('document.getElementById("aufgeloest").textContent.length > 0', timeout=15000)

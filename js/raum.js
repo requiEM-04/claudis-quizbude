@@ -1,8 +1,9 @@
-import { sb, spielEintragen, spielLoggen } from './server.js?v=0.3.0';
-import { fragenBauen, pruefeFrage, richtigeWahl, fragenVorladen, KATEGORIEN } from './kategorien.js?v=0.3.0';
-import { lobbyMelden, lobbyAbmelden } from './lobby.js?v=0.3.0';
+import { sb, spielEintragen, spielLoggen } from './server.js?v=0.4.0';
+import { fragenBauen, pruefeFrage, richtigeWahl, fragenVorladen, KATEGORIEN, kategorieVon } from './kategorien.js?v=0.4.0';
+import { lobbyMelden, lobbyAbmelden } from './lobby.js?v=0.4.0';
+import { chatErlaubt, textPruefen } from './filter.js?v=0.4.0';
 
-export const STANDARD = { kategorie: 'flaggen', runden: 10, zeit: 15, auswahl: 'bekannt', modus: 'tippen' };
+export const STANDARD = { kategorie: 'flaggen', runden: 10, zeit: 15, auswahl: 'bekannt', modus: 'tippen', chat: 'eingeschraenkt' };
 const COUNTDOWN = 3000;
 const AUFLOESUNG = 3500;
 
@@ -12,6 +13,15 @@ export function codeNeu() {
 }
 
 // Schnell sein lohnt sich, wer als Erstes trifft, kriegt 20 obendrauf
+// Klartext einer Antwortmöglichkeit (die Optionen liegen als escaptes HTML vor)
+function wahlText(frage, key) {
+  try {
+    return String(kategorieVon(frage).option(String(key), frage))
+      .replace(/<[^>]*>/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'").replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim();
+  } catch { return ''; }
+}
+
 export function punkteFuer(ms, dauer, rang) {
   const rest = Math.max(0, 1 - ms / dauer);
   return 30 + Math.round(70 * rest) + (rang === 1 ? 20 : 0);
@@ -133,6 +143,15 @@ export class Raum {
     });
   }
 
+  // Falschantwort für die Spalte rechts: Name plus das, was getippt oder angeklickt wurde
+  danebenZeile(id, text) {
+    const t = String(text || '').trim().slice(0, 40);
+    if (!t || !chatErlaubt(t, this.einst.chat || 'eingeschraenkt')) return;
+    const wer = this.bekannt.get(id);
+    this.chat.push({ daneben: true, id, name: wer?.name || 'Jemand', avatar: wer?.avatar, text: t });
+    if (this.chat.length > 80) this.chat.shift();
+  }
+
   systemZeile(text) {
     this.chat.push({ system: true, text });
     if (this.chat.length > 80) this.chat.shift();
@@ -197,7 +216,11 @@ export class Raum {
       case 'fehl':
         if (!this.binHost || this.phase !== 'frage' || p.i !== this.idx || this.vergeben.has(p.von)) break;
         this.vergeben.add(p.von);
-        this.senden('gesperrt', { i: p.i, id: p.von });
+        this.senden('gesperrt', { i: p.i, id: p.von, wahl: p.wahl });
+        break;
+      case 'daneben':
+        if (this.phase !== 'frage' || p.i !== this.idx) break;
+        this.danebenZeile(p.von, p.text);
         break;
       case 'geloest':
         if (p.i !== this.idx || this.geloest.has(p.id)) break;
@@ -208,8 +231,9 @@ export class Raum {
         if (this.binHost) this.allePruefen();
         break;
       case 'gesperrt':
-        if (p.i !== this.idx) break;
+        if (p.i !== this.idx || this.gesperrt.has(p.id)) break;
         this.gesperrt.add(p.id);
+        if (p.wahl != null && this.frage) this.danebenZeile(p.id, wahlText(this.frage, p.wahl));
         if (p.id === this.ich.id) this.meinStatus = 'gesperrt';
         if (this.binHost) this.allePruefen();
         break;
@@ -227,6 +251,7 @@ export class Raum {
         if (this.binHost) this.lobbyAktualisieren();
         break;
       case 'chat':
+        if (!chatErlaubt(String(p.text), this.einst.chat || 'eingeschraenkt')) break; // auch fremde Clients können nichts durchschmuggeln
         this.chat.push({ id: p.von, name, avatar: this.bekannt.get(p.von)?.avatar, text: String(p.text).slice(0, 200) });
         if (this.chat.length > 80) this.chat.shift();
         break;
@@ -247,7 +272,7 @@ export class Raum {
   }
 
   starten() {
-    if (!this.binHost) return;
+    if (!this.binHost || this.spieler.size < 2) return; // gespielt wird ab 2 Leuten
     clearTimeout(this.timer);
     const fragen = fragenBauen(this.einst);
     this.senden('start', { einst: this.einst, fragen, spielId: crypto.randomUUID() });
@@ -314,6 +339,10 @@ export class Raum {
     if (ergebnis === 'richtig') {
       this.meinStatus = 'wartet';
       this.senden('treffer', { i: this.idx, ms: performance.now() - this.start });
+    } else if (ergebnis === 'falsch') {
+      // knappe Versuche bleiben privat, die würden die Lösung fast verraten
+      const t = text.trim().slice(0, 40);
+      this.senden('daneben', { i: this.idx, text: t }); // kommt über den Kanal auch bei mir selbst an
     }
     return ergebnis;
   }
@@ -323,14 +352,18 @@ export class Raum {
     const ms = performance.now() - this.start;
     if (richtigeWahl(this.frage, code)) { this.meinStatus = 'wartet'; this.senden('treffer', { i: this.idx, ms }); return 'richtig'; }
     this.meinStatus = 'gesperrt';
-    this.senden('fehl', { i: this.idx });
+    this.senden('fehl', { i: this.idx, wahl: code });
     this.meldung();
     return 'falsch';
   }
 
+  // true = gesendet, sonst der Grund ('hass' oder 'grob')
   chatten(text) {
-    const t = text.trim();
-    if (t) this.senden('chat', { text: t.slice(0, 200) });
+    const t = text.trim().slice(0, 200);
+    if (!t) return true;
+    if (!chatErlaubt(t, this.einst.chat || 'eingeschraenkt')) return textPruefen(t);
+    this.senden('chat', { text: t });
+    return true;
   }
 
   eintragen() {

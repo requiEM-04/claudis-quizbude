@@ -1,15 +1,18 @@
-import { VERSION } from './config.js?v=0.3.0';
+import { VERSION } from './config.js?v=0.4.0';
 import {
-  online, nameFehler, registrieren, anmelden, abmelden, sitzungHolen, profilLaden,
-  bestenliste, letzteSpiele, sprintEintragen, sb,
-} from './server.js?v=0.3.0';
-import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.3.0';
-import { Raum, codeNeu, STANDARD } from './raum.js?v=0.3.0';
-import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.3.0';
+  online, nameFehler, registrieren, anmelden, abmelden, sitzungHolen, profilLaden, profilSpeichern,
+  bestenliste, letzteSpiele, sprintEintragen, sprintBestenliste, rangVon, spielerAnzahl, spieleVon, sb,
+} from './server.js?v=0.4.0';
+import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.4.0';
+import { Raum, codeNeu, STANDARD } from './raum.js?v=0.4.0';
+import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.4.0';
 import {
-  KATEGORIEN, KATEGORIE_REIHE, kategorieVon, optionSchluessel, richtigeWahl, umrisseDa,
-} from './kategorien.js?v=0.3.0';
-import { LAENDER } from './laender.js?v=0.3.0';
+  KATEGORIEN, KATEGORIE_REIHE, kategorieVon, optionSchluessel, richtigeWahl, umrisseDa, umrisseLaden,
+  sprintFrage, pruefeFrage, fragenVorladen, kanon,
+} from './kategorien.js?v=0.4.0';
+import { LAENDER } from './laender.js?v=0.4.0';
+import { auswahlfeld } from './auswahlfeld.js?v=0.4.0';
+import { KATEGORIE_SYMBOL } from './symbole.js?v=0.4.0';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -66,24 +69,62 @@ function wann(iso) {
   return tage === 1 ? 'gestern' : `vor ${tage} Tagen`;
 }
 
+// ---------- Navigation ----------
+// Die Bude ist Ebene 0, die Reiter unten (Sprint, Lernen, Profil) und Räume Ebene 1,
+// ein laufender Sprint Ebene 2 über seiner Auswahl. Jeder Eintrag merkt sich, woher er kam.
+// Darum führt die Zurück-Taste (Browser oder Maus) genauso zurück wie „Raus".
+const tiefe = () => history.state?.qbTiefe ?? 0;
+const tiefeVon = ziel => (ziel === '#/' ? 0 : /^#\/sprint\/[a-z]+$/.test(ziel) ? 2 : 1);
+
+function navigieren(ziel) {
+  const jetzt = location.hash || '#/';
+  if (ziel === jetzt) return;
+  if (history.state?.vorher === ziel) { history.back(); return; } // popstate ruft dann route()
+  if (ziel === '#/') {
+    if (tiefe() > 0) { history.go(-tiefe()); return; }
+    history.replaceState({ qbTiefe: 0 }, '', '#/');
+  } else if (tiefeVon(ziel) > tiefe()) {
+    history.pushState({ qbTiefe: tiefe() + 1, vorher: jetzt }, '', ziel);
+  } else {
+    history.replaceState({ ...history.state, qbTiefe: tiefe() }, '', ziel);
+  }
+  route();
+}
+
+document.addEventListener('click', e => {
+  const a = e.target.closest('a[href^="#/"]');
+  if (!a || e.defaultPrevented || e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+  e.preventDefault();
+  navigieren(a.getAttribute('href'));
+});
+
+// Klasse nach dem Wackeln wieder weg: sonst wackelt das Feld erneut, sobald es nach dem Ausblenden wieder sichtbar wird
 function wackeln(el) {
   el.classList.remove('wackeln'); void el.offsetWidth; el.classList.add('wackeln');
+  el.addEventListener('animationend', () => el.classList.remove('wackeln'), { once: true });
 }
+const pause = ms => new Promise(r => setTimeout(r, ms));
 
 // ---------- Anmelden ----------
 let anmeldeModus = 'anmelden';
 const auswahl = { avatar: zufall(AVATARE), farbe: zufall(FARBEN) };
 
-function anmeldenAufbauen() {
-  $('avatar-wahl').innerHTML = AVATARE.map(a => `<button type="button" data-a="${a}" aria-label="Avatar ${a}">${a}</button>`).join('');
-  $('farb-wahl').innerHTML = FARBEN.map(f => `<button type="button" data-f="${f}" style="background:${f}" aria-label="Farbe ${f}"></button>`).join('');
+// Avatar- und Farbwahl (beim Registrieren und im Profil)
+function wahlBauen(avatarEl, farbEl, zustand) {
+  avatarEl.innerHTML = AVATARE.map(a => `<button type="button" data-a="${a}" aria-label="Avatar ${a}">${a}</button>`).join('');
+  farbEl.innerHTML = FARBEN.map(f => `<button type="button" data-f="${f}" style="background:${f}" aria-label="Farbe ${f}"></button>`).join('');
   const markieren = () => {
-    document.querySelectorAll('#avatar-wahl button').forEach(b => b.setAttribute('aria-pressed', b.dataset.a === auswahl.avatar));
-    document.querySelectorAll('#farb-wahl button').forEach(b => b.setAttribute('aria-pressed', b.dataset.f === auswahl.farbe));
+    avatarEl.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b.dataset.a === zustand.avatar));
+    farbEl.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b.dataset.f === zustand.farbe));
   };
-  $('avatar-wahl').onclick = e => { const b = e.target.closest('button'); if (b) { auswahl.avatar = b.dataset.a; markieren(); } };
-  $('farb-wahl').onclick = e => { const b = e.target.closest('button'); if (b) { auswahl.farbe = b.dataset.f; markieren(); } };
+  avatarEl.onclick = e => { const b = e.target.closest('button'); if (b) { zustand.avatar = b.dataset.a; markieren(); } };
+  farbEl.onclick = e => { const b = e.target.closest('button'); if (b) { zustand.farbe = b.dataset.f; markieren(); } };
   markieren();
+  return markieren;
+}
+
+function anmeldenAufbauen() {
+  wahlBauen($('avatar-wahl'), $('farb-wahl'), auswahl);
 
   document.querySelectorAll('#s-anmelden .umschalter-knopf').forEach(b => {
     b.onclick = () => {
@@ -118,7 +159,7 @@ function anmeldenAufbauen() {
         : await anmelden(name, passwort);
       await profilHolen(user);
       f.passwort.value = '';
-      route();
+      route(true);
     } catch (err) {
       fehler.textContent = err.message;
     } finally {
@@ -126,7 +167,7 @@ function anmeldenAufbauen() {
     }
   };
 
-  $('gast-sprint').onclick = () => { location.hash = '#/sprint'; };
+  $('gast-sprint').onclick = () => navigieren('#/sprint');
 }
 
 // Drei Flaggen als Fächer, bei jedem Besuch andere
@@ -165,14 +206,15 @@ function chipZeichnen() {
   const chip = $('profil-chip');
   $('dock').hidden = !ich;
   if (!ich) { chip.innerHTML = ''; return; }
-  chip.innerHTML = `${avatarHtml(ich)}<span class="dock-name">${esc(ich.name)}</span><button class="dock-aus" id="abmelden" title="Abmelden" aria-label="Abmelden">${AUS_ICON}</button>`;
+  const aufProfil = (location.hash || '#/') === '#/profil';
+  chip.innerHTML = `<a class="dock-ich${aufProfil ? ' aktiv' : ''}" href="#/profil" title="Mein Profil">${avatarHtml(ich)}<span class="dock-name">${esc(ich.name)}</span></a><button class="dock-aus" id="abmelden" title="Abmelden" aria-label="Abmelden">${AUS_ICON}</button>`;
   $('abmelden').onclick = async () => {
     if (raum) { raum.verlassen(); raum = null; }
     lobbyStopp();
     await abmelden();
     ich = null; chipZeichnen();
-    location.hash = '#/';
-    route();
+    history.replaceState({ qbTiefe: 0 }, '', '#/');
+    route(true);
   };
 }
 
@@ -180,6 +222,7 @@ function chipZeichnen() {
 function budeZeigen() {
   zeige('bude');
   faecherFuellen();
+  kachelnZeichnen();
   $('bude-claudi').textContent = zufall(SPRUCH.hallo).replace('{name}', ich.name);
   if (lobbyAus) lobbyAus();
   lobbyAus = lobbyAbo(raeumeZeichnen);
@@ -205,15 +248,17 @@ function raeumeZeichnen(raeume) {
 const SPALTE = {
   siege: n => `${n} ${n === 1 ? 'Sieg' : 'Siege'}`,
   punkte: n => `${n.toLocaleString('de-DE')} Pkt.`,
-  sprint_rekord: n => `${n} Flaggen`,
+  sprint: n => `${n} richtig`,
 };
 
 async function bestenLaden() {
   const ol = $('besten-liste');
   try {
-    const daten = await bestenliste(besteSpalte);
+    const sprintModus = besteSpalte === 'sprint';
+    document.querySelector('.besten-kategorie').hidden = !sprintModus;
+    const daten = sprintModus ? await sprintBestenliste($('besten-kategorie').value) : await bestenliste(besteSpalte);
     ol.innerHTML = daten.length
-      ? daten.map(p => `<li>${avatarHtml(p)}<span>${esc(p.name)}</span><span class="wert">${SPALTE[besteSpalte](p[besteSpalte])}</span></li>`).join('')
+      ? daten.map(p => `<li>${avatarHtml(p)}<a href="#/profil/${esc(p.id)}">${esc(p.name)}</a><span class="wert">${SPALTE[besteSpalte](sprintModus ? p.wert : p[besteSpalte])}</span></li>`).join('')
       : '<li class="leer">Hier steht noch keiner. Spiel eine Runde, dann bist du der Erste.</li>';
   } catch (e) {
     ol.innerHTML = `<li class="leer">${esc(e.message)}</li>`;
@@ -243,21 +288,25 @@ async function letzteLaden() {
 
 function budeAufbauen() {
   $('raum-neu').onclick = () => raumAufmachen('gemischt');
-  $('kachel-raster').innerHTML = KATEGORIE_REIHE.map(k => `
-    <button class="kachel" data-k="${k}">
-      <span class="kachel-bild" aria-hidden="true">${kachelBild(k)}</span>
-      <span class="kachel-name">${esc(KATEGORIEN[k].name)}</span>
-      <span class="kachel-text">${esc(KATEGORIEN[k].text)}</span>
-    </button>`).join('');
-  $('kachel-raster').onclick = e => { const b = e.target.closest('.kachel'); if (b) raumAufmachen(b.dataset.k); };
+  kachelnZeichnen();
+  $('kachel-raster').onclick = e => {
+    const b = e.target.closest('.kachel');
+    if (b) raumAufmachen(b.dataset.k);
+  };
+  $('sprint-kacheln').onclick = e => {
+    const b = e.target.closest('.kachel');
+    if (b) navigieren('#/sprint/' + b.dataset.k);
+  };
   $('beitreten-form').onsubmit = e => {
     e.preventDefault();
     const c = $('code-eingabe').value.trim().toUpperCase();
     if (!/^[A-Z]{4}$/.test(c)) { toast('Der Code hat 4 Buchstaben, zum Beispiel KXQB.'); return; }
     $('code-eingabe').value = '';
-    location.hash = '#/raum/' + c;
+    navigieren('#/raum/' + c);
   };
-  $('sprint-start').onclick = () => { location.hash = '#/sprint'; };
+  $('besten-kategorie').innerHTML = KATEGORIE_REIHE.map(k => `<option value="${k}">${esc(KATEGORIEN[k].name)}</option>`).join('');
+  auswahlfeld($('besten-kategorie'), { symbol: v => KATEGORIE_SYMBOL[v] });
+  $('besten-kategorie').onchange = () => bestenLaden();
   document.querySelectorAll('#besten-reiter .umschalter-knopf').forEach(b => {
     b.onclick = () => {
       besteSpalte = b.dataset.spalte;
@@ -265,6 +314,35 @@ function budeAufbauen() {
       bestenLaden();
     };
   });
+}
+
+function sprintRekord(k) {
+  if (!ich) {
+    try { return Number(localStorage.getItem('quizbude.sprint.gast.' + k) || 0); } catch { return 0; }
+  }
+  return ich.rekorde?.[k] ?? (k === 'flaggen' ? ich.sprint_rekord || 0 : 0);
+}
+
+function kachelnHtml(mitRekord) {
+  return KATEGORIE_REIHE.map(k => {
+    const rekord = mitRekord ? sprintRekord(k) : 0;
+    return `
+    <button class="kachel" data-k="${k}">
+      <span class="kachel-bild" aria-hidden="true">${kachelBild(k)}</span>
+      <span class="kachel-name">${esc(KATEGORIEN[k].name)}</span>
+      <span class="kachel-text">${esc(KATEGORIEN[k].text)}</span>
+      ${mitRekord ? `<span class="kachel-rekord">${rekord ? `Dein Rekord: ${rekord}` : 'Noch kein Rekord'}</span>` : ''}
+    </button>`;
+  }).join('');
+}
+
+function kachelnZeichnen() {
+  $('kachel-raster').innerHTML = kachelnHtml(false);
+}
+
+function sprintWahlZeigen() {
+  zeige('sprintwahl');
+  $('sprint-kacheln').innerHTML = kachelnHtml(true);
 }
 
 function kachelBild(k) {
@@ -284,11 +362,180 @@ function raumAufmachen(kategorie) {
   const code = codeNeu();
   const kat = KATEGORIEN[kategorie];
   neuErstellt = { code, einst: { ...STANDARD, kategorie, auswahl: kat.standard, zeit: kat.zeit, modus: kat.tippen ? 'tippen' : 'auswahl' } };
-  location.hash = '#/raum/' + code;
+  navigieren('#/raum/' + code);
+}
+
+// ---------- Nachschlagen ----------
+const REGIONEN = { alle: 'Alle', europa: 'Europa', afrika: 'Afrika', asien: 'Asien', amerika: 'Amerika', ozeanien: 'Ozeanien' };
+let lernenArt = 'flaggen';
+let lernenRegion = 'alle';
+let UMRISSE_LERNEN = null;
+// Im Hauptstadt-Quiz bewusst ausgelassen (gleichnamig oder umstritten), zum Nachlesen aber trotzdem da
+const STADT_NACHLESEN = {
+  BZ: 'Belmopan', DJ: 'Dschibuti', GT: 'Guatemala-Stadt', KW: 'Kuwait-Stadt', LU: 'Luxemburg', MX: 'Mexiko-Stadt',
+  MC: 'Monaco', PA: 'Panama-Stadt', SM: 'San Marino', SG: 'Singapur', VA: 'Vatikanstadt',
+  IL: 'Jerusalem (international umstritten)', PS: 'Ramallah (Regierungssitz, umstritten)',
+};
+const stadtVon = l => l.stadt || STADT_NACHLESEN[l.code] || '';
+
+const umrissSvg = (code, klasse = '') => UMRISSE_LERNEN?.[code]
+  ? `<svg class="${klasse}" viewBox="0 0 100 100" aria-hidden="true"><path d="${UMRISSE_LERNEN[code]}" fill-rule="evenodd"/></svg>` : '';
+
+function lernenAufbauen() {
+  $('lernen-region').innerHTML = Object.entries(REGIONEN).map(([k, n]) => `<button class="chip" data-r="${k}" aria-pressed="${k === 'alle'}">${n}</button>`).join('');
+  $('lernen-region').onclick = e => {
+    const b = e.target.closest('.chip'); if (!b) return;
+    lernenRegion = b.dataset.r;
+    document.querySelectorAll('#lernen-region .chip').forEach(x => x.setAttribute('aria-pressed', x === b));
+    lernenZeichnen();
+  };
+  document.querySelectorAll('#lernen-art .umschalter-knopf').forEach(b => {
+    b.onclick = () => {
+      lernenArt = b.dataset.art;
+      document.querySelectorAll('#lernen-art .umschalter-knopf').forEach(x => { x.classList.toggle('aktiv', x === b); x.setAttribute('aria-selected', x === b); });
+      lernenZeigen();
+    };
+  });
+  $('lernen-suche').oninput = () => lernenZeichnen();
+  $('lernen-raster').onclick = e => { const b = e.target.closest('.lern-karte'); if (b) lernenDetail(b.dataset.c); };
+  $('lernen-zu').onclick = () => $('lernen-detail').close();
+  $('lernen-detail').onclick = e => { if (e.target === $('lernen-detail')) $('lernen-detail').close(); };
+}
+
+function lernenZeigen() {
+  zeige('lernen');
+  if (!UMRISSE_LERNEN) umrisseLaden().then(u => { UMRISSE_LERNEN = u; if (!$('s-lernen').hidden) lernenZeichnen(); });
+  lernenZeichnen();
+}
+
+function lernenZeichnen() {
+  const q = kanon($('lernen-suche').value);
+  let liste = LAENDER.filter(l => lernenRegion === 'alle' || l.region === lernenRegion);
+  if (lernenArt === 'umrisse') liste = liste.filter(l => l.umriss);
+  if (q) liste = liste.filter(l => l.antworten.some(a => a.includes(q)) || (l.stadtAntworten || []).some(a => a.includes(q)) || kanon(stadtVon(l)).includes(q));
+  $('lernen-anzahl').textContent = liste.length === 1 ? '1 Land' : `${liste.length} Länder`;
+  $('lernen-raster').innerHTML = liste.length ? liste.map(l => `
+    <li><button class="lern-karte" data-c="${l.code}">
+      <span class="lern-bild">${lernenArt === 'umrisse' ? umrissSvg(l.code) : `<img src="${flaggeUrl(l.code)}" alt="" loading="lazy">`}</span>
+      <span class="lern-name">${esc(l.name)}</span>
+      ${stadtVon(l) ? `<span class="lern-stadt">${esc(stadtVon(l).replace(/ \(.*\)$/, ''))}</span>` : ''}
+    </button></li>`).join('') : '<li class="leer">Nichts gefunden. Probier einen anderen Namen.</li>';
+}
+
+function lernenDetail(code) {
+  const l = LAND[code];
+  $('lernen-detail-inhalt').innerHTML = `
+    <div class="detail-bilder"><img src="${flaggeUrl(code)}" alt="Flagge von ${esc(l.name)}">${umrissSvg(code)}</div>
+    <h2>${esc(l.name)}</h2>
+    <dl class="detail-daten">
+      ${stadtVon(l) ? `<dt>Hauptstadt</dt><dd>${esc(stadtVon(l))}</dd>` : ''}
+      <dt>Fläche</dt><dd>${l.flaeche.toLocaleString('de-DE')} km²</dd>
+      <dt>Kontinent</dt><dd>${REGIONEN[l.region] || '–'}</dd>
+    </dl>`;
+  $('lernen-detail').showModal();
+}
+
+// ---------- Profil ----------
+const profilWahl = { avatar: '', farbe: '' };
+let profilMarkieren = null;
+let profilAbruf = 0;
+
+function datum(iso) {
+  return new Date(iso).toLocaleDateString('de-DE', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+const prozent = (a, b) => (b ? Math.round((a / b) * 100) : 0);
+
+function profilAufbauen() {
+  profilMarkieren = wahlBauen($('profil-avatar-wahl'), $('profil-farb-wahl'), profilWahl);
+  $('profil-bearbeiten').onclick = () => {
+    profilWahl.avatar = ich.avatar; profilWahl.farbe = farbe(ich.farbe);
+    profilMarkieren();
+    $('profil-editor').hidden = false;
+  };
+  $('profil-abbrechen').onclick = () => { $('profil-editor').hidden = true; };
+  $('profil-speichern').onclick = async () => {
+    try {
+      await profilSpeichern(ich.id, { avatar: profilWahl.avatar, farbe: profilWahl.farbe });
+      ich = { ...ich, avatar: profilWahl.avatar, farbe: profilWahl.farbe };
+      chipZeichnen();
+      $('profil-editor').hidden = true;
+      $('profil-avatar').outerHTML = avatarHtml(ich).replace('class="avatar"', 'class="avatar riesig" id="profil-avatar"');
+      toast('Avatar gespeichert.');
+    } catch (e) { toast(e.message); }
+  };
+}
+
+async function profilZeigen(id) {
+  zeige('profil');
+  const eigenes = !id || id === ich.id;
+  const abruf = ++profilAbruf;
+  $('profil-editor').hidden = true;
+  $('profil-bearbeiten').hidden = !eigenes;
+  $('profil-werte').innerHTML = '';
+  for (const el of ['profil-raenge', 'profil-rekorde', 'profil-kategorien', 'profil-spiele']) $(el).innerHTML = '<li class="leer">Wird geladen …</li>';
+  let p;
+  try { p = await profilLaden(eigenes ? ich.id : id); } catch (e) { toast(e.message); return; }
+  if (abruf !== profilAbruf) return;
+  if (!p) { $('profil-name').textContent = 'Profil nicht gefunden'; $('profil-seit').textContent = ''; return; }
+  if (eigenes) { ich = { ...ich, ...p }; chipZeichnen(); }
+
+  $('profil-avatar').outerHTML = avatarHtml(p).replace('class="avatar"', 'class="avatar riesig" id="profil-avatar"');
+  $('profil-name').textContent = p.name;
+  $('profil-seit').textContent = `Dabei seit ${datum(p.erstellt)}, zuletzt aktiv ${wann(p.zuletzt)}`;
+
+  const schnitt = p.spiele ? Math.round(p.punkte / p.spiele) : 0;
+  const werte = [
+    ['Spiele', p.spiele], ['Siege', p.siege, true], ['Siegquote', `${prozent(p.siege, p.spiele)}<small>%</small>`], ['Punkte', p.punkte.toLocaleString('de-DE')],
+    ['Ø Punkte pro Spiel', schnitt], ['Richtige Antworten', p.richtig],
+    ['Bester Sprint', Math.max(0, p.sprint_rekord || 0, ...Object.values(p.rekorde || {})), true], ['Sprints gespielt', p.sprints],
+  ];
+  $('profil-werte').innerHTML = werte.map(([dt, dd, hervor]) => `<div${hervor ? ' class="hervor"' : ''}><dt>${dt}</dt><dd>${dd}</dd></div>`).join('');
+
+  try {
+    const [rSiege, rPunkte, alle, spiele] = await Promise.all([
+      rangVon('siege', p.siege), rangVon('punkte', p.punkte), spielerAnzahl(), spieleVon(p.name),
+    ]);
+    if (abruf !== profilAbruf) return;
+    const rang = (r, leer) => r ? `<span class="${r === 1 ? 'platz-1' : ''}">Platz ${r}</span> <span class="neben">von ${alle}</span>` : `<span class="neben">${leer}</span>`;
+    $('profil-raenge').innerHTML = [
+      ['Siege', rang(rSiege, 'noch kein Sieg')], ['Punkte', rang(rPunkte, 'noch keine Punkte')],
+    ].map(([n, w]) => `<li><span>${n}</span><span>${w}</span></li>`).join('');
+    const rekorde = { ...(p.sprint_rekord ? { flaggen: p.sprint_rekord } : {}), ...(p.rekorde || {}) };
+    const mitRekord = KATEGORIE_REIHE.filter(k => rekorde[k] > 0);
+    $('profil-rekorde').innerHTML = mitRekord.length
+      ? mitRekord.map(k => `<li><span>${esc(KATEGORIEN[k].name)}</span><span><b>${rekorde[k]}</b> <span class="neben">richtig in 60 s</span></span></li>`).join('')
+      : '<li class="leer">Noch kein Sprint gespielt.</li>';
+
+    // Spiele dieses Profils auswerten
+    const meine = spiele.map(sp => {
+      const liste = sp.spieler || [];
+      const platz = liste.findIndex(x => x.name === p.name) + 1;
+      return { ...sp, platz, von: liste.length, pkt: liste[platz - 1]?.pkt ?? 0 };
+    }).filter(x => x.platz > 0);
+    const proKat = new Map();
+    for (const g of meine) {
+      const k = g.kategorie || 'flaggen';
+      const e = proKat.get(k) || { n: 0, siege: 0, pkt: 0 };
+      e.n++; e.pkt += g.pkt; if (g.platz === 1 && g.von > 1) e.siege++;
+      proKat.set(k, e);
+    }
+    const kats = [...proKat].sort((a, b) => b[1].n - a[1].n);
+    $('profil-kategorien').innerHTML = kats.length ? kats.map(([k, e], i) => `
+      <li><span>${esc(KATEGORIEN[k]?.name || k)}${i === 0 && kats.length > 1 ? ' <span class="neben">(am liebsten)</span>' : ''}</span>
+        <span class="neben">${e.n} ${e.n === 1 ? 'Spiel' : 'Spiele'}, ${e.siege} ${e.siege === 1 ? 'Sieg' : 'Siege'}, Ø ${Math.round(e.pkt / e.n)} Punkte</span></li>`).join('')
+      : '<li class="leer">Noch keine Raum-Spiele.</li>';
+    $('profil-spiele').innerHTML = meine.length ? meine.slice(0, 10).map(g => `
+      <li><span${g.platz === 1 && g.von > 1 ? ' class="platz-1"' : ''}>${g.von > 1 ? `Platz ${g.platz} von ${g.von}` : 'Allein gespielt'}</span>
+        <span class="neben">${esc(KATEGORIEN[g.kategorie]?.name || 'Flaggen')}, ${g.pkt} Punkte, ${wann(g.am)}</span></li>`).join('')
+      : '<li class="leer">Noch keine Raum-Spiele. Mach einen Raum auf!</li>';
+  } catch (e) {
+    $('profil-spiele').innerHTML = `<li class="leer">${esc(e.message)}</li>`;
+  }
 }
 
 // ---------- Raum ----------
 let gezeichnet = { idx: -2, phase: '' };
+let einstFelder = [];
 
 async function raumBetreten(code) {
   if (raum && raum.code === code) { raumZeichnen(); return; }
@@ -305,12 +552,14 @@ async function raumBetreten(code) {
     await raum.betreten(alsHost);
   } catch (e) {
     toast(e.message);
-    location.hash = '#/';
+    navigieren('#/');
   }
 }
 
 function raumAufbauen() {
   $('einst-kategorie').innerHTML = KATEGORIE_REIHE.map(k => `<option value="${k}">${esc(KATEGORIEN[k].name)}</option>`).join('');
+  einstFelder = [...document.querySelectorAll('#einst select')]
+    .map(sel => auswahlfeld(sel, sel.dataset.e === 'kategorie' ? { symbol: v => KATEGORIE_SYMBOL[v] } : {}));
   document.querySelectorAll('#einst select').forEach(s => {
     s.onchange = () => {
       if (!raum) return;
@@ -355,7 +604,10 @@ function raumAufbauen() {
   };
   $('chat-form').onsubmit = e => {
     e.preventDefault();
-    raum?.chatten($('chat-eingabe').value);
+    if (!raum) return;
+    const r = raum.chatten($('chat-eingabe').value);
+    if (r === 'hass') { toast('Nicht gesendet. So etwas gibt es hier nicht.'); return; }
+    if (r === 'grob') { toast('Nicht gesendet. Der Chat ist eingeschränkt.'); return; }
     $('chat-eingabe').value = '';
   };
 }
@@ -392,7 +644,13 @@ function raumZeichnen() {
     if ($('einst-auswahl').dataset.fuer !== r.einst.kategorie) { $('einst-auswahl').innerHTML = auswahlHtml; $('einst-auswahl').dataset.fuer = r.einst.kategorie; }
     document.querySelectorAll('#einst select').forEach(s => { s.value = String(r.einst[s.dataset.e] ?? ''); s.disabled = !r.binHost; });
     if (!kat.tippen) { $('einst-modus').value = 'auswahl'; $('einst-modus').disabled = true; }
+    einstFelder.forEach(f => f.aktualisieren());
     $('los').hidden = !r.binHost;
+    const genug = r.spieler.size >= 2;
+    $('los').disabled = !genug;
+    $('los-hinweis').textContent = genug ? '' : r.binHost
+      ? 'Starten geht ab 2 Leuten. Klick oben auf den Code und schick den Link rum.'
+      : 'Es geht los, sobald genug Leute da sind.';
     $('warten-text').textContent = !r.hostId ? 'Verbinde mit dem Raum …'
       : r.binHost ? 'Stell ein und leg los, sobald alle da sind. Klick auf den Code oben, dann ist der Einladungslink kopiert.'
         : `${hostName || 'Der Gastgeber'} stellt ein und startet gleich.`;
@@ -470,7 +728,9 @@ function raumZeichnen() {
   const unten = cl.scrollHeight - cl.scrollTop - cl.clientHeight < 40;
   cl.innerHTML = r.chat.map(m => m.system
     ? `<li class="system">${esc(m.text)}</li>`
-    : `<li><b>${esc(m.avatar || '')} ${esc(m.name)}:</b> ${esc(m.text)}</li>`).join('');
+    : m.daneben
+      ? `<li class="daneben"><span class="daneben-x" aria-label="falsch">✗</span><b>${esc(m.name)}</b> <span class="daneben-text">${esc(m.text)}</span></li>`
+      : `<li><b>${esc(m.avatar || '')} ${esc(m.name)}:</b> ${esc(m.text)}</li>`).join('');
   if (unten) cl.scrollTop = cl.scrollHeight;
 }
 
@@ -486,29 +746,73 @@ setInterval(() => {
   if (sprint && sprint.laeuft) sprintTick();
 }, 100);
 
-// ---------- Flaggen-Sprint ----------
+// ---------- Sprint (allein, jede Kategorie) ----------
 const SPRINT_MS = 60000;
+const SPRINT_STRAFE = 2000;  // Überspringen
+const SPRINT_FALSCH = 5000;  // falsch geklickt (nur bei Auswahl-Fragen)
+const SPRINT_COUNTDOWN = 2;  // Sekunden vor der ersten Frage
 
-function sprintStart() {
+async function sprintStart(kategorie = 'flaggen') {
+  if (!KATEGORIEN[kategorie]) kategorie = 'flaggen';
   zeige('sprint');
-  sprint = { punkte: 0, ende: performance.now() + SPRINT_MS, benutzt: new Set(), verpasst: [], aktuell: null, laeuft: true };
+  const s = { kategorie, punkte: 0, ende: 0, benutzt: new Set(), verpasst: [], laeuft: false, vorrat: [], frage: null };
+  sprint = s;
   $('sp-laeuft').hidden = false; $('sp-ende').hidden = true;
   $('sprint-punkte').textContent = '0';
-  $('sprint-rueck').textContent = '';
+  $('sprint-zeit').textContent = '60 s';
+  $('sprint-leiste').style.width = '100%';
+  $('sprint-rueck').textContent = ''; $('sprint-rueck').className = 'rueckmeldung';
+  $('sprint-optionen').innerHTML = '';
+  $('sprint-form').hidden = true; $('sprint-skip').hidden = true;
+  $('sprint-eingabe').classList.remove('wackeln', 'richtig');
+  $('sprint-hinweis').textContent = `${KATEGORIEN[kategorie].name}: gleich geht's los`;
+  $('sprint-bild').innerHTML = `<p class="countdown" id="sprint-countdown">${SPRINT_COUNTDOWN}</p>`;
+  // Während des Countdowns schon Umrisse und die ersten Bilder laden
+  const laden = kategorie === 'umrisse' || kategorie === 'gemischt' ? umrisseLaden() : Promise.resolve();
+  laden.then(() => { if (sprint === s) while (s.vorrat.length < 2) sprintZiehen(); });
+  for (let i = SPRINT_COUNTDOWN; i >= 1; i--) {
+    if (sprint !== s) return;
+    $('sprint-countdown').textContent = i;
+    await pause(1000);
+  }
+  await laden;
+  if (sprint !== s) return;
+  $('sprint-skip').hidden = false;
+  s.ende = performance.now() + SPRINT_MS;
+  s.laeuft = true;
   sprintNaechste();
-  setTimeout(() => $('sprint-eingabe').focus(), 30);
+}
+
+function sprintZiehen() {
+  const s = sprint;
+  const f = sprintFrage(s.kategorie, s.punkte + s.vorrat.length, s.benutzt);
+  fragenVorladen([f]); // Bilder schon mal laden, damit es ohne Warten weitergeht
+  s.vorrat.push(f);
 }
 
 function sprintNaechste() {
   const s = sprint;
-  // erst bekannte Flaggen, dann wird's gemischt, ab 16 Treffern kommt alles
-  const nurBekannt = s.punkte < 8 || (s.punkte < 16 && Math.random() < 0.5);
-  let pool = LAENDER.filter(l => !s.benutzt.has(l.code) && (!nurBekannt || l.bekannt));
-  if (!pool.length) pool = LAENDER.filter(l => !s.benutzt.has(l.code));
-  s.aktuell = zufall(pool).code;
-  s.benutzt.add(s.aktuell);
-  $('sprint-flagge').src = flaggeUrl(s.aktuell);
-  $('sprint-eingabe').value = '';
+  while (s.vorrat.length < 2) sprintZiehen();
+  const f = s.vorrat.shift();
+  sprintZiehen();
+  s.frage = f;
+  const kat = kategorieVon(f);
+  $('sprint-hinweis').textContent = kat.hinweis(f);
+  $('sprint-bild').innerHTML = kat.bild(f); // jedes Mal neue Elemente, nie ein altes Bild
+  const eingabe = $('sprint-eingabe');
+  $('sprint-form').hidden = !!f.o;
+  $('sprint-optionen').className = 'optionen' + (kat.optionKlasse ? ' ' + kat.optionKlasse : '');
+  $('sprint-optionen').innerHTML = f.o ? optionSchluessel(f).map(k => `<button type="button" data-c="${esc(k)}">${kat.option(k, f)}</button>`).join('') : '';
+  eingabe.value = '';
+  eingabe.placeholder = f.k === 'hauptstaedte' ? 'Welche Stadt?' : 'Welches Land?';
+  if (!f.o) setTimeout(() => eingabe.focus(), 20);
+}
+
+function sprintTreffer() {
+  sprint.punkte++;
+  $('sprint-punkte').textContent = sprint.punkte;
+  $('sprint-rueck').className = 'rueckmeldung gut'; $('sprint-rueck').textContent = zufall(SPRUCH.richtig);
+  sprintNaechste();
 }
 
 function sprintTick() {
@@ -522,71 +826,114 @@ function sprintTick() {
 
 async function sprintEnde() {
   const s = sprint;
-  s.laeuft = false;
-  if (s.aktuell) s.verpasst.push(s.aktuell);
+  s.laeuft = false; // die Frage, die beim Abpfiff noch offen ist, zählt nicht als ausgelassen
+  const kat = KATEGORIEN[s.kategorie];
   $('sp-laeuft').hidden = true; $('sp-ende').hidden = false;
-  $('sprint-ergebnis').textContent = s.punkte === 1 ? '1 Flagge in 60 Sekunden' : `${s.punkte} Flaggen in 60 Sekunden`;
-  $('sprint-verpasst').innerHTML = s.verpasst.map(c => `<li><img src="${flaggeUrl(c)}" alt=""><span>${esc(LAND[c].name)}</span></li>`).join('');
+  $('sprint-ergebnis').textContent = `${s.punkte} richtig in 60 Sekunden`;
+  $('sprint-verpasst').innerHTML = s.verpasst.map(f => `<li>${kategorieVon(f).kurz(f)}</li>`).join('');
   $('sprint-verpasst-titel').hidden = !s.verpasst.length;
   const rekordText = $('sprint-rekord');
-  rekordText.textContent = '';
+  rekordText.textContent = kat.name;
+  const alt = sprintRekord(s.kategorie);
   if (ich && online()) {
-    const alt = ich.sprint_rekord || 0;
-    const neu = await sprintEintragen(s.punkte);
-    if (typeof neu === 'number') ich.sprint_rekord = neu;
-    rekordText.textContent = s.punkte > alt ? (alt ? `Neuer Rekord! Vorher waren es ${alt}.` : 'Dein erster Rekord steht.') : `Dein Rekord: ${alt}.`;
-  } else {
-    let alt = 0;
-    try { alt = Number(localStorage.getItem('quizbude.sprint.gast') || 0); } catch { /* egal */ }
-    if (s.punkte > alt) { try { localStorage.setItem('quizbude.sprint.gast', s.punkte); } catch { /* egal */ } }
-    rekordText.textContent = s.punkte > alt ? 'Neuer Rekord auf diesem Gerät.' : `Rekord auf diesem Gerät: ${alt}.`;
+    const neu = await sprintEintragen(s.punkte, s.kategorie);
+    if (typeof neu === 'number') ich.rekorde = { ...(ich.rekorde || {}), [s.kategorie]: neu };
+  } else if (s.punkte > alt) {
+    try { localStorage.setItem('quizbude.sprint.gast.' + s.kategorie, s.punkte); } catch { /* egal */ }
   }
+  if (sprint !== s) return;
+  rekordText.textContent = `${kat.name}: ` + (s.punkte > alt ? (alt ? `Neuer Rekord! Vorher waren es ${alt}.` : 'Dein erster Rekord steht.') : `Dein Rekord: ${alt}.`);
 }
 
 function sprintAufbauen() {
   $('sprint-form').onsubmit = e => {
     e.preventDefault();
-    if (!sprint?.laeuft) return;
+    if (!sprint?.laeuft || !sprint.frage || sprint.frage.o) return;
     const eingabe = $('sprint-eingabe');
-    const r = pruefe(eingabe.value, sprint.aktuell);
+    const r = pruefeFrage(sprint.frage, eingabe.value);
     const rm = $('sprint-rueck');
-    if (r === 'richtig') {
-      sprint.punkte++;
-      $('sprint-punkte').textContent = sprint.punkte;
-      rm.className = 'rueckmeldung gut'; rm.textContent = zufall(SPRUCH.richtig);
-      sprintNaechste();
-    } else if (r === 'knapp') {
-      rm.className = 'rueckmeldung'; rm.textContent = zufall(SPRUCH.knapp); wackeln(eingabe);
-    } else if (r === 'falsch') {
-      rm.className = 'rueckmeldung schlecht'; rm.textContent = zufall(SPRUCH.falsch); wackeln(eingabe); eingabe.select();
-    }
+    if (r === 'richtig') sprintTreffer();
+    else if (r === 'knapp') { rm.className = 'rueckmeldung'; rm.textContent = zufall(SPRUCH.knapp); wackeln(eingabe); }
+    else if (r === 'falsch') { rm.className = 'rueckmeldung schlecht'; rm.textContent = zufall(SPRUCH.falsch); wackeln(eingabe); eingabe.select(); }
   };
-  $('sprint-skip').onclick = () => {
-    if (!sprint?.laeuft) return;
-    sprint.verpasst.push(sprint.aktuell);
-    sprint.ende -= 2000;
-    $('sprint-rueck').className = 'rueckmeldung';
-    $('sprint-rueck').textContent = `Das war ${LAND[sprint.aktuell].name}.`;
-    sprintNaechste();
-    $('sprint-eingabe').focus();
+  $('sprint-optionen').onclick = e => {
+    const b = e.target.closest('button');
+    const s = sprint;
+    if (!b || !s?.laeuft || !s.frage?.o || b.disabled) return;
+    const f = s.frage;
+    if (richtigeWahl(f, b.dataset.c)) { sprintTreffer(); return; }
+    // falsch: richtige Antwort kurz zeigen, Zeit abziehen, weiter
+    s.ende -= SPRINT_FALSCH;
+    s.verpasst.push(f);
+    document.querySelectorAll('#sprint-optionen button').forEach(x => {
+      x.disabled = true;
+      if (richtigeWahl(f, x.dataset.c)) x.classList.add('richtig');
+    });
+    b.classList.add('falsch');
+    $('sprint-rueck').className = 'rueckmeldung schlecht'; $('sprint-rueck').textContent = `${zufall(SPRUCH.falsch)} Minus 5 Sekunden.`;
+    setTimeout(() => { if (sprint === s && s.laeuft && s.frage === f) sprintNaechste(); }, 800);
   };
-  $('sprint-nochmal').onclick = () => sprintStart();
+  $('sprint-skip').onclick = () => sprintUeberspringen();
+  $('sprint-nochmal').onclick = () => sprintStart(sprint?.kategorie);
 }
 
+function sprintUeberspringen() {
+  const s = sprint;
+  if (!s?.laeuft || !s.frage) return;
+  s.verpasst.push(s.frage);
+  s.ende -= SPRINT_STRAFE;
+  $('sprint-rueck').className = 'rueckmeldung';
+  $('sprint-rueck').textContent = `Das war ${kategorieVon(s.frage).loesung(s.frage)}.`;
+  sprintNaechste();
+}
+
+// Tastenkürzel: Pfeil rechts oder Alt+D = überspringen, 1–4 = Antwort wählen
+document.addEventListener('keydown', e => {
+  const imSprint = sprint?.laeuft && !$('s-sprint').hidden;
+  const imRaum = raum && raum.phase === 'frage' && !$('s-raum').hidden;
+  if (!imSprint && !imRaum) return;
+  const ziel = e.target;
+  const tippt = ziel instanceof HTMLInputElement || ziel instanceof HTMLTextAreaElement;
+  if (imSprint) {
+    if (e.altKey && e.key.toLowerCase() === 'd') { e.preventDefault(); sprintUeberspringen(); return; }
+    if (e.key === 'ArrowRight' && !e.altKey && !e.ctrlKey && !e.shiftKey) {
+      const amEnde = !tippt || ziel.id !== 'sprint-eingabe' || (ziel.selectionStart === ziel.value.length && ziel.selectionEnd === ziel.value.length);
+      if (amEnde) { e.preventDefault(); sprintUeberspringen(); }
+      return;
+    }
+  }
+  if (/^[1-4]$/.test(e.key) && !e.altKey && !e.ctrlKey && !e.metaKey && !(tippt && ziel.id === 'chat-eingabe')) {
+    const knoepfe = [...document.querySelectorAll(imSprint ? '#sprint-optionen button' : '#optionen button')];
+    const k = knoepfe[Number(e.key) - 1];
+    if (k && !k.disabled) { e.preventDefault(); k.click(); }
+  }
+});
+
 // ---------- Weiche ----------
-function route() {
+let geroutet = null;
+
+function route(erzwingen = false) {
   const h = location.hash || '#/';
-  const nav = h === '#/sprint' ? 'sprint' : h.startsWith('#/raum/') ? '' : 'bude';
+  if (!erzwingen && h === geroutet) return; // popstate und hashchange kommen oft beide
+  geroutet = h;
+  const nav = h === '#/lernen' ? 'lernen' : h.startsWith('#/sprint') ? 'sprint' : h.startsWith('#/raum/') || h.startsWith('#/profil') ? '' : 'bude';
   document.querySelectorAll('.dock-link').forEach(a => a.classList.toggle('aktiv', a.dataset.nav === nav));
   if (raum && h !== '#/raum/' + raum.code) { raum.verlassen(); raum = null; }
-  if (sprint && h !== '#/sprint') { sprint.laeuft = false; sprint = null; }
+  if (sprint && !/^#\/sprint\/[a-z]+$/.test(h)) { sprint.laeuft = false; sprint = null; }
   if (h !== '#/' && lobbyAus) { lobbyAus(); lobbyAus = null; }
-  if (h === '#/sprint') return sprintStart();
+  if (!$('s-lernen').hidden && h !== '#/lernen' && $('lernen-detail').open) $('lernen-detail').close();
+  if (h === '#/lernen') return lernenZeigen();
+  if (h === '#/sprint') return sprintWahlZeigen();
+  const sm = h.match(/^#\/sprint\/([a-z]+)$/);
+  if (sm) return sprintStart(sm[1]);
   if (!ich) return anmeldenZeigen();
+  chipZeichnen();
+  const pm = h.match(/^#\/profil(?:\/([0-9a-f-]{36}))?$/);
+  if (pm) return profilZeigen(pm[1]);
   const m = h.match(/^#\/raum\/([A-Za-z]{4})$/);
   if (m) {
     const code = m[1].toUpperCase();
-    if (m[1] !== code) { location.hash = '#/raum/' + code; return; }
+    if (m[1] !== code) { history.replaceState(history.state, '', '#/raum/' + code); return route(true); }
     return raumBetreten(code);
   }
   return budeZeigen();
@@ -598,7 +945,16 @@ async function los() {
   budeAufbauen();
   raumAufbauen();
   sprintAufbauen();
-  window.addEventListener('hashchange', route);
+  profilAufbauen();
+  lernenAufbauen();
+  // Direktlink (z. B. Einladung in einen Raum): die Bude kommt darunter, damit „Zurück" dorthin führt
+  const start = location.hash || '#/';
+  if (history.state?.qbTiefe == null) {
+    if (start !== '#/') { history.replaceState({ qbTiefe: 0 }, '', '#/'); history.pushState({ qbTiefe: 1, vorher: '#/' }, '', start); }
+    else history.replaceState({ qbTiefe: 0 }, '', '#/');
+  }
+  window.addEventListener('popstate', () => route());
+  window.addEventListener('hashchange', () => route());
   if (online()) {
     try {
       const user = await sitzungHolen();
@@ -607,13 +963,13 @@ async function los() {
       console.warn('[Quizbude] Sitzung nicht wiederhergestellt', e);
     }
     sb.auth.onAuthStateChange(ereignis => {
-      if (ereignis === 'SIGNED_OUT' && ich) { ich = null; chipZeichnen(); route(); }
+      if (ereignis === 'SIGNED_OUT' && ich) { ich = null; chipZeichnen(); route(true); }
     });
   }
-  route();
+  route(true);
 }
 
 // Für die Fehlersuche in der Konsole: quizbude.raum
-window.quizbude = { get raum() { return raum; } };
+window.quizbude = { get raum() { return raum; }, get sprint() { return sprint; } };
 
 los();

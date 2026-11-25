@@ -7,7 +7,7 @@
 <meta name="description" content="Flaggen raten in der Pause, allein oder zusammen im Raum.">
 <meta name="theme-color" content="#1B1E21">
 <link rel="icon" href="bilder/icon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="css/stil.css?v=0.3.0">
+<link rel="stylesheet" href="css/stil.css?v=0.4.0">
 </head>
 <body>
 <main>
@@ -58,12 +58,14 @@
           <input id="code-eingabe" maxlength="4" autocomplete="off" spellcheck="false" placeholder="Code" aria-label="Raum-Code">
           <button class="knopf zweit" type="submit">Beitreten</button>
         </form>
-        <button class="textknopf" id="sprint-start">oder allein üben: Flaggen-Sprint</button>
       </div>
     </div>
 
     <section class="kategorien" aria-labelledby="kat-titel">
-      <h2 id="kat-titel">Was spielen wir?</h2>
+      <div class="kategorien-kopf">
+        <h2 id="kat-titel">Was spielen wir?</h2>
+      </div>
+      <p class="kategorien-text">Klick auf eine Kategorie, dann geht ein Raum auf. Starten könnt ihr ab 2 Leuten. Allein üben geht unten unter Sprint.</p>
       <div class="kachel-raster" id="kachel-raster"></div>
     </section>
 
@@ -80,12 +82,72 @@
           <div class="umschalter klein" role="tablist" id="besten-reiter">
             <button role="tab" class="umschalter-knopf aktiv" data-spalte="siege" aria-selected="true">Siege</button>
             <button role="tab" class="umschalter-knopf" data-spalte="punkte" aria-selected="false">Punkte</button>
-            <button role="tab" class="umschalter-knopf" data-spalte="sprint_rekord" aria-selected="false">Sprint</button>
+            <button role="tab" class="umschalter-knopf" data-spalte="sprint" aria-selected="false">Sprint</button>
           </div>
         </div>
+        <label class="besten-kategorie" hidden>Sprint-Rekorde bei <select id="besten-kategorie"></select></label>
         <ol id="besten-liste" class="besten-liste"></ol>
       </section>
     </div>
+  </section>
+
+  <!-- Profil -->
+  <section class="screen" id="s-profil" hidden>
+    <div class="profil-kopf">
+      <span class="avatar riesig" id="profil-avatar"></span>
+      <div class="profil-titel">
+        <h1 id="profil-name"></h1>
+        <p class="unterzeile" id="profil-seit"></p>
+      </div>
+      <button class="knopf zweit klein" id="profil-bearbeiten" hidden>Avatar ändern</button>
+    </div>
+    <div class="karte profil-editor" id="profil-editor" hidden>
+      <div class="avatar-wahl" id="profil-avatar-wahl"></div>
+      <div class="farb-wahl" id="profil-farb-wahl"></div>
+      <div class="zeile">
+        <button class="knopf haupt klein" id="profil-speichern">Speichern</button>
+        <button class="knopf zweit klein" id="profil-abbrechen">Abbrechen</button>
+      </div>
+    </div>
+    <dl class="werte" id="profil-werte"></dl>
+    <div class="profil-raster">
+      <section class="karte">
+        <h2>Platzierungen</h2>
+        <ul class="profil-liste" id="profil-raenge"></ul>
+        <h2 class="abstand">Sprint-Rekorde</h2>
+        <ul class="profil-liste" id="profil-rekorde"></ul>
+      </section>
+      <section class="karte">
+        <h2>Nach Kategorie</h2>
+        <ul class="profil-liste" id="profil-kategorien"></ul>
+      </section>
+    </div>
+    <section class="karte profil-spiele">
+      <h2>Letzte Spiele</h2>
+      <ul class="profil-liste" id="profil-spiele"></ul>
+    </section>
+  </section>
+
+  <!-- Nachschlagen -->
+  <section class="screen" id="s-lernen" hidden>
+    <div class="lernen-kopf">
+      <h1>Nachschlagen</h1>
+      <p class="unterzeile">Alle Länder zum Anschauen und Lernen. Klick auf ein Land für Hauptstadt, Fläche und Umriss.</p>
+    </div>
+    <div class="lernen-steuerung">
+      <div class="umschalter" role="tablist" id="lernen-art">
+        <button role="tab" class="umschalter-knopf aktiv" data-art="flaggen" aria-selected="true">Flaggen</button>
+        <button role="tab" class="umschalter-knopf" data-art="umrisse" aria-selected="false">Umrisse</button>
+      </div>
+      <input id="lernen-suche" type="search" placeholder="Land oder Hauptstadt suchen" autocomplete="off" aria-label="Land oder Hauptstadt suchen">
+    </div>
+    <div class="chips" id="lernen-region" role="group" aria-label="Kontinent"></div>
+    <p class="lernen-anzahl" id="lernen-anzahl"></p>
+    <ul class="lernen-raster" id="lernen-raster"></ul>
+    <dialog class="lernen-detail" id="lernen-detail">
+      <button class="dialog-zu" id="lernen-zu" aria-label="Schließen">×</button>
+      <div id="lernen-detail-inhalt"></div>
+    </dialog>
   </section>
 
   <!-- Raum -->
@@ -109,8 +171,10 @@
               <label>Antworten <select data-e="modus" id="einst-modus"><option value="tippen">Selbst tippen</option><option value="auswahl">Zur Auswahl</option></select></label>
               <label>Runden <select data-e="runden"><option>5</option><option>10</option><option>15</option><option>20</option><option>30</option></select></label>
               <label>Zeit pro Frage <select data-e="zeit"><option value="10">10 s</option><option value="15">15 s</option><option value="20">20 s</option><option value="30">30 s</option></select></label>
+              <label>Chat <select data-e="chat"><option value="eingeschraenkt">Eingeschränkt</option><option value="offen">Offen</option></select></label>
             </div>
             <button class="knopf haupt gross" id="los">Los geht's</button>
+            <p class="phase-text" id="los-hinweis"></p>
           </div>
 
           <div class="phase" id="p-countdown"><p class="countdown" id="countdown"></p></div>
@@ -132,7 +196,7 @@
             <ol class="podest" id="podest"></ol>
             <div class="zeile mitte">
               <button class="knopf haupt" id="nochmal">Nochmal</button>
-              <a class="knopf zweit" href="#/">Zur Bude</a>
+              <a class="knopf zweit" href="#/sprint">Andere Kategorie</a>
             </div>
             <p class="phase-text" id="ende-text"></p>
           </div>
@@ -150,22 +214,33 @@
     </div>
   </section>
 
+  <!-- Sprint: Auswahl -->
+  <section class="screen" id="s-sprintwahl" hidden>
+    <div class="lernen-kopf">
+      <h1>Sprint</h1>
+      <p class="unterzeile">Allein gegen die Uhr, ganz ohne Raum: 60 Sekunden, so viele wie möglich. Überspringen kostet 2 Sekunden.</p>
+    </div>
+    <div class="kachel-raster" id="sprint-kacheln"></div>
+  </section>
+
   <!-- Sprint -->
   <section class="screen" id="s-sprint" hidden>
     <div class="buehne-karte sprint">
       <div class="buehne-kopf">
         <span class="sprint-punkte"><span id="sprint-punkte">0</span> <small>Treffer</small></span>
         <span class="runde" id="sprint-zeit">60 s</span>
-        <a class="knopf zweit klein" href="#/">Raus</a>
+        <a class="knopf zweit klein" href="#/sprint">Raus</a>
       </div>
       <div class="zeitleiste"><div class="zeitleiste-fuellung" id="sprint-leiste"></div></div>
       <div class="buehne">
         <div class="phase" id="sp-laeuft">
-          <div class="flaggen-rahmen"><img id="sprint-flagge" alt="Flagge, welches Land ist das?" draggable="false"></div>
+          <p class="frage-hinweis" id="sprint-hinweis"></p>
+          <div class="frage-bild" id="sprint-bild"></div>
           <form class="rate-form" id="sprint-form" autocomplete="off">
             <input id="sprint-eingabe" placeholder="Welches Land?" spellcheck="false" autocapitalize="off">
           </form>
-          <button class="textknopf" id="sprint-skip">Weiß ich nicht, weiter (kostet 2 Sekunden)</button>
+          <div class="optionen" id="sprint-optionen"></div>
+          <button class="textknopf" id="sprint-skip">Weiß ich nicht, weiter <span class="tasten"><kbd>→</kbd> oder <kbd>Alt</kbd>+<kbd>D</kbd>, kostet 2 Sekunden</span></button>
           <p class="rueckmeldung" id="sprint-rueck" aria-live="polite"></p>
         </div>
         <div class="phase" id="sp-ende" hidden>
@@ -173,7 +248,7 @@
           <p class="phase-text" id="sprint-rekord"></p>
           <div class="zeile mitte">
             <button class="knopf haupt" id="sprint-nochmal">Nochmal</button>
-            <a class="knopf zweit" href="#/">Zur Bude</a>
+            <a class="knopf zweit" href="#/sprint">Andere Kategorie</a>
           </div>
           <h3 id="sprint-verpasst-titel">Die hast du ausgelassen</h3>
           <ul class="verpasst" id="sprint-verpasst"></ul>
@@ -182,7 +257,7 @@
     </div>
   </section>
 
-  <footer class="fuss">Version <span id="version"></span>. Flaggen von flag-icons (MIT), Länderdaten und Umrisse von world-countries (ODbL).</footer>
+  <footer class="fuss">Version <span id="version"></span>. Flaggen von svg-country-flags (gemeinfrei), Länderdaten und Umrisse von world-countries (ODbL).</footer>
 </main>
 
 <!-- Dock: Navigation unten in der Mitte -->
@@ -190,12 +265,13 @@
   <a class="dock-marke" href="#/" aria-label="Zur Bude"><img src="bilder/logo.svg" alt="" width="34" height="34"></a>
   <a class="dock-link" href="#/" data-nav="bude">Bude</a>
   <a class="dock-link" href="#/sprint" data-nav="sprint">Sprint</a>
+  <a class="dock-link" href="#/lernen" data-nav="lernen">Lernen</a>
   <span class="dock-trenner" aria-hidden="true"></span>
   <span class="dock-profil" id="profil-chip"></span>
 </nav>
 <div class="toast" id="toast" role="status" hidden></div>
 
-<script src="vendor/supabase.js?v=0.3.0"></script>
-<script type="module" src="js/app.js?v=0.3.0"></script>
+<script src="vendor/supabase.js?v=0.4.0"></script>
+<script type="module" src="js/app.js?v=0.4.0"></script>
 </body>
 </html>

@@ -9,7 +9,7 @@ Quiz-Spiele für die Pause: Flaggen, Umrisse, Hauptstädte, Größer oder kleine
 - Reine statische Seite (GitHub Pages), keine Build-Schritte nötig.
 - Konten, Bestenliste und Spielverlauf: Supabase (Projekt `quizbude`, Frankfurt). Schema: `werkzeuge/schema.sql`.
 - Räume laufen live über Supabase Realtime (Broadcast + Presence). Der Gastgeber steuert die Runden; geht er raus, übernimmt automatisch der Nächste.
-- Flaggen: [flag-icons](https://github.com/lipis/flag-icons) (MIT). Länderdaten und Umrisse: [world-countries](https://github.com/mledoze/countries) (ODbL).
+- Flaggen in echten Seitenverhältnissen: [svg-country-flags](https://github.com/hjnilsson/country-flags) (gemeinfrei). Länderdaten und Umrisse: [world-countries](https://github.com/mledoze/countries) (ODbL).
 
 ## Werkzeuge
 
