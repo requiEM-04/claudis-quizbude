@@ -1,8 +1,8 @@
-import { LAENDER } from './laender.js?v=0.5.1';
-import { WISSEN, WISSEN_THEMEN } from './wissen.js?v=0.5.1';
-import { EMOJI, EMOJI_THEMEN } from './emoji.js?v=0.5.1';
-import { kanon } from './kanon.js?v=0.5.1';
-import { LAND, AUSWAHL, pruefe, mischen, flaggeUrl, abgleichen } from './abgleich.js?v=0.5.1';
+import { LAENDER } from './laender.js?v=0.5.2';
+import { WISSEN, WISSEN_THEMEN } from './wissen.js?v=0.5.2';
+import { EMOJI, EMOJI_THEMEN } from './emoji.js?v=0.5.2';
+import { kanon } from './kanon.js?v=0.5.2';
+import { LAND, AUSWAHL, pruefe, mischen, flaggeUrl, abgleichen } from './abgleich.js?v=0.5.2';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const zahl = n => n.toLocaleString('de-DE');
@@ -12,7 +12,7 @@ let UMRISSE = null;
 let umrisseLaeuft = null;
 export function umrisseLaden() {
   if (UMRISSE) return Promise.resolve(UMRISSE);
-  umrisseLaeuft ||= import('./umrisse.js?v=0.5.1').then(m => { UMRISSE = m.UMRISSE; return UMRISSE; });
+  umrisseLaeuft ||= import('./umrisse.js?v=0.5.2').then(m => { UMRISSE = m.UMRISSE; return UMRISSE; });
   return umrisseLaeuft;
 }
 export const umrisseDa = () => !!UMRISSE;
@@ -90,9 +90,17 @@ export const KATEGORIEN = {
       const b = pool.find(x => Math.max(x.flaeche, l.flaeche) / Math.min(x.flaeche, l.flaeche) > 1.25) || pool[0];
       return { k: 'groesser', c: l.code, d: b.code, o: mischen([l.code, b.code]) };
     },
-    hinweis: () => 'Welches Land ist größer?',
+    hinweis: () => 'Welches Land hat die größere Fläche?',
     bild: () => '',
-    option: (key) => `<img src="${flaggeUrl(key)}" alt=""><span>${esc(LAND[key].name)}</span>`,
+    // Fläche und Balken sind schon da, aber unsichtbar, bis aufgedeckt wird
+    option: (key, f) => {
+      const max = Math.max(LAND[f.c].flaeche, LAND[f.d].flaeche);
+      const anteil = Math.max(2, Math.round(LAND[key].flaeche / max * 100));
+      return `<img src="${flaggeUrl(key)}" alt=""><span class="duell-name">${esc(LAND[key].name)}</span>`
+        + `<span class="duell-zahl">${zahl(LAND[key].flaeche)} km²</span>`
+        + `<span class="duell-balken" aria-hidden="true"><i style="--anteil:${anteil}%"></i></span>`
+        + '<span class="duell-urteil"></span>';
+    },
     optionKlasse: 'duell',
     pruefe: () => 'falsch',
     richtig: (key, f) => key === groesseres(f),
@@ -125,7 +133,7 @@ export const KATEGORIEN = {
       const falsch = mischen(EMOJI.filter(x => x.t === q.t && x.a !== q.a)).slice(0, 3).map(x => x.a);
       return { k: 'emoji', n: q.n, o: mischen([q.a, ...falsch]) };
     },
-    hinweis: f => ({ filme: 'Welcher Film?', woerter: 'Welches Wort?', sprueche: 'Welches Sprichwort?' }[EMOJI[f.n].t]),
+    hinweis: f => ({ filme: 'Welcher Film?', woerter: 'Welches Wort?', sprueche: 'Welches Sprichwort oder welche Redewendung?' }[EMOJI[f.n].t]),
     bild: f => `<p class="bild-emoji">${EMOJI[f.n].e}</p>`,
     option: (key, f) => esc(f.o[Number(key)]),
     schluessel: f => f.o.map((_, i) => String(i)),

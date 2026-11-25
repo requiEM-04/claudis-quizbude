@@ -1,20 +1,21 @@
-import { VERSION } from './config.js?v=0.5.1';
+import { VERSION } from './config.js?v=0.5.2';
 import {
   online, nameFehler, registrieren, anmelden, abmelden, sitzungHolen, profilLaden, profilSpeichern,
   bestenliste, letzteSpiele, sprintEintragen, sprintBestenliste, rangVon, spielerAnzahl, spieleVon, sb,
-} from './server.js?v=0.5.1';
-import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.5.1';
-import { Raum, codeNeu, STANDARD } from './raum.js?v=0.5.1';
-import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.5.1';
+} from './server.js?v=0.5.2';
+import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.5.2';
+import { Raum, codeNeu, STANDARD } from './raum.js?v=0.5.2';
+import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.5.2';
 import {
   KATEGORIEN, KATEGORIE_REIHE, RAUM_REIHE, SPIEL_NAME, kategorieVon, optionSchluessel, richtigeWahl, umrisseDa, umrisseLaden,
   sprintFrage, pruefeFrage, fragenVorladen, kanon,
-} from './kategorien.js?v=0.5.1';
-import { LAENDER } from './laender.js?v=0.5.1';
-import { auswahlfeld } from './auswahlfeld.js?v=0.5.1';
-import { KATEGORIE_SYMBOL } from './symbole.js?v=0.5.1';
-import { snakeZeichnen, SCHLANGEN_FARBEN, SNAKE_DAUER } from './snake.js?v=0.5.1';
-import { KURVEN_FARBEN } from './kurve.js?v=0.5.1';
+} from './kategorien.js?v=0.5.2';
+import { LAENDER } from './laender.js?v=0.5.2';
+import { auswahlfeld } from './auswahlfeld.js?v=0.5.2';
+import { KATEGORIE_SYMBOL } from './symbole.js?v=0.5.2';
+import { snakeZeichnen, SCHLANGEN_FARBEN, SNAKE_DAUER } from './snake.js?v=0.5.2';
+import { KURVEN_FARBEN } from './kurve.js?v=0.5.2';
+import { konfetti } from './konfetti.js?v=0.5.2';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -32,7 +33,7 @@ const SPRUCH = {
     'Schön, dass du da bist, {name}. Die Flaggen hängen schon.',
   ],
   richtig: ['Ticket geschlossen.', 'Sauber!', 'Zack, drin.', 'Läuft bei dir.', 'Schneller als jeder Neustart.', 'Das sitzt.'],
-  falsch: ['Schon mal aus- und wieder eingeschaltet?', 'Nee, andere Baustelle.', 'Leider nein.', 'Knapp vorbei ist auch daneben.'],
+  falsch: ['Schon mal aus- und wieder eingeschaltet?', 'Nee, andere Baustelle.', 'Leider nein.', 'Das war nix.'],
   knapp: ['Fast! Tippfehler?', 'Ganz warm.', 'So gut wie. Nochmal genauer.'],
 };
 
@@ -44,9 +45,46 @@ let besteSpalte = 'siege';
 let lobbyAus = null;
 
 // ---------- Kleinkram ----------
+let aktuellerScreen = null;
 function zeige(name) {
   document.querySelectorAll('.screen').forEach(s => { s.hidden = s.id !== 's-' + name; });
+  if (aktuellerScreen !== name) { aktuellerScreen = name; scrollTo(0, 0); } // neue Seite beginnt oben
 }
+
+// kleine Effekte
+function pulsen(el, klasse = 'puls') {
+  el.classList.remove(klasse); void el.offsetWidth; el.classList.add(klasse);
+}
+function plusEins(ziel, text = '+1') {
+  const s = document.createElement('span');
+  s.className = 'plus-eins'; s.textContent = text;
+  ziel.append(s);
+  setTimeout(() => s.remove(), 900);
+}
+function hochzaehlen(el, bis, vorlage = n => String(n), dauer = 650) {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches || bis <= 0) { el.textContent = vorlage(bis); return; }
+  const start = performance.now();
+  const schritt = jetzt => {
+    const t = Math.min(1, (jetzt - start) / dauer);
+    el.textContent = vorlage(Math.round(bis * (1 - (1 - t) ** 3)));
+    if (t < 1) requestAnimationFrame(schritt);
+  };
+  requestAnimationFrame(schritt);
+}
+
+// Größer oder kleiner: beide Flächen aufdecken, größeres Land mit ✓, eigene falsche Wahl mit ✗
+function duellAufdecken(box, f, gewaehlt) {
+  box.classList.add('aufgedeckt');
+  box.querySelectorAll('button').forEach(b => {
+    b.disabled = true;
+    const gross = richtigeWahl(f, b.dataset.c);
+    b.classList.toggle('gewinner', gross);
+    if (gewaehlt != null && b.dataset.c === gewaehlt) b.classList.add(gross ? 'richtig' : 'falsch');
+    const urteil = b.querySelector('.duell-urteil');
+    if (urteil) urteil.textContent = gross ? '✓ größer' : gewaehlt === b.dataset.c ? '✗ kleiner' : 'kleiner';
+  });
+}
+const groessererName = f => LAND[LAND[f.c].flaeche >= LAND[f.d].flaeche ? f.c : f.d].name;
 
 let toastTimer;
 function toast(text) {
@@ -618,8 +656,15 @@ function raumAufbauen() {
   $('optionen').onclick = e => {
     const b = e.target.closest('button');
     if (!b || !raum) return;
+    const f = raum.frage;
     const r = raum.waehlen(b.dataset.c);
     const rm = $('rueckmeldung');
+    if (r !== 'zu' && f?.k === 'groesser') {
+      duellAufdecken($('optionen'), f, b.dataset.c);
+      rm.className = 'rueckmeldung ' + (r === 'richtig' ? 'gut' : 'schlecht');
+      rm.textContent = `${r === 'richtig' ? 'Richtig' : 'Falsch'}, ${groessererName(f)} ist größer.`;
+      return;
+    }
     if (r === 'richtig') { b.classList.add('richtig'); rm.className = 'rueckmeldung gut'; rm.textContent = zufall(SPRUCH.richtig); }
     if (r === 'falsch') { b.classList.add('falsch'); rm.className = 'rueckmeldung schlecht'; rm.textContent = zufall(SPRUCH.falsch); }
     if (r !== 'zu') document.querySelectorAll('#optionen button').forEach(x => { x.disabled = true; });
@@ -732,7 +777,8 @@ function raumZeichnen() {
       eingabe.disabled = true;
       $('aufgeloest').textContent = kat.loesung(f);
       $('frage-info').innerHTML = (kat.nachher ? kat.nachher(f) : '') + esc(kat.info ? kat.info(f) : '');
-      document.querySelectorAll('#optionen button').forEach(b => {
+      if (f.k === 'groesser') duellAufdecken($('optionen'), f, null);
+      else document.querySelectorAll('#optionen button').forEach(b => {
         b.disabled = true;
         if (richtigeWahl(f, b.dataset.c)) b.classList.add('richtig');
       });
@@ -752,7 +798,14 @@ function raumZeichnen() {
   if (r.phase === 'ende') {
     const liste = r.ergebnis || [];
     $('ende-titel').textContent = !r.istSpiel ? 'Endstand' : r.unentschieden ? 'Unentschieden' : `${liste[0]?.name || '?'} gewinnt`;
-    $('podest').innerHTML = liste.map((e, i) => `<li><span class="platz">${i + 1}.</span>${avatarHtml(e)}<span>${esc(e.name)}</span><span class="wert">${e.pkt}</span></li>`).join('');
+    if (gezeichnet.ende !== r.spielId) {
+      gezeichnet.ende = r.spielId;
+      $('podest').innerHTML = liste.map((e, i) => `<li style="--i:${i}"${e.id === r.ich.id ? ' class="ich"' : ''}><span class="platz">${i + 1}.</span>${avatarHtml(e)}<span class="podest-name">${i === 0 && !r.unentschieden ? '<span class="krone" aria-hidden="true">👑</span>' : ''}${esc(e.name)}</span><span class="wert" data-pkt="${e.pkt}">0</span></li>`).join('');
+      $('podest').querySelectorAll('.wert').forEach((w, i) => setTimeout(() => hochzaehlen(w, Number(w.dataset.pkt)), 250 + i * 140));
+      // Konfetti je nach eigenem Platz (bei mehreren Leuten)
+      const platz = liste.findIndex(e => e.id === r.ich.id);
+      if (liste.length >= 2 && platz >= 0 && platz <= 2 && !(r.unentschieden && platz === 0) && (liste[platz].pkt > 0)) setTimeout(() => konfetti(3 - platz), 350);
+    }
     $('nochmal').hidden = !r.binHost;
     $('andere-kategorie').hidden = !r.binHost;
     $('ende-text').textContent = r.binHost
@@ -952,8 +1005,13 @@ setInterval(updateWennRuhig, 3000); // falls die neue Version schon bekannt ist 
 // Countdown und knapp werdende Zeit
 setInterval(() => {
   if (raum && raum.phase === 'countdown') {
-    $('countdown').textContent = Math.max(1, Math.ceil((raum.countdownEnde - performance.now()) / 1000));
+    const z = String(Math.max(1, Math.ceil((raum.countdownEnde - performance.now()) / 1000)));
+    if ($('countdown').textContent !== z) { $('countdown').textContent = z; pulsen($('countdown')); }
   }
+  // Während gespielt wird, verschwindet die Leiste unten (verdeckt sonst auf kleinen Bildschirmen die Antworten)
+  const spielt = (sprint && !$('s-sprint').hidden && (sprint.laeuft || !sprint.ende))
+    || (raum && !$('s-raum').hidden && ['countdown', 'frage', 'aufloesung', 'spiel'].includes(raum.phase));
+  document.body.classList.toggle('spielt', !!spielt);
   const spielCountdown = raum && raum.istSpiel && raum.phase === 'countdown';
   $('spiel-countdown').hidden = !spielCountdown;
   if (spielCountdown) {
@@ -966,7 +1024,8 @@ setInterval(() => {
       const i = raum.snake?.schlangen.findIndex(s => s.id === raum.ich.id) ?? -1;
       text = i === 0 ? 'Du bist die sandfarbene Schlange links.' : i === 1 ? 'Du bist die grüne Schlange rechts.' : 'Du schaust zu.';
     }
-    $('spiel-countdown').innerHTML = `<span>${zahl}<small>${text}</small></span>`;
+    const neu = `<span>${zahl}<small>${text}</small></span>`;
+    if ($('spiel-countdown').innerHTML !== neu) { $('spiel-countdown').innerHTML = neu; pulsen($('spiel-countdown').firstElementChild); }
   }
   if (raum && raum.phase === 'frage') {
     const rest = raum.dauer - (performance.now() - raum.start);
@@ -1002,6 +1061,7 @@ async function sprintStart(kategorie = 'flaggen') {
   for (let i = SPRINT_COUNTDOWN; i >= 1; i--) {
     if (sprint !== s) return;
     $('sprint-countdown').textContent = i;
+    pulsen($('sprint-countdown'));
     await pause(1000);
   }
   await laden;
@@ -1025,6 +1085,7 @@ function sprintNaechste() {
   const f = s.vorrat.shift();
   sprintZiehen();
   s.frage = f;
+  s.versucht = false;
   const kat = kategorieVon(f);
   $('sprint-hinweis').textContent = kat.hinweis(f);
   $('sprint-bild').innerHTML = kat.bild(f); // jedes Mal neue Elemente, nie ein altes Bild
@@ -1037,15 +1098,21 @@ function sprintNaechste() {
   if (!f.o) setTimeout(() => eingabe.focus(), 20);
 }
 
+function punktePop() {
+  $('sprint-punkte').textContent = sprint.punkte;
+  pulsen($('sprint-punkte').parentElement, 'pop');
+  plusEins($('sprint-punkte').parentElement);
+}
+
 function sprintTreffer() {
   sprint.punkte++;
-  $('sprint-punkte').textContent = sprint.punkte;
+  punktePop();
   $('sprint-rueck').className = 'rueckmeldung gut'; $('sprint-rueck').textContent = zufall(SPRUCH.richtig);
   sprintNaechste();
 }
 
 function sprintTick() {
-  const rest = Math.max(0, sprint.ende - performance.now());
+  const rest = Math.max(0, sprint.ende - (sprint.pauseSeit || performance.now())); // während einer Auflösung steht die Uhr
   $('sprint-zeit').textContent = `${Math.ceil(rest / 1000)} s`;
   const fl = $('sprint-leiste');
   fl.style.width = `${(rest / SPRINT_MS) * 100}%`;
@@ -1055,10 +1122,12 @@ function sprintTick() {
 
 async function sprintEnde() {
   const s = sprint;
-  s.laeuft = false; // die Frage, die beim Abpfiff noch offen ist, zählt nicht als ausgelassen
+  s.laeuft = false;
+  // Die Frage beim Abpfiff zählt nur als ausgelassen, wenn man schon etwas versucht oder eingetippt hatte
+  if (s.frage && !s.verpasst.includes(s.frage) && (s.versucht || (!s.frage.o && $('sprint-eingabe').value.trim()))) s.verpasst.push(s.frage);
   const kat = KATEGORIEN[s.kategorie];
   $('sp-laeuft').hidden = true; $('sp-ende').hidden = false;
-  $('sprint-ergebnis').textContent = `${s.punkte} richtig in 60 Sekunden`;
+  hochzaehlen($('sprint-ergebnis'), s.punkte, n => `${n} richtig in 60 Sekunden`);
   $('sprint-verpasst').innerHTML = s.verpasst.map(f => `<li>${kategorieVon(f).kurz(f)}</li>`).join('');
   $('sprint-verpasst-titel').hidden = !s.verpasst.length;
   const rekordText = $('sprint-rekord');
@@ -1072,6 +1141,8 @@ async function sprintEnde() {
   }
   if (sprint !== s) return;
   rekordText.textContent = `${kat.name}: ` + (s.punkte > alt ? (alt ? `Neuer Rekord! Vorher waren es ${alt}.` : 'Dein erster Rekord steht.') : `Dein Rekord: ${alt}.`);
+  rekordText.classList.toggle('rekord-neu', s.punkte > alt && s.punkte > 0);
+  if (s.punkte > alt && s.punkte > 0) setTimeout(() => konfetti(alt ? 3 : 2), 300);
 }
 
 function sprintAufbauen() {
@@ -1083,13 +1154,28 @@ function sprintAufbauen() {
     const rm = $('sprint-rueck');
     if (r === 'richtig') sprintTreffer();
     else if (r === 'knapp') { rm.className = 'rueckmeldung'; rm.textContent = zufall(SPRUCH.knapp); wackeln(eingabe); }
-    else if (r === 'falsch') { rm.className = 'rueckmeldung schlecht'; rm.textContent = zufall(SPRUCH.falsch); wackeln(eingabe); eingabe.select(); }
+    else if (r === 'falsch') { sprint.versucht = true; rm.className = 'rueckmeldung schlecht'; rm.textContent = zufall(SPRUCH.falsch); wackeln(eingabe); eingabe.select(); }
   };
   $('sprint-optionen').onclick = e => {
     const b = e.target.closest('button');
     const s = sprint;
-    if (!b || !s?.laeuft || !s.frage?.o || b.disabled) return;
+    if (!b || !s?.laeuft || !s.frage?.o || b.disabled || s.pauseSeit) return;
     const f = s.frage;
+    if (f.k === 'groesser') {
+      // Auflösung zeigen, die Uhr steht so lange
+      const ok = richtigeWahl(f, b.dataset.c);
+      s.pauseSeit = performance.now();
+      duellAufdecken($('sprint-optionen'), f, b.dataset.c);
+      const rm = $('sprint-rueck');
+      if (ok) { s.punkte++; punktePop(); rm.className = 'rueckmeldung gut'; rm.textContent = `Richtig, ${groessererName(f)} ist größer.`; }
+      else { s.ende -= SPRINT_FALSCH; s.verpasst.push(f); rm.className = 'rueckmeldung schlecht'; rm.textContent = `Falsch, ${groessererName(f)} ist größer. Minus 5 Sekunden.`; }
+      setTimeout(() => {
+        if (sprint !== s || !s.laeuft) return;
+        s.ende += performance.now() - s.pauseSeit; s.pauseSeit = null;
+        if (s.frage === f) sprintNaechste();
+      }, ok ? 1300 : 1900);
+      return;
+    }
     if (richtigeWahl(f, b.dataset.c)) { sprintTreffer(); return; }
     // falsch: richtige Antwort kurz zeigen, Zeit abziehen, weiter
     s.ende -= SPRINT_FALSCH;
@@ -1108,7 +1194,7 @@ function sprintAufbauen() {
 
 function sprintUeberspringen() {
   const s = sprint;
-  if (!s?.laeuft || !s.frage) return;
+  if (!s?.laeuft || !s.frage || s.pauseSeit) return;
   s.verpasst.push(s.frage);
   s.ende -= SPRINT_STRAFE;
   $('sprint-rueck').className = 'rueckmeldung';

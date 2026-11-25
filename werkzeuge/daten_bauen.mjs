@@ -106,7 +106,7 @@ function umriss(cca3) {
     if (g.type === 'MultiPolygon') polys.push(...g.coordinates);
   }
   if (!polys.length) return null;
-  const lons = polys.flat(2).filter((_, i) => i % 2 === 0);
+  const lons = polys.flat(2).map(p => p[0]);
   const ueberDatumsgrenze = lons.some(x => x < -150) && lons.some(x => x > 150);
   if (ueberDatumsgrenze) polys = polys.map(p => p.map(r => r.map(([x, y]) => [x < 0 ? x + 360 : x, y])));
   // nur die großen Teile behalten, Inselstaub fliegt raus

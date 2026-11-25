@@ -3,7 +3,7 @@
 export const EMOJI_THEMEN = {
   filme: 'Filme',
   woerter: 'Zusammengesetzte Wörter',
-  sprueche: 'Sprichwörter',
+  sprueche: 'Sprichwörter und Redewendungen',
 };
 
 export const EMOJI = [

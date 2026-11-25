@@ -111,7 +111,7 @@ async def main():
                 print('Auflösung:', await A.inner_text('#aufgeloest'), '/', await A.inner_text('#rueckmeldung'))
         await warte_phase(A, 'p-ende', 10000)
         await warte_phase(Bp, 'p-ende', 10000)
-        await A.wait_for_timeout(500)
+        await A.wait_for_timeout(1800)  # Punkte zählen hoch
         pa = await A.inner_text('#podest'); pb = await Bp.inner_text('#podest')
         print('Podest A:', pa.replace('\n', ' ')); print('Podest B:', pb.replace('\n', ' '))
         assert pa == pb
@@ -147,6 +147,7 @@ async def main():
             c = await code_jetzt(Bp)
             await Bp.click(f'#optionen button[data-c="{c}"]')
         await warte_phase(Bp, 'p-ende', 15000)
+        await Bp.wait_for_timeout(1500)
         print('Endstand B allein:', (await Bp.inner_text('#podest')).replace('\n', ' '))
         print('Nochmal-Knopf bei B sichtbar:', await Bp.is_visible('#nochmal'))
         await A.wait_for_timeout(500)

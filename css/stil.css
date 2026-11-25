@@ -154,6 +154,51 @@ label { display: grid; gap: 6px; font-weight: 600; font-size: .86rem; color: var
 .fehler:empty { display: none; }
 .hinweis { color: var(--text-2); font-size: .92rem; }
 
+/* ---------- Effekte ---------- */
+.konfetti { position: fixed; inset: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 60; }
+@keyframes puls { 0% { transform: scale(1.35); opacity: .2; } 60% { transform: scale(.96); opacity: 1; } 100% { transform: scale(1); } }
+.puls { animation: puls .5s cubic-bezier(.2, .8, .2, 1); display: inline-block; }
+.sprint-punkte { position: relative; display: inline-block; }
+@keyframes pop { 0% { transform: scale(1); } 35% { transform: scale(1.28); } 100% { transform: scale(1); } }
+.sprint-punkte.pop { animation: pop .35s ease; }
+.plus-eins {
+  position: absolute; left: 100%; top: -4px; margin-left: 4px; font: 800 1rem var(--display); color: var(--salbei);
+  pointer-events: none; animation: hoch .9s ease-out forwards;
+}
+@keyframes hoch { from { transform: translateY(6px); opacity: 0; } 20% { opacity: 1; } to { transform: translateY(-26px); opacity: 0; } }
+.rekord-neu { color: var(--sand) !important; font-weight: 800; animation: puls .6s ease; }
+/* Podest fährt Platz für Platz hoch */
+@keyframes aufsteigen { from { transform: translateY(18px); opacity: 0; } to { transform: none; opacity: 1; } }
+.podest li { animation: aufsteigen .5s cubic-bezier(.2, .8, .2, 1) both; animation-delay: calc(var(--i, 0) * 140ms + 120ms); }
+.podest li:first-child { box-shadow: 0 0 0 1px rgba(205,182,140,.35), 0 18px 40px -18px rgba(205,182,140,.45); }
+.podest li.ich { outline: 1px dashed rgba(143,179,162,.55); outline-offset: -1px; }
+.podest-name { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
+.krone { display: inline-block; animation: krone 1.2s ease .6s both; }
+@keyframes krone { 0% { transform: translateY(-14px) rotate(-20deg); opacity: 0; } 60% { transform: translateY(2px) rotate(8deg); opacity: 1; } 100% { transform: none; } }
+/* richtig: kurzer grüner Schein */
+@keyframes schein { 0% { box-shadow: 0 0 0 0 rgba(143,179,162,.6); } 100% { box-shadow: 0 0 0 16px rgba(143,179,162,0); } }
+.rate-form input.richtig, .optionen button.richtig { animation: schein .7s ease-out; }
+/* Leiste unten beim Spielen ausblenden */
+.dock { transition: opacity .25s ease, transform .25s ease, visibility .25s; }
+body.spielt .dock { opacity: 0; visibility: hidden; transform: translate(-50%, 24px); }
+
+/* ---------- Größer oder kleiner: Auflösung ---------- */
+.optionen.duell .duell-zahl, .optionen.duell .duell-balken, .optionen.duell .duell-urteil { visibility: hidden; }
+.optionen.duell.aufgedeckt .duell-zahl, .optionen.duell.aufgedeckt .duell-balken, .optionen.duell.aufgedeckt .duell-urteil { visibility: visible; }
+.optionen.duell .duell-zahl { font: 700 .95rem var(--schrift); color: var(--text-2); font-variant-numeric: tabular-nums; margin-top: -6px; }
+.optionen.duell .duell-balken { width: 100%; height: 8px; border-radius: 99px; background: rgba(255,255,255,.07); overflow: hidden; }
+.optionen.duell .duell-balken i { display: block; height: 100%; width: 0; border-radius: inherit; background: var(--text-3); transition: width .7s cubic-bezier(.2, .8, .2, 1); }
+.optionen.duell.aufgedeckt .duell-balken i { width: var(--anteil); }
+.optionen.duell .duell-urteil { font: 800 .9rem var(--display); color: var(--text-3); min-height: 1.2em; }
+.optionen.duell button.gewinner .duell-balken i { background: var(--salbei); }
+.optionen.duell button.gewinner .duell-urteil { color: var(--salbei); }
+.optionen.duell button.richtig, .optionen.duell button.falsch, .optionen.duell button.gewinner { color: var(--text); }
+.optionen.duell button.gewinner { border-color: rgba(143,179,162,.6); background: rgba(143,179,162,.1); }
+.optionen.duell button.richtig { border-color: var(--salbei); background: rgba(143,179,162,.18); }
+.optionen.duell button.falsch { border-color: var(--rose); background: rgba(207,142,142,.14); }
+.optionen.duell button.falsch .duell-urteil { color: var(--rose); }
+.optionen.duell.aufgedeckt button:not(.gewinner) img { opacity: .75; }
+
 /* ---------- Als Gast ---------- */
 .oder { display: flex; align-items: center; gap: 12px; margin: 18px 0 14px; color: var(--text-3); font-size: .85rem; font-weight: 600; }
 .oder::before, .oder::after { content: ""; flex: 1; height: 1px; background: var(--linie); }

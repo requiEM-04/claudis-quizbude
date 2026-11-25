@@ -1,9 +1,9 @@
-import { sb, spielEintragen, spielLoggen } from './server.js?v=0.5.1';
-import { fragenBauen, pruefeFrage, richtigeWahl, fragenVorladen, KATEGORIEN, kategorieVon } from './kategorien.js?v=0.5.1';
-import { lobbyMelden, lobbyAbmelden } from './lobby.js?v=0.5.1';
-import { chatErlaubt, textPruefen } from './filter.js?v=0.5.1';
-import { snakeNeu, snakeSchritt, snakeErgebnis, snakeTakt, SNAKE_DAUER } from './snake.js?v=0.5.1';
-import { KurvenSim, KurvenBild } from './kurve.js?v=0.5.1';
+import { sb, spielEintragen, spielLoggen } from './server.js?v=0.5.2';
+import { fragenBauen, pruefeFrage, richtigeWahl, fragenVorladen, KATEGORIEN, kategorieVon } from './kategorien.js?v=0.5.2';
+import { lobbyMelden, lobbyAbmelden } from './lobby.js?v=0.5.2';
+import { chatErlaubt, textPruefen } from './filter.js?v=0.5.2';
+import { snakeNeu, snakeSchritt, snakeErgebnis, snakeTakt, SNAKE_DAUER } from './snake.js?v=0.5.2';
+import { KurvenSim, KurvenBild } from './kurve.js?v=0.5.2';
 
 export const STANDARD = { kategorie: 'flaggen', runden: 10, zeit: 15, auswahl: 'alle', modus: 'tippen', chat: 'eingeschraenkt', sichtbar: 'geschlossen' };
 const COUNTDOWN = 3000;
@@ -18,7 +18,9 @@ export function codeNeu() {
 // Klartext einer Antwortmöglichkeit (die Optionen liegen als escaptes HTML vor)
 function wahlText(frage, key) {
   try {
-    return String(kategorieVon(frage).option(String(key), frage))
+    const html = String(kategorieVon(frage).option(String(key), frage));
+    const name = html.match(/class="duell-name">([^<]*)</); // bei Größer oder kleiner nur den Ländernamen
+    return (name ? name[1] : html)
       .replace(/<[^>]*>/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"')
       .replace(/&#39;/g, "'").replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim();
   } catch { return ''; }
