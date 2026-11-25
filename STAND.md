@@ -2,7 +2,7 @@
 
 ## Aktuell (25.11.2026)
 
-- **Version:** 0.6.2
+- **Version:** 0.7.0
 - **Live:** https://requiem-04.github.io/claudis-quizbude/ (Repo `requiEM-04/claudis-quizbude`, Branch `main`, GitHub Pages)
 - **Server:** Supabase-Projekt `quizbude` (Ref `jgvjjjiwfjxynbzjaxsg`, Frankfurt), E-Mail-Bestätigung aus, Realtime mit öffentlichen Kanälen.
 - **Inhalt:** Konten (Name + Passwort ab 4 Zeichen), Räume mit 4-Buchstaben-Code (live über Realtime), Flaggenraten (tippen oder 4 zur Auswahl), Flaggen-Sprint (60 s), Bestenliste (Siege, Punkte, Sprint), „Zuletzt gespielt".
@@ -31,15 +31,17 @@
 
 - **Neu in 0.6.2:** Antworten auch mit A–D (nur wenn nicht in ein Feld getippt wird), Tastenliste als Fenster (⌨-Knopf oben in Sprint und Raum, Taste „?“) statt Hinweis unter jeder Frage. Pokémon-Kategorie bewusst nicht gebaut (Urheberrecht, Colin: „können wir auch auslassen“).
 
-## Als Nächstes (mit Colin besprochen)
+- **Neu in 0.7.0:** Rubrik „Spiele“ (Snake) komplett entfernt (alte Spiele-Runden werden in „Zuletzt gespielt“ ausgeblendet). Bestenliste neu: schmale Spalte fest am rechten Rand (ab 1560 px; 1560–1859 px rückt der Inhalt etwas nach links, darunter steht sie unter dem Inhalt), Inhalt wieder in normaler Breite. Reiter Punkte | Siege | Sprint, kleine Auswahl „Saison <Monat>“ / „Allzeit“ (Saisons ab November 2026), jede Zeile ein Feld mit Avatar, Name, Wert und Unterzeile (Platz für Titel und Ruhm-Emblem später). Platz 1–3 mit Medaille, Rahmen und Glanz, Krone fällt ein, schwebt und blitzt. Endstand im Raum im selben Stil. Datenbank: `sprint_laeufe` (jeder Sprint mit Zeitpunkt), `sprint_bestenliste(p_kategorie, p_seit)` für Saison-Sprints (Migration am 25.11. eingespielt).
 
-- Emoji-Rätsel inhaltlich überarbeiten (spannender).
-- Freunde + Einladen in Räume (Einladung 15 s oben sichtbar).
-- Kosmetik mit Pass (wie Pokélings) und Währung.
+## Als Nächstes (mit Colin besprochen, in dieser Reihenfolge)
 
+1. **Ruhm** wie in Pokélings (angelehnt an Brawl Stars): Edelstein-Ränge Topas → Smaragd → Saphir → Rubin → Amethyst → Diamant → Ruhmeslegende, je Stufe I–III. Ruhm-Token fließen automatisch rein (serverseitig in den RPCs), Vergangenes wird aus den Konten nachgerechnet. Belohnungen: Stufe I Namensfarbe, Stufe II Rang-Effekt, Stufe III Kartenrahmen + Bestenlisten-Rahmen; im Profil (Battle-Karte) auswählbar, auch „Keiner“. Animationen beim Aufstieg.
+2. Nur planen: Kosmetik-Shop, Währung (Name noch offen), Battle Pass (mit Colin nochmal besprechen).
+3. Saison-Abzeichen: Top 3 jeder Monats-Saison bekommen ein Abzeichen (Saison läuft schon).
+4. Freunde + Einladen in Räume (Einladung 15 s oben sichtbar).
+5. Emoji-Rätsel inhaltlich überarbeiten (spannender).
 
-- Insider-Fragen (BAUPART, Ticketsystem) – nicht ins öffentliche Repo, sondern in Supabase nur für angemeldete Spieler.
-- Spielwährung für Kosmetik.
+- Insider-Fragen (BAUPART, Ticketsystem) – wartet auf Colins Antwort, ob Salvatore und Ali einverstanden sind. Wenn ja: nicht ins öffentliche Repo, sondern in Supabase nur für angemeldete Spieler.
 
 ## Ideen für später
 

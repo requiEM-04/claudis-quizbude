@@ -189,15 +189,26 @@ label { display: grid; gap: 6px; font-weight: 600; font-size: .86rem; color: var
 @keyframes aufsteigen { from { transform: translateY(18px); opacity: 0; } to { transform: none; opacity: 1; } }
 .podest li { animation: aufsteigen .5s cubic-bezier(.2, .8, .2, 1) both; animation-delay: calc(var(--i, 0) * 140ms + 120ms); }
 .podest { display: grid; gap: 8px; }
-ol.podest li { background: rgba(255,255,255,.03); border-radius: 14px; padding: 12px 18px; }
-ol.podest li:first-child { background: linear-gradient(90deg, rgba(205,182,140,.2), rgba(205,182,140,.05)); padding: 16px 18px; }
+ol.podest li { background: rgba(255,255,255,.035); border: 1px solid transparent; border-radius: 16px; padding: 12px 18px 12px 12px; position: relative; overflow: hidden; }
 .podest li .wert { font: 800 1.1rem var(--display); font-variant-numeric: tabular-nums; }
-.podest li:first-child .wert { color: var(--sand); font-size: 1.3rem; }
+/* Platz 1 bis 3 auf dem Endstand: Medaille, Rahmen, Glanz – Platz 1 größer mit Krone */
+ol.podest li.p1 { --medaille: #E2C487; } ol.podest li.p2 { --medaille: #C3CACF; } ol.podest li.p3 { --medaille: #C99A6E; }
+ol.podest li.top { border-color: color-mix(in srgb, var(--medaille) 45%, transparent); background: linear-gradient(100deg, color-mix(in srgb, var(--medaille) 24%, transparent), rgba(255,255,255,.02) 75%); }
+ol.podest li.top .platz { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-size: .9rem; color: #1B1E21; background: radial-gradient(circle at 35% 30%, #fff8 0, transparent 45%), var(--medaille); box-shadow: 0 0 0 2px color-mix(in srgb, var(--medaille) 35%, transparent), 0 4px 10px -2px rgba(0,0,0,.6); }
+ol.podest li.top .wert { color: var(--medaille); }
+ol.podest li.top .avatar { box-shadow: 0 0 0 2px var(--medaille); }
+ol.podest li.p1 { padding: 20px 20px 18px 12px; font-size: 1.2rem; }
+ol.podest li.p1 .wert { font-size: 1.45rem; }
+ol.podest li.p1 .avatar { width: 48px; height: 48px; font-size: 1.5rem; box-shadow: 0 0 0 2px var(--medaille), 0 0 24px -2px var(--medaille); }
+ol.podest li.p1 .krone { font-size: 1.35rem; top: -19px; margin-left: -12px; }
+ol.podest li.top::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(110deg, transparent 35%, rgba(255,255,255,.18) 50%, transparent 65%); transform: translateX(-120%); animation: glanz 5.5s ease-in-out infinite; animation-delay: calc(var(--i, 0) * .5s + 1.4s); }
+ol.podest li.p1::before { content: ""; position: absolute; inset: -40% -10%; pointer-events: none; background: radial-gradient(closest-side at 18% 50%, color-mix(in srgb, var(--medaille) 30%, transparent), transparent); animation: p1-puls 3s ease-in-out infinite; }
+ol.podest li > * { position: relative; z-index: 1; }
+@keyframes p1-puls { 0%, 100% { opacity: .5; } 50% { opacity: 1; } }
 .podest li.ich .podest-name::after { content: "du"; margin-left: 8px; padding: 1px 7px; border-radius: 99px; font: 700 .7rem var(--schrift); color: var(--salbei); background: rgba(143,179,162,.15); }
-.podest li:nth-child(2) .platz { color: #B9C0C4; } .podest li:nth-child(3) .platz { color: #C49A72; }
-.podest-name { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
-.krone { display: inline-block; animation: krone 1.2s ease .6s both; }
-@keyframes krone { 0% { transform: translateY(-14px) rotate(-20deg); opacity: 0; } 60% { transform: translateY(2px) rotate(8deg); opacity: 1; } 100% { transform: none; } }
+
+.podest-name { display: inline-flex; align-items: center; gap: 6px; min-width: 0; font-weight: 700; }
+
 /* richtig: kurzer grüner Schein */
 @keyframes schein { 0% { box-shadow: 0 0 0 0 rgba(143,179,162,.6); } 100% { box-shadow: 0 0 0 16px rgba(143,179,162,0); } }
 .rate-form input.richtig, .optionen button.richtig { animation: schein .7s ease-out; }
@@ -228,29 +239,6 @@ body.spielt .dock { opacity: 0; visibility: hidden; transform: translate(-50%, 2
 .gast-hinweis { margin-top: 10px; color: var(--text-3); font-size: .86rem; }
 .dock-gast { display: inline-flex; align-items: center; gap: 8px; color: var(--text-2); font-weight: 700; padding: 0 4px; }
 .dock-gast .avatar { background: var(--flaeche-aktiv); }
-
-/* ---------- Spiele (Snake) ---------- */
-/* großes Feld: Seitenleiste weg, so breit und hoch wie der Bildschirm erlaubt */
-body.grossfeld main { max-width: min(1600px, 100%); padding-top: 12px; padding-bottom: 24px; }
-.raum-raster.spielmodus { grid-template-columns: minmax(0, 1fr); }
-.raum-raster.spielmodus > .seite { display: none; }
-.raum-raster.spielmodus .buehne-karte { padding: 14px 18px 18px; }
-.raum-raster.spielmodus .spiel-feld { width: min(100%, calc((100vh - 150px) * 1.6129)); margin: 0 auto; }
-.raum-raster.spielmodus .spiel-kopf { margin-bottom: 10px; }
-.raum-raster.spielmodus #spiel-hilfe { display: none; }
-.spiel-kopf { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px 26px; margin-bottom: 14px; font-weight: 700; }
-.spiel-kopf .wer { display: inline-flex; align-items: center; gap: 8px; }
-.spiel-kopf .punkt { width: 12px; height: 12px; border-radius: 4px; background: var(--f); }
-.spiel-kopf .wer.raus { opacity: .45; text-decoration: line-through; }
-.spiel-kopf small { color: var(--text-2); font-weight: 600; }
-.spiel-buehne { position: relative; width: 100%; }
-.spiel-feld { display: block; width: 100%; border-radius: 16px; background: var(--tief); border: 1px solid var(--linie); touch-action: none; }
-.spiel-countdown {
-  position: absolute; inset: 0; display: grid; place-items: center; margin: 0;
-  font: 800 clamp(5rem, 14vw, 8rem)/1 var(--display); color: var(--sand); text-shadow: 0 10px 30px rgba(0,0,0,.6);
-}
-.spiel-countdown small { display: block; font: 700 1rem/1.4 var(--schrift); color: var(--text); text-shadow: none; margin-top: 10px; text-align: center; }
-.kb-snake { width: 92px; height: 60px; }
 
 /* ---------- Eigene Klappliste ---------- */
 select.nativ { display: none !important; }
@@ -344,78 +332,92 @@ legend { font-weight: 600; font-size: .86rem; color: var(--text-2); margin-botto
 .bude-raster { display: grid; gap: 20px; margin-top: 44px; }
 @media (min-width: 900px) { .bude-raster { grid-template-columns: 1fr 1fr; align-items: start; } }
 
-/* Bude mit Bestenliste als eigener Spalte rechts (ab breiten Bildschirmen) */
-.screen.bude { display: grid; gap: 28px; align-items: start; }
-.screen.bude[hidden] { display: none; }
-.bude-rechts { min-width: 0; }
-@media (min-width: 1480px) {
-  body:has(#s-bude:not([hidden])) main { max-width: 1580px; }
-  .screen.bude { grid-template-columns: minmax(0, 1fr) 360px; }
-  .bude-rechts { position: sticky; top: 20px; margin-top: 18px; }
-  .bude-rechts .besten-karte { max-height: calc(100vh - 150px); overflow-y: auto; scrollbar-width: thin; }
+/* ---------- Bestenliste ----------
+   Breite Bildschirme: schmale Spalte fest am rechten Rand, der Inhalt in der Mitte bleibt so groß wie immer.
+   Sonst: unter dem Inhalt. */
+.bude-rechts { margin-top: 24px; }
+@media (min-width: 1860px) {
+  .bude-rechts {
+    position: fixed; top: 24px; right: 24px; width: 300px; margin: 0; z-index: 5;
+    max-height: calc(100vh - 48px); overflow-y: auto; scrollbar-width: thin; border-radius: var(--r-gross);
+  }
 }
-.besten-karte { padding-bottom: 18px; }
-.besten-kopf { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
-.besten-kopf h2 { margin: 0; }
-.besten-saison { color: var(--sand); font-weight: 700; font-size: .85rem; }
+@media (min-width: 1560px) and (max-width: 1859px) {
+  .bude-rechts { position: fixed; top: 24px; right: 20px; width: 290px; margin: 0; z-index: 5; max-height: calc(100vh - 48px); overflow-y: auto; scrollbar-width: thin; border-radius: var(--r-gross); }
+  body:has(#s-bude:not([hidden])) main { margin-left: max(0px, calc((100vw - 330px - var(--breite)) / 2)); margin-right: 0; }
+}
+@media (max-width: 1559px) {
+  .bude-rechts .besten-felder { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 8px; }
+}
+.besten-karte { padding: 18px 16px 16px; }
+.besten-kopf { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+.besten-kopf h2 { margin: 0; font-size: 1.15rem; }
+/* kleine Zeitraum-Auswahl wie bei Pokélings */
+.besten-kopf .feld { min-width: 0; }
+.besten-kopf .feld-knopf { padding: .34em .6em .34em .75em; font-size: .78rem; border-radius: 99px; gap: 4px; color: var(--sand); background: rgba(205,182,140,.08); border-color: rgba(205,182,140,.25); }
+.besten-kopf .feld-pfeil { width: 14px; height: 14px; }
+.besten-kopf .feld-liste { left: auto; right: 0; width: 200px; }
 .umschalter.voll { display: flex; width: 100%; }
 .umschalter.voll .umschalter-knopf { flex: 1; }
-.besten-kategorie { margin: 12px 0 0; display: block; }
-.besten-kategorie .feld { min-width: 0; }
-/* Podest oben */
-.besten-podest { display: grid; grid-template-columns: 1fr 1.15fr 1fr; align-items: end; gap: 8px; margin: 18px 0 8px; }
-.besten-podest:empty { display: none; }
-.podest-platz {
-  position: relative; display: grid; justify-items: center; gap: 4px; text-align: center; min-width: 0;
-  color: var(--text); text-decoration: none; padding-top: 14px;
+.besten-kategorie { margin: 10px 0 0; display: block; }
+.besten-kategorie .feld { width: 100%; }
+@media (max-width: 1559px) {
+  .besten-karte .umschalter.voll { max-width: 440px; }
+  .besten-kategorie .feld { width: min(100%, 280px); }
 }
-.podest-platz .avatar { width: 46px; height: 46px; font-size: 1.4rem; box-shadow: 0 0 0 3px var(--medaille), 0 10px 24px -8px rgba(0,0,0,.7); }
-.podest-platz.p1 .avatar { width: 58px; height: 58px; font-size: 1.8rem; }
-.podest-platz .krone { position: absolute; top: -6px; font-size: 1.3rem; }
-.podest-name { font-weight: 700; font-size: .88rem; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.podest-wert { font-size: .78rem; color: var(--text-2); font-weight: 600; }
-.podest-sockel {
-  width: 100%; display: grid; place-items: center; margin-top: 4px; border-radius: 12px 12px 6px 6px;
-  font: 800 1.3rem var(--display); color: #16191B; background: var(--medaille);
-  box-shadow: inset 0 -10px 18px rgba(0,0,0,.18);
+.besten-kategorie .feld-knopf { padding: .5em .8em; font-size: .9rem; }
+/* jede Zeile ein Feld */
+.besten-felder { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 6px; }
+.besten-feld a {
+  display: grid; grid-template-columns: 26px 40px minmax(0, 1fr) auto; align-items: center; gap: 10px;
+  padding: 8px 12px 8px 8px; border-radius: 14px; text-decoration: none; color: var(--text);
+  background: rgba(255,255,255,.035); border: 1px solid transparent;
+  transition: background-color .15s, border-color .15s, transform .15s;
 }
-.podest-platz.p1 { --medaille: #CDB68C; } .podest-platz.p1 .podest-sockel { height: 62px; }
-.podest-platz.p2 { --medaille: #B9C0C4; } .podest-platz.p2 .podest-sockel { height: 44px; }
-.podest-platz.p3 { --medaille: #C49A72; } .podest-platz.p3 .podest-sockel { height: 32px; }
-.podest-platz:hover .podest-name { text-decoration: underline; text-underline-offset: 3px; }
-.podest-platz.ich .podest-name { color: var(--salbei); }
-.besten-liste li .rang { font: 800 .95rem var(--display); color: var(--text-3); text-align: center; }
-.besten-liste li.ich, .besten-ich { background: rgba(143,179,162,.1); border-radius: 12px; box-shadow: inset 3px 0 0 var(--salbei); }
-.besten-ich { display: grid; grid-template-columns: 2em auto 1fr auto; gap: 12px; align-items: center; padding: 10px 12px; margin-top: 10px; font-weight: 700; }
+.besten-feld a:hover { background: rgba(255,255,255,.06); border-color: var(--linie-stark); transform: translateX(-2px); }
+.besten-feld .rang { font: 800 .95rem var(--display); color: var(--text-3); text-align: center; }
+.bf-avatar { position: relative; display: grid; place-items: center; }
+.bf-avatar .avatar { width: 36px; height: 36px; font-size: 1.15rem; }
+.bf-mitte { display: grid; min-width: 0; line-height: 1.2; }
+.bf-name { font-weight: 700; font-size: .92rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bf-unter { font-size: .74rem; color: var(--text-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bf-wert { font: 800 1rem var(--display); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+.bf-wert small { font: 600 .7rem var(--schrift); color: var(--text-3); margin-left: 3px; }
+/* Platz 1 bis 3: Medaillen-Farbe, Glanz, Medaille statt Zahl */
+.besten-feld.top a { border-color: color-mix(in srgb, var(--medaille) 45%, transparent); background: linear-gradient(100deg, color-mix(in srgb, var(--medaille) 24%, transparent), rgba(255,255,255,.02) 70%); position: relative; overflow: hidden; }
+.besten-feld.p1 { --medaille: #E2C487; } .besten-feld.p2 { --medaille: #C3CACF; } .besten-feld.p3 { --medaille: #C99A6E; }
+.besten-feld.top .rang {
+  width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: .78rem; color: #1B1E21;
+  background: radial-gradient(circle at 35% 30%, #fff8 0, transparent 45%), var(--medaille);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--medaille) 35%, transparent), 0 4px 10px -2px rgba(0,0,0,.6);
+}
+.besten-feld.top .bf-wert { color: var(--medaille); }
+.besten-feld.top .bf-avatar .avatar { box-shadow: 0 0 0 2px var(--medaille); }
+.besten-feld.p1 a { padding-top: 12px; padding-bottom: 12px; }
+.besten-feld.p1 .bf-avatar .avatar { width: 40px; height: 40px; box-shadow: 0 0 0 2px var(--medaille), 0 0 18px -2px var(--medaille); }
+/* Glanz, der langsam über die Top 3 läuft */
+.besten-feld.top a::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(110deg, transparent 35%, rgba(255,255,255,.16) 50%, transparent 65%);
+  transform: translateX(-120%); animation: glanz 5.5s ease-in-out infinite; animation-delay: calc(var(--i, 0) * .6s + 1s);
+}
+@keyframes glanz { 0%, 70% { transform: translateX(-120%); } 100% { transform: translateX(120%); } }
+.besten-feld.ich a { border-color: rgba(143,179,162,.6); box-shadow: inset 3px 0 0 var(--salbei); }
+.besten-feld.ich .bf-name { color: var(--salbei); }
+.besten-felder li.leer { color: var(--text-2); padding: 8px 4px; }
+.besten-ich { display: grid; grid-template-columns: 26px 36px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 8px 12px 8px 8px; margin-top: 10px; border-radius: 14px; background: rgba(143,179,162,.1); box-shadow: inset 3px 0 0 var(--salbei); font-weight: 700; }
 .besten-ich[hidden] { display: none; }
 .besten-ich .rang { font: 800 .95rem var(--display); color: var(--salbei); text-align: center; }
-.besten-fuss { margin: 14px 0 0; color: var(--text-3); font-size: .82rem; }
+.besten-ich .avatar { width: 36px; height: 36px; font-size: 1.1rem; }
+.besten-fuss { margin: 12px 2px 0; color: var(--text-3); font-size: .78rem; line-height: 1.45; }
 
-.raum-liste, .letzte-liste, .besten-liste { list-style: none; margin: 0; padding: 0; }
-.raum-liste li {
-  display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center;
-  padding: 12px; margin: 0 -12px; border-radius: var(--r-klein);
-  transition: background-color .15s;
-}
-.raum-liste li:hover { background: rgba(255,255,255,.025); }
-.raum-liste li.leer { display: block; }
-.raum-liste .code {
-  font: 800 1.05rem/1 var(--display); letter-spacing: .14em; color: var(--sand);
-  background: var(--tief); border: 1px solid var(--linie); padding: 10px 12px; border-radius: 12px;
-}
-.raum-liste .info strong { display: block; font-weight: 700; }
-.raum-liste .info span { color: var(--text-2); font-size: .88rem; }
-.leer { color: var(--text-2); padding: 6px 0; }
-.letzte-liste li { color: var(--text-2); padding: 6px 0; }
-.letzte-liste li + li { border-top: 1px solid var(--linie); }
+/* Krone: fällt beim Erscheinen ein, schwebt danach leicht und blitzt ab und zu auf */
+.krone { display: inline-block; filter: drop-shadow(0 3px 4px rgba(0,0,0,.55)); animation: krone-rein .9s cubic-bezier(.2, 1.4, .4, 1) .3s both, krone-schweben 3.2s ease-in-out 1.2s infinite, krone-blitz 4.5s ease-in-out 2s infinite; }
+@keyframes krone-rein { from { transform: translateY(-16px) rotate(-25deg) scale(.6); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes krone-schweben { 0%, 100% { transform: translateY(0) rotate(-6deg); } 50% { transform: translateY(-3px) rotate(4deg); } }
+@keyframes krone-blitz { 0%, 85%, 100% { filter: drop-shadow(0 3px 4px rgba(0,0,0,.55)) brightness(1); } 92% { filter: drop-shadow(0 0 8px rgba(255,220,140,.95)) brightness(1.35); } }
+.bf-avatar .krone { position: absolute; top: -13px; left: 50%; margin-left: -9px; font-size: 1.05rem; z-index: 1; }
 
-.besten-liste { counter-reset: platz; }
-.besten-liste li {
-  counter-increment: platz;
-  display: grid; grid-template-columns: 2em auto 1fr auto; align-items: center; gap: 12px;
-  padding: 9px 0; border-top: 1px solid var(--linie);
-}
-.besten-liste li:first-child { border-top: 0; }
 /* Platznummer steht jetzt in .rang */
 .besten-liste li.leer { display: block; border: 0; }
 .besten-liste li.leer::before { content: none; }
@@ -443,8 +445,6 @@ kbd {
 /* ab Laptop-Breite alle 7 Kategorien in einer Reihe, damit man nicht scrollen muss */
 @media (min-width: 1100px) {
   .kachel-raster { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 10px; }
-  #kachel-raster { grid-template-columns: repeat(8, minmax(0, 1fr)); }
-  #kachel-raster .kb-emoji { font-size: 2.1rem; }
   .kachel { padding: 14px 13px 15px; }
   .kachel-name { font-size: .93rem; }
   .kb-duell { gap: 4px; }
@@ -609,10 +609,9 @@ img[src$="/np.svg"] { border-radius: 0 !important; }
 @keyframes wackeln { 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
 
 .podest { list-style: none; margin: 0; padding: 0; width: min(100%, 480px); text-align: left; }
-.podest li { display: grid; grid-template-columns: 2em auto 1fr auto; gap: 12px; align-items: center; padding: 10px 14px; border-radius: var(--r-klein); }
-.podest li .platz { font: 800 1.1rem var(--display); color: var(--text-3); }
-.podest li:first-child { font-size: 1.15rem; }
-.podest li:first-child .platz { color: var(--sand); }
+.podest li { display: grid; grid-template-columns: 30px auto 1fr auto; gap: 12px; align-items: center; padding: 10px 14px; border-radius: var(--r-klein); }
+.podest li .platz { font: 800 1.05rem var(--display); color: var(--text-3); text-align: center; }
+
 
 .seite h2 { font-size: 1.1rem; }
 .spieler-liste { list-style: none; margin: 0 0 18px; padding: 0; }

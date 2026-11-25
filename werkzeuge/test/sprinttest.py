@@ -48,7 +48,7 @@ async def main():
         await pg.screenshot(path=f'{BILDER}/s_bude.png')
         await pg.click('.dock-link[data-nav=sprint]'); await pg.wait_for_selector('#s-sprintwahl:not([hidden])')
         print('Sprint-Reiter:', await pg.evaluate('location.hash'), '| aktiv:', await pg.inner_text('.dock-link.aktiv'))
-        print('Kachel-Text:', (await pg.inner_text('#sprint-kacheln .kachel[data-k=umrisse] .kachel-rekord')))
+        print('Kachel-Text:', (await pg.inner_text('#sprint-kacheln .kachel[data-k=umrisse] .sk-rekord')))
         await pg.screenshot(path=f'{BILDER}/s_sprintwahl.png')
 
         for kat in ['umrisse', 'wissen', 'groesser']:
@@ -84,7 +84,7 @@ async def main():
             await pg.screenshot(path=f'{BILDER}/s_ende_{kat}.png')
             await pg.go_back(); await pg.wait_for_timeout(500)
             print(kat, 'nach Zurück:', await pg.evaluate('location.hash'), [s for s in ['s-bude', 's-sprint', 's-sprintwahl'] if not await pg.evaluate(f'document.getElementById("{s}").hidden')])
-        print('Kachel-Text danach:', await pg.inner_text('#sprint-kacheln .kachel[data-k=umrisse] .kachel-rekord'))
+        print('Kachel-Text danach:', await pg.inner_text('#sprint-kacheln .kachel[data-k=umrisse] .sk-rekord'))
         # Raus aus laufendem Sprint -> Auswahl, dann Zurück -> Bude
         await pg.click('#sprint-kacheln .kachel[data-k=flaggen]'); await pg.wait_for_function('quizbude.sprint && quizbude.sprint.laeuft', timeout=8000)
         await pg.click('#s-sprint a.knopf[href="#/sprint"]'); await pg.wait_for_timeout(400)

@@ -124,12 +124,18 @@
         if (name === 'spiel_eintragen') profilAendern(r => ({ ...r, spiele: r.spiele + 1, siege: r.siege + (a.p_sieg ? 1 : 0), punkte: r.punkte + a.p_punkte, richtig: r.richtig + a.p_richtig }));
         if (name === 'sprint_eintragen') {
           const k = a.p_kategorie || 'flaggen'; let rek;
+          L.set('fake.laeufe', [...L.get('fake.laeufe', []), { von: uid(), k, w: a.p_wert, am: new Date().toISOString() }]);
           profilAendern(r => { r.sprints++; if (k === 'flaggen') r.sprint_rekord = Math.max(r.sprint_rekord, a.p_wert); r.rekorde = { ...(r.rekorde || {}), [k]: Math.max(r.rekorde?.[k] || 0, a.p_wert) }; rek = r.rekorde[k]; return r; });
           return { data: rek, error: null };
         }
         if (name === 'sprint_bestenliste') {
           const k = a.p_kategorie;
-          const rows = L.get('fake.profile', []).filter(r => (r.rekorde?.[k] || 0) > 0).map(r => ({ id: r.id, name: r.name, avatar: r.avatar, farbe: r.farbe, wert: r.rekorde[k] })).sort((x, y) => y.wert - x.wert).slice(0, 15);
+          // Saison: aus den gespeicherten Läufen, sonst Rekorde
+          const laeufe = L.get('fake.laeufe', []).filter(x => x.k === k && (!a.p_seit || x.am >= a.p_seit));
+          const best = new Map(); for (const x of laeufe) best.set(x.von, Math.max(best.get(x.von) || 0, x.w));
+          const rows = a.p_seit
+            ? L.get('fake.profile', []).filter(r => best.get(r.id) > 0).map(r => ({ id: r.id, name: r.name, avatar: r.avatar, farbe: r.farbe, wert: best.get(r.id) })).sort((x, y) => y.wert - x.wert).slice(0, 15)
+            : L.get('fake.profile', []).filter(r => (r.rekorde?.[k] || 0) > 0).map(r => ({ id: r.id, name: r.name, avatar: r.avatar, farbe: r.farbe, wert: r.rekorde[k] })).sort((x, y) => y.wert - x.wert).slice(0, 15);
           return { data: rows, error: null };
         }
         if (name === 'spiel_loggen') L.set('fake.spiele', [{ ...a.p, am: new Date().toISOString() }, ...L.get('fake.spiele', [])]);

@@ -1,5 +1,5 @@
-import { CONFIG } from './config.js?v=0.6.2';
-import { textPruefen } from './filter.js?v=0.6.2';
+import { CONFIG } from './config.js?v=0.7.0';
+import { textPruefen } from './filter.js?v=0.7.0';
 
 // ?sitzung=2 in der Adresse = zweites Konto im selben Browser (zum Testen mit zwei Tabs)
 const sitzung = new URLSearchParams(location.search).get('sitzung');
@@ -134,8 +134,8 @@ export async function spieleVon(name) {
   return data;
 }
 
-export async function sprintBestenliste(kategorie) {
-  const { data, error } = await sb.rpc('sprint_bestenliste', { p_kategorie: kategorie });
+export async function sprintBestenliste(kategorie, seit = null) {
+  const { data, error } = await sb.rpc('sprint_bestenliste', { p_kategorie: kategorie, p_seit: seit });
   if (error) throw new Error(uebersetzen(error));
   return data || [];
 }

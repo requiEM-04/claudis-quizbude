@@ -7,7 +7,7 @@
 <meta name="description" content="Flaggen raten in der Pause, allein oder zusammen im Raum.">
 <meta name="theme-color" content="#1B1E21">
 <link rel="icon" href="bilder/icon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="css/stil.css?v=0.6.2">
+<link rel="stylesheet" href="css/stil.css?v=0.7.0">
 </head>
 <body>
 <main>
@@ -84,22 +84,20 @@
     </div>
     </div>
 
-    <!-- Bestenliste als eigene Spalte rechts -->
+    <!-- Bestenliste: am rechten Rand (breite Bildschirme), sonst unter dem Inhalt -->
     <aside class="bude-rechts" aria-labelledby="besten-titel">
       <section class="karte besten-karte">
         <div class="besten-kopf">
           <h2 id="besten-titel">Bestenliste</h2>
-          <span class="besten-saison" id="besten-saison"></span>
+          <select id="besten-zeit" aria-label="Zeitraum"></select>
         </div>
         <div class="umschalter klein voll" role="tablist" id="besten-reiter">
-          <button role="tab" class="umschalter-knopf aktiv" data-spalte="monat" aria-selected="true">Monat</button>
+          <button role="tab" class="umschalter-knopf aktiv" data-spalte="punkte" aria-selected="true">Punkte</button>
           <button role="tab" class="umschalter-knopf" data-spalte="siege" aria-selected="false">Siege</button>
-          <button role="tab" class="umschalter-knopf" data-spalte="punkte" aria-selected="false">Punkte</button>
           <button role="tab" class="umschalter-knopf" data-spalte="sprint" aria-selected="false">Sprint</button>
         </div>
-        <label class="besten-kategorie" hidden><select id="besten-kategorie"></select></label>
-        <div class="besten-podest" id="besten-podest"></div>
-        <ol id="besten-liste" class="besten-liste"></ol>
+        <label class="besten-kategorie" hidden><select id="besten-kategorie" aria-label="Sprint-Kategorie"></select></label>
+        <ol id="besten-liste" class="besten-felder"></ol>
         <div class="besten-ich" id="besten-ich" hidden></div>
         <p class="besten-fuss" id="besten-fuss"></p>
       </section>
@@ -182,7 +180,7 @@
             <p class="phase-text" id="warten-text"></p>
             <div class="einst" id="einst">
               <label class="breit">Kategorie <select data-e="kategorie" id="einst-kategorie"></select></label>
-              <label><span id="einst-auswahl-titel">Auswahl</span> <select data-e="auswahl" id="einst-auswahl"></select></label>
+              <label>Auswahl <select data-e="auswahl" id="einst-auswahl"></select></label>
               <label>Antworten <select data-e="modus" id="einst-modus"><option value="tippen">Selbst tippen</option><option value="auswahl">Zur Auswahl</option></select></label>
               <label>Runden <select data-e="runden"><option>5</option><option>10</option><option>15</option><option>20</option><option>30</option></select></label>
               <label>Zeit pro Frage <select data-e="zeit"><option value="10">10 s</option><option value="15">15 s</option><option value="20">20 s</option><option value="30">30 s</option></select></label>
@@ -205,15 +203,6 @@
             </form>
             <div class="optionen" id="optionen"></div>
             <p class="rueckmeldung" id="rueckmeldung" aria-live="polite"></p>
-          </div>
-
-          <div class="phase" id="p-spiel">
-            <div class="spiel-kopf" id="spiel-info"></div>
-            <div class="spiel-buehne">
-              <canvas class="spiel-feld" id="spiel-feld" aria-label="Spielfeld"></canvas>
-              <p class="spiel-countdown" id="spiel-countdown" hidden></p>
-            </div>
-            <p class="phase-text" id="spiel-hilfe">Lenken mit ← → oder A D, Rakete mit ↑, W oder Leertaste. Am Handy links oder rechts aufs Feld drücken und halten, Doppeltipp feuert.</p>
           </div>
 
           <div class="phase" id="p-ende">
@@ -293,8 +282,6 @@
     <dt>Antwort wählen</dt><dd><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> <kbd>4</kbd> oder <kbd>A</kbd> <kbd>B</kbd> <kbd>C</kbd> <kbd>D</kbd></dd>
     <dt>Antwort abschicken</dt><dd><kbd>Enter</kbd></dd>
     <dt>Überspringen im Sprint</dt><dd><kbd>→</kbd> oder <kbd>Alt</kbd> + <kbd>D</kbd> (kostet 2 Sekunden)</dd>
-    <dt>Snake lenken</dt><dd><kbd>←</kbd> <kbd>→</kbd> oder <kbd>A</kbd> <kbd>D</kbd></dd>
-    <dt>Rakete abfeuern</dt><dd><kbd>↑</kbd>, <kbd>W</kbd> oder <kbd>Leertaste</kbd></dd>
     <dt>Raus</dt><dd>Zurück-Taste im Browser oder an der Maus</dd>
     <dt>Diese Liste</dt><dd><kbd>?</kbd></dd>
   </dl>
@@ -311,7 +298,7 @@
 </nav>
 <div class="toast" id="toast" role="status" hidden></div>
 
-<script src="vendor/supabase.js?v=0.6.2"></script>
-<script type="module" src="js/app.js?v=0.6.2"></script>
+<script src="vendor/supabase.js?v=0.7.0"></script>
+<script type="module" src="js/app.js?v=0.7.0"></script>
 </body>
 </html>

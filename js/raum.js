@@ -1,8 +1,7 @@
-import { sb, spielEintragen, spielLoggen } from './server.js?v=0.6.2';
-import { fragenBauen, pruefeFrage, richtigeWahl, fragenVorladen, KATEGORIEN, kategorieVon } from './kategorien.js?v=0.6.2';
-import { lobbyMelden, lobbyAbmelden } from './lobby.js?v=0.6.2';
-import { chatErlaubt, textPruefen } from './filter.js?v=0.6.2';
-import { KurvenSim, KurvenBild } from './kurve.js?v=0.6.2';
+import { sb, spielEintragen, spielLoggen } from './server.js?v=0.7.0';
+import { fragenBauen, pruefeFrage, richtigeWahl, fragenVorladen, KATEGORIEN, kategorieVon } from './kategorien.js?v=0.7.0';
+import { lobbyMelden, lobbyAbmelden } from './lobby.js?v=0.7.0';
+import { chatErlaubt, textPruefen } from './filter.js?v=0.7.0';
 
 export const STANDARD = { kategorie: 'flaggen', runden: 10, zeit: 15, auswahl: 'alle', modus: 'tippen', chat: 'eingeschraenkt', sichtbar: 'geschlossen' };
 const COUNTDOWN = 3000;
@@ -70,10 +69,7 @@ export class Raum {
     this.unentschieden = false;
   }
 
-  get istSpiel() { return !!KATEGORIEN[this.einst.kategorie]?.spiel; }
-  // [mindestens, höchstens] Leute für das gewählte Spiel
-  get spielerSpanne() { return this.istSpiel ? (KATEGORIEN.spiele.spielerZahl[this.einst.auswahl] || [2, 2]) : [2, 99]; }
-  get startBereit() { const [min, max] = this.spielerSpanne; return this.spieler.size >= min && this.spieler.size <= max; }
+  get startBereit() { return this.spieler.size >= 2; } // gespielt wird ab 2 Leuten
 
   get binHost() { return this.hostId === this.ich.id; }
 
@@ -123,7 +119,6 @@ export class Raum {
   verlassen() {
     this.weg = true;
     clearTimeout(this.timer);
-    this.kurveStopp();
     if (this.binHost) lobbyAbmelden();
     if (this.kanal) sb.removeChannel(this.kanal);
   }
@@ -168,11 +163,6 @@ export class Raum {
     if (this.phase === 'warten' && !this.syncDa && this.gemerkt?.einst) {
       this.senden('einst', { einst: { ...this.einst, ...this.gemerkt.einst } });
       this.gemerkt.einst = null;
-    }
-    if (this.istSpiel && (this.phase === 'countdown' || this.phase === 'spiel')) {
-      // Der bisherige Gastgeber ist mitten im Spiel gegangen: wer noch da ist, gewinnt bzw. der Spielstand zählt
-      if (this.kurvenBild) this.kurveBeenden(this.kurvenBild.lage?.punkte, this.kurveIds);
-      return;
     }
     if (this.phase === 'countdown') this.timer = setTimeout(() => this.frageSenden(0), 1500);
     else if (this.phase === 'frage') { this.hostSchritt = { i: this.idx, fertig: false }; this.aufloesen(); }
@@ -251,9 +241,7 @@ export class Raum {
           einst: p.einst, fragen: p.fragen, spielId: p.spielId, idx: -1, phase: 'countdown',
           punkte: new Map(), geloest: new Map(), gesperrt: new Set(), ergebnis: null, meineTreffer: 0,
           unentschieden: false,
-          kurveIds: p.kurve?.ids || null, kurvenBild: p.kurve ? new KurvenBild() : null,
         });
-        this.kurveStopp();
         this.countdownEnde = performance.now() + COUNTDOWN;
         this.vorladen();
         if (this.binHost) this.lobbyAktualisieren();
@@ -297,17 +285,6 @@ export class Raum {
       case 'aufloesung':
         this.phase = 'aufloesung';
         break;
-      case 'kv':
-        if (!this.kurvenBild) return;
-        this.kurvenBild.aufnehmen(p.b, p.l);
-        if (this.phase === 'countdown') { this.phase = 'spiel'; break; }
-        return;
-      case 'kd':
-        if (this.binHost && this.kurve) this.kurve.lenken(p.von, !!p.l, !!p.r);
-        return;
-      case 'kf':
-        if (this.binHost && this.kurve && p.von !== this.ich.id) this.kurve.feuern(p.von);
-        return;
       case 'ende':
         this.phase = 'ende';
         this.ergebnis = p.liste;
@@ -316,7 +293,6 @@ export class Raum {
         if (this.binHost) this.lobbyAktualisieren();
         break;
       case 'warten':
-        this.kurveStopp();
         Object.assign(this, { phase: 'warten', fragen: [], idx: -1, punkte: new Map(), ergebnis: null });
         if (this.binHost) this.lobbyAktualisieren();
         break;
@@ -342,9 +318,8 @@ export class Raum {
   }
 
   starten() {
-    if (!this.binHost || !this.startBereit) return; // Quiz ab 2 Leuten, Spiele je nach Spiel
+    if (!this.binHost || !this.startBereit) return; // gespielt wird ab 2 Leuten
     clearTimeout(this.timer);
-    if (this.istSpiel) return this.spielStarten();
     const fragen = fragenBauen(this.einst);
     this.senden('start', { einst: this.einst, fragen, spielId: crypto.randomUUID() });
     this.timer = setTimeout(() => this.frageSenden(0), COUNTDOWN);
@@ -405,89 +380,10 @@ export class Raum {
     else this.senden('warten', {});
   }
 
-  // ---------- Kurvenkampf ----------
-  kurveStarten() {
-    const ids = [...this.spieler.keys()].sort((a, b) => (a === this.hostId ? -1 : b === this.hostId ? 1 : (this.spieler.get(a).seit - this.spieler.get(b).seit)));
-    this.senden('start', { einst: this.einst, fragen: [], spielId: crypto.randomUUID(), kurve: { ids: ids.slice(0, 8) } });
-    this.timer = setTimeout(() => this.kurveLos(), COUNTDOWN);
-  }
-
-  kurveLos() {
-    if (!this.binHost || this.weg || !this.kurveIds) return;
-    this.kurve = new KurvenSim(this.kurveIds);
-    if (this.kurveVorab) this.kurve.lenken(this.ich.id, this.kurveVorab.l, this.kurveVorab.r);
-    this.kurveUhr = performance.now();
-    this.kurveBuendel = [];
-    this.kurveSchleife = setInterval(() => this.kurveWeiter(), 1000 / 60);
-  }
-
-  kurveWeiter() {
-    const sim = this.kurve;
-    if (!this.binHost || this.weg || !sim) return this.kurveStopp();
-    // Wer den Raum verlässt, scheidet aus
-    sim.s.forEach(s => { if (s.lebt && !this.spieler.has(s.id) && sim.phase === 'lauf') s.tot = true; });
-    const jetzt = performance.now();
-    let n = Math.floor((jetzt - this.kurveUhr) / (1000 / 60));
-    if (n > 20) { n = 20; this.kurveUhr = jetzt; } else this.kurveUhr += n * (1000 / 60);
-    for (let i = 0; i < n; i++) this.kurveBuendel.push(sim.schritt());
-    // bis 4 Leute etwa 20 Sendungen pro Sekunde, darüber 12 (damit der Server nicht ans Limit kommt)
-    if (this.kurveBuendel.length >= (sim.ids.length > 4 ? 5 : 3)) {
-      const b = this.kurveBuendel; this.kurveBuendel = [];
-      const l = sim.lage();
-      this.kurvenBild?.aufnehmen(b, l);
-      this.senden('kv', { b, l });
-      if (this.phase === 'countdown') { this.phase = 'spiel'; this.meldung(); }
-    }
-    if (sim.vorbei && sim.phase === 'pause' && sim.t >= sim.phaseBis) this.kurveBeenden(sim.punkte, sim.ids);
-  }
-
-  kurveStopp() {
-    clearInterval(this.kurveSchleife);
-    this.kurveSchleife = null;
-  }
-
-  kurveBeenden(punkte, ids) {
-    if (!this.binHost || this.weg) return;
-    this.kurveStopp();
-    clearTimeout(this.timer);
-    ids = ids || [];
-    punkte = punkte || ids.map(() => 0);
-    const max = Math.max(0, ...punkte);
-    const liste = ids.map((id, i) => ({
-      id, pkt: punkte[i] * 10 + (punkte[i] === max && max > 0 && punkte.filter(p => p === max).length === 1 ? 30 : 0),
-      ...(this.bekannt.get(id) || { name: '?' }),
-    })).sort((a, b) => b.pkt - a.pkt);
-    const unentschieden = liste.length > 1 && liste[0].pkt === liste[1].pkt;
-    this.kurve = null;
-    this.senden('ende', { liste, unentschieden });
-    if (!this.ich.gast) spielLoggen({
-      code: this.code, kategorie: 'spiele', runden: null, modus: 'kurve', auswahl: 'kurve',
-      spieler: liste.map(({ name, avatar, pkt }) => ({ name, avatar, pkt })),
-    });
-  }
-
-  kurveFeuern() {
-    if (this.phase !== 'spiel') return;
-    if (this.binHost) this.kurve?.feuern(this.ich.id);
-    else this.senden('kf', {});
-  }
-
-  // Links/rechts gedrückt halten. Der Gastgeber gibt es direkt an seine Rechnung, alle anderen schicken es.
-  kurveLenken(l, r) {
-    if (this.phase !== 'spiel' && this.phase !== 'countdown') return;
-    if (this.binHost) {
-      if (this.kurve) this.kurve.lenken(this.ich.id, l, r);
-      else this.kurveVorab = { l, r };
-    } else this.senden('kd', { l, r });
-  }
-
-  spielStarten() { return this.kurveStarten(); }
-
   // Alle zusammen zurück in den Warteraum, dort sucht der Gastgeber eine neue Kategorie aus
   zurueckInDenWarteraum() {
     if (!this.binHost) return;
     clearTimeout(this.timer);
-    this.kurveStopp();
     this.senden('warten', {});
   }
 

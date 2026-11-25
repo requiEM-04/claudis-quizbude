@@ -1,20 +1,19 @@
-import { VERSION } from './config.js?v=0.6.2';
+import { VERSION } from './config.js?v=0.7.0';
 import {
   online, nameFehler, registrieren, anmelden, abmelden, sitzungHolen, profilLaden, profilSpeichern,
   bestenliste, letzteSpiele, spieleSeit, alleProfile, sprintEintragen, sprintBestenliste, rangVon, spielerAnzahl, spieleVon, sb,
-} from './server.js?v=0.6.2';
-import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.6.2';
-import { Raum, codeNeu, STANDARD } from './raum.js?v=0.6.2';
-import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.6.2';
+} from './server.js?v=0.7.0';
+import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.7.0';
+import { Raum, codeNeu, STANDARD } from './raum.js?v=0.7.0';
+import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.7.0';
 import {
-  KATEGORIEN, KATEGORIE_REIHE, RAUM_REIHE, SPIEL_NAME, kategorieVon, optionSchluessel, richtigeWahl, umrisseDa, umrisseLaden,
+  KATEGORIEN, KATEGORIE_REIHE, kategorieVon, optionSchluessel, richtigeWahl, umrisseDa, umrisseLaden,
   sprintFrage, pruefeFrage, fragenVorladen, kanon,
-} from './kategorien.js?v=0.6.2';
-import { LAENDER } from './laender.js?v=0.6.2';
-import { auswahlfeld } from './auswahlfeld.js?v=0.6.2';
-import { KATEGORIE_SYMBOL } from './symbole.js?v=0.6.2';
-import { KURVEN_FARBEN } from './kurve.js?v=0.6.2';
-import { konfetti } from './konfetti.js?v=0.6.2';
+} from './kategorien.js?v=0.7.0';
+import { LAENDER } from './laender.js?v=0.7.0';
+import { auswahlfeld } from './auswahlfeld.js?v=0.7.0';
+import { KATEGORIE_SYMBOL } from './symbole.js?v=0.7.0';
+import { konfetti } from './konfetti.js?v=0.7.0';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -40,7 +39,7 @@ let ich = null;
 let raum = null;
 let sprint = null;
 let neuErstellt = null;
-let besteSpalte = 'monat';
+let besteSpalte = 'punkte';
 let lobbyAus = null;
 
 // ---------- Kleinkram ----------
@@ -312,92 +311,106 @@ function raeumeZeichnen(raeume) {
 }
 
 const SPALTE = {
-  monat: n => `${n.toLocaleString('de-DE')} Pkt.`,
-  siege: n => `${n} ${n === 1 ? 'Sieg' : 'Siege'}`,
-  punkte: n => `${n.toLocaleString('de-DE')} Pkt.`,
-  sprint: n => `${n} richtig`,
+  siege: n => [n, n === 1 ? 'Sieg' : 'Siege'],
+  punkte: n => [n.toLocaleString('de-DE'), 'Pkt.'],
+  sprint: n => [n, 'richtig'],
 };
 const MONATE = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
+const ERSTE_SAISON = [2026, 10]; // November 2026 (Monat ab 0)
 
-// Monatswertung: Punkte und Siege aus allen Raum-Spielen dieses Monats (Gäste zählen nicht)
-async function monatsWertung() {
-  const jetzt = new Date();
-  const start = new Date(jetzt.getFullYear(), jetzt.getMonth(), 1);
-  const [spiele, profile] = await Promise.all([spieleSeit(start), alleProfile()]);
+// Saisons von der ersten bis heute, neueste zuerst, dazu „Allzeit“
+function saisonOptionen() {
+  const jetzt = new Date(), aus = [];
+  for (let j = jetzt.getFullYear(), m = jetzt.getMonth(); j > ERSTE_SAISON[0] || (j === ERSTE_SAISON[0] && m >= ERSTE_SAISON[1]); m--) {
+    if (m < 0) { m = 11; j--; continue; }
+    aus.push({ wert: `${j}-${m}`, name: `Saison ${MONATE[m]}${j !== jetzt.getFullYear() ? ' ' + j : ''}` });
+    if (aus.length > 24) break;
+  }
+  aus.push({ wert: 'allzeit', name: 'Allzeit' });
+  return aus;
+}
+const saisonGrenzen = wert => { const [j, m] = wert.split('-').map(Number); return [new Date(j, m, 1), new Date(j, m + 1, 1)]; };
+
+// Saisonwertung: Punkte und Siege aus allen Raum-Spielen des Monats (Gäste zählen nicht)
+async function saisonWertung(von, bis) {
+  const [spiele, profile] = await Promise.all([spieleSeit(von), alleProfile()]);
   const proName = new Map(profile.map(p => [p.name.toLowerCase(), p]));
   const summe = new Map();
+  let anzahl = 0;
   for (const s of spiele) {
+    if (new Date(s.am) >= bis || s.kategorie === 'spiele') continue;
+    anzahl++;
     const sp = s.spieler || [];
     sp.forEach((e, i) => {
       const p = proName.get(String(e.name || '').toLowerCase());
       if (!p) return;
-      const z = summe.get(p.id) || { ...p, wert: 0, siege: 0, spiele: 0 };
-      z.wert += e.pkt || 0; z.spiele++;
+      const z = summe.get(p.id) || { ...p, punkte: 0, siege: 0, spiele: 0 };
+      z.punkte += e.pkt || 0; z.spiele++;
       if (i === 0 && sp.length > 1 && e.pkt > 0) z.siege++;
       summe.set(p.id, z);
     });
   }
-  const liste = [...summe.values()].sort((a, b) => b.wert - a.wert || b.siege - a.siege);
-  return { liste, spiele: spiele.length, ende: new Date(jetzt.getFullYear(), jetzt.getMonth() + 1, 1) };
+  return { liste: [...summe.values()], anzahl };
 }
 
 let bestenUhr = null;
 async function bestenLaden() {
-  const ol = $('besten-liste'), podest = $('besten-podest'), ichBox = $('besten-ich'), fuss = $('besten-fuss');
-  const spalte = besteSpalte;
+  const ol = $('besten-liste'), ichBox = $('besten-ich'), fuss = $('besten-fuss');
+  const spalte = besteSpalte, zeit = $('besten-zeit').value || saisonOptionen()[0].wert;
   document.querySelector('.besten-kategorie').hidden = spalte !== 'sprint';
   clearInterval(bestenUhr);
   bestenUhr = setInterval(() => { if (!$('s-bude').hidden && !document.hidden) bestenLaden(); }, 30000); // frisch halten
   try {
-    let liste, fussText = '', saison = '';
-    if (spalte === 'monat') {
-      const m = await monatsWertung();
-      liste = m.liste;
-      const tage = Math.ceil((m.ende - new Date()) / 86400000);
-      saison = `Saison ${MONATE[new Date().getMonth()]}`;
-      fussText = `${m.spiele} ${m.spiele === 1 ? 'Spiel' : 'Spiele'} diesen Monat, die Saison endet ${tage <= 1 ? 'heute Nacht' : `in ${tage} Tagen`}.`;
-    } else if (spalte === 'sprint') {
-      liste = await sprintBestenliste($('besten-kategorie').value);
-      saison = 'Allzeit';
-      fussText = 'Rekorde aus dem 60-Sekunden-Sprint.';
+    let liste, unter = () => '', fussText = '';
+    if (zeit === 'allzeit') {
+      if (spalte === 'sprint') liste = await sprintBestenliste($('besten-kategorie').value, null);
+      else { liste = (await bestenliste(spalte)).map(p => ({ ...p, wert: p[spalte] })); unter = p => `${p.spiele} ${p.spiele === 1 ? 'Spiel' : 'Spiele'}`; }
+      fussText = spalte === 'sprint' ? 'Beste 60-Sekunden-Sprints aller Zeiten.' : 'Alles seit dem Start der Quizbude.';
     } else {
-      liste = (await bestenliste(spalte)).map(p => ({ ...p, wert: p[spalte] }));
-      saison = 'Allzeit';
-      fussText = spalte === 'siege' ? 'Siege in Räumen mit mindestens zwei Leuten.' : 'Alle Punkte aus Raum-Spielen.';
+      const [von, bis] = saisonGrenzen(zeit);
+      const laeuft = bis > new Date();
+      if (spalte === 'sprint') {
+        liste = await sprintBestenliste($('besten-kategorie').value, von.toISOString());
+        fussText = 'Bester Sprint dieser Saison.';
+      } else {
+        const w = await saisonWertung(von, bis);
+        liste = w.liste.map(p => ({ ...p, wert: p[spalte] })).filter(p => p.wert > 0).sort((a, b) => b.wert - a.wert || b.punkte - a.punkte);
+        unter = p => spalte === 'punkte' ? `${p.siege} ${p.siege === 1 ? 'Sieg' : 'Siege'} in ${p.spiele}` : `${p.punkte.toLocaleString('de-DE')} Pkt.`;
+        fussText = `${w.anzahl} ${w.anzahl === 1 ? 'Spiel' : 'Spiele'} in dieser Saison`;
+      }
+      if (laeuft) {
+        const tage = Math.ceil((bis - new Date()) / 86400000);
+        fussText += `${fussText.endsWith('.') ? '' : '.'} Endet ${tage <= 1 ? 'heute Nacht' : `in ${tage} Tagen`}, die Top 3 bekommen ein Abzeichen.`;
+      } else if (!fussText.endsWith('.')) fussText += '.';
     }
     if (besteSpalte !== spalte) return; // inzwischen anderer Reiter
-    $('besten-saison').textContent = saison;
-    const zeile = (p, platz) => `<li class="${ich && p.id === ich.id ? 'ich' : ''}"><span class="rang">${platz}</span>${avatarHtml(p)}<a href="#/profil/${esc(p.id)}">${esc(p.name)}</a><span class="wert">${SPALTE[spalte](p.wert)}</span></li>`;
-    if (!liste.length) {
-      podest.innerHTML = '';
-      ol.innerHTML = `<li class="leer">${spalte === 'monat' ? 'Diesen Monat hat noch keiner gespielt. Der erste Platz ist frei.' : 'Hier steht noch keiner. Spiel eine Runde, dann bist du der Erste.'}</li>`;
-    } else {
-      // Podest: Platz 2 links, Platz 1 in der Mitte, Platz 3 rechts
-      const top = liste.slice(0, 3);
-      const reihe = [top[1], top[0], top[2]].map((p, i) => p ? { p, platz: [2, 1, 3][i] } : null).filter(Boolean);
-      podest.innerHTML = reihe.map(({ p, platz }) => `
-        <a class="podest-platz p${platz}${ich && p.id === ich.id ? ' ich' : ''}" href="#/profil/${esc(p.id)}">
-          ${platz === 1 ? '<span class="krone" aria-hidden="true">👑</span>' : ''}
-          ${avatarHtml(p)}
-          <span class="podest-name">${esc(p.name)}</span>
-          <span class="podest-wert">${SPALTE[spalte](p.wert)}</span>
-          <span class="podest-sockel">${platz}</span>
-        </a>`).join('');
-      ol.innerHTML = liste.slice(3, 15).map((p, i) => zeile(p, i + 4)).join('');
-    }
-    // eigener Platz, wenn man nicht oben steht
+    const feld = (p, platz) => {
+      const [zahl, einheit] = SPALTE[spalte](p.wert);
+      const sub = unter(p);
+      return `<li class="besten-feld${platz <= 3 ? ` top p${platz}` : ''}${ich && p.id === ich.id ? ' ich' : ''}" style="--i:${platz - 1}">
+        <a href="#/profil/${esc(p.id)}">
+          <span class="rang">${platz}</span>
+          <span class="bf-avatar">${platz === 1 ? '<span class="krone" aria-hidden="true">👑</span>' : ''}${avatarHtml(p)}</span>
+          <span class="bf-mitte"><span class="bf-name">${esc(p.name)}</span>${sub ? `<span class="bf-unter">${esc(sub)}</span>` : ''}</span>
+          <span class="bf-wert">${zahl}<small>${einheit}</small></span>
+        </a></li>`;
+    };
+    ol.innerHTML = liste.length ? liste.slice(0, 15).map((p, i) => feld(p, i + 1)).join('')
+      : `<li class="leer">${zeit === 'allzeit' ? 'Hier steht noch keiner. Spiel eine Runde, dann bist du der Erste.' : 'In dieser Saison steht hier noch keiner. Platz 1 ist frei.'}</li>`;
+    // eigener Platz, wenn man nicht in den Top 15 steht
     ichBox.hidden = true;
     if (ich && !liste.slice(0, 15).some(p => p.id === ich.id)) {
-      let platz = null, wert = null;
-      if (spalte === 'monat') { const i = liste.findIndex(p => p.id === ich.id); if (i >= 0) { platz = i + 1; wert = liste[i].wert; } }
-      else if (spalte === 'siege' || spalte === 'punkte') { wert = ich[spalte] || 0; platz = await rangVon(spalte, wert); }
-      else { wert = sprintRekord($('besten-kategorie').value); }
-      ichBox.innerHTML = `<span class="rang">${platz ?? '–'}</span>${avatarHtml(ich)}<span>Du</span><span class="wert">${wert ? SPALTE[spalte](wert) : 'spiel mit, dann stehst du hier'}</span>`;
+      let platz = null, wert = 0;
+      const i = liste.findIndex(p => p.id === ich.id);
+      if (i >= 0) { platz = i + 1; wert = liste[i].wert; }
+      else if (zeit === 'allzeit' && spalte !== 'sprint') { wert = ich[spalte] || 0; platz = await rangVon(spalte, wert); }
+      else if (zeit === 'allzeit') wert = sprintRekord($('besten-kategorie').value);
+      const [zahl, einheit] = SPALTE[spalte](wert);
+      ichBox.innerHTML = `<span class="rang">${platz ?? '–'}</span>${avatarHtml(ich)}<span class="bf-name">Du</span><span class="bf-wert">${wert ? `${zahl}<small>${einheit}</small>` : '<small>noch nichts</small>'}</span>`;
       ichBox.hidden = false;
     }
     fuss.textContent = fussText;
   } catch (e) {
-    podest.innerHTML = '';
     ol.innerHTML = `<li class="leer">${esc(e.message)}</li>`;
   }
 }
@@ -410,7 +423,8 @@ async function letzteLaden() {
       const sp = s.spieler || [];
       const erster = sp[0];
       if (!erster) return '';
-      const kat = s.kategorie === 'spiele' ? SPIEL_NAME[s.auswahl] || 'Spiele' : KATEGORIEN[s.kategorie]?.name;
+      if (s.kategorie === 'spiele') return ''; // alte Spiele-Runden (Snake) nicht mehr anzeigen
+      const kat = KATEGORIEN[s.kategorie]?.name;
       const wo = kat ? ` bei ${esc(kat)}` : '';
       const text = sp.length > 1
         ? `${esc(erster.avatar)} ${esc(erster.name)} gewinnt${wo} mit ${erster.pkt} Punkten gegen ${sp.length - 1 === 1 ? '1 andere Person' : `${sp.length - 1} andere`}`
@@ -443,6 +457,9 @@ function budeAufbauen() {
   };
   $('besten-kategorie').innerHTML = KATEGORIE_REIHE.map(k => `<option value="${k}">${esc(KATEGORIEN[k].name)}</option>`).join('');
   bestenFeld = auswahlfeld($('besten-kategorie'), { symbol: v => KATEGORIE_SYMBOL[v] });
+  $('besten-zeit').innerHTML = saisonOptionen().map(o => `<option value="${o.wert}">${esc(o.name)}</option>`).join('');
+  zeitFeld = auswahlfeld($('besten-zeit'));
+  $('besten-zeit').onchange = () => bestenLaden();
   $('besten-kategorie').onchange = () => bestenLaden();
   document.querySelectorAll('#besten-reiter .umschalter-knopf').forEach(b => {
     b.onclick = () => {
@@ -461,7 +478,7 @@ function sprintRekord(k) {
 }
 
 function kachelnHtml(mitRekord) {
-  return (mitRekord ? KATEGORIE_REIHE : RAUM_REIHE).map(k => {
+  return KATEGORIE_REIHE.map(k => {
     const rekord = mitRekord ? sprintRekord(k) : 0;
     return `
     <button class="kachel${mitRekord ? ' sprint-karte' : ''}" data-k="${k}">
@@ -491,7 +508,6 @@ function kachelBild(k) {
     case 'groesser': return `<span class="kb-duell">${f('CA')}<b>oder</b>${f('BR')}</span>`;
     case 'wissen': return '<span class="kb-text kb-gross">?</span>';
     case 'emoji': return '<span class="kb-emoji">🦁👑</span>';
-    case 'spiele': return '<svg class="kb-snake" viewBox="0 0 92 60" aria-hidden="true"><path d="M8 48H40V20H70V30" fill="none" stroke="#CDB68C" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/><circle cx="66.5" cy="22" r="1.8" fill="#16191B"/><circle cx="73.5" cy="22" r="1.8" fill="#16191B"/><circle cx="70" cy="48" r="6" fill="#CF8E8E"/></svg>';
     default: return '<span class="kb-emoji">🎲</span>';
   }
 }
@@ -677,7 +693,7 @@ async function profilZeigen(id) {
 let gezeichnet = { idx: -2, phase: '' };
 let einstFelder = [];
 let bestenFeld = null;
-let spielFokus = null;
+let zeitFeld = null;
 
 async function raumBetreten(code) {
   if (raum && raum.code === code) { raumZeichnen(); return; }
@@ -699,7 +715,7 @@ async function raumBetreten(code) {
 }
 
 function raumAufbauen() {
-  $('einst-kategorie').innerHTML = RAUM_REIHE.map(k => `<option value="${k}">${esc(KATEGORIEN[k].name)}</option>`).join('');
+  $('einst-kategorie').innerHTML = KATEGORIE_REIHE.map(k => `<option value="${k}">${esc(KATEGORIEN[k].name)}</option>`).join('');
   einstFelder = [...document.querySelectorAll('#einst select')]
     .map(sel => auswahlfeld(sel, sel.dataset.e === 'kategorie' ? { symbol: v => KATEGORIE_SYMBOL[v] } : {}));
   document.querySelectorAll('#einst select').forEach(s => {
@@ -777,19 +793,11 @@ function raumZeichnen() {
   $('raum-code').textContent = r.code;
   const n = r.fragen.length;
   $('raum-runde').textContent = r.phase === 'frage' || r.phase === 'aufloesung' ? `Frage ${r.idx + 1} von ${n}`
-    : r.phase === 'ende' ? 'Fertig' : r.phase === 'countdown' ? 'Gleich geht\'s los' : r.phase === 'spiel' ? (SPIEL_NAME[r.einst.auswahl] || 'Spiel') : 'Warteraum';
+    : r.phase === 'ende' ? 'Fertig' : r.phase === 'countdown' ? 'Gleich geht\'s los' : 'Warteraum';
 
-  const spielfeld = r.istSpiel && (r.phase === 'countdown' || r.phase === 'spiel');
-  const sichtbar = spielfeld ? 'p-spiel' : { warten: 'p-warten', countdown: 'p-countdown', frage: 'p-frage', aufloesung: 'p-frage', ende: 'p-ende' }[r.phase];
-  for (const id of ['p-warten', 'p-countdown', 'p-frage', 'p-spiel', 'p-ende']) $(id).hidden = id !== sichtbar;
+  const sichtbar = { warten: 'p-warten', countdown: 'p-countdown', frage: 'p-frage', aufloesung: 'p-frage', ende: 'p-ende' }[r.phase];
+  for (const id of ['p-warten', 'p-countdown', 'p-frage', 'p-ende']) $(id).hidden = id !== sichtbar;
   $('zeitleiste').hidden = !(r.phase === 'frage' || r.phase === 'aufloesung');
-  // Spielfeld groß: Seitenleiste weg, Fläche so breit und hoch wie möglich
-  document.querySelector('.raum-raster').classList.toggle('spielmodus', spielfeld);
-  document.body.classList.toggle('grossfeld', spielfeld);
-  if (spielfeld) {
-    if (spielFokus !== r.spielId) { spielFokus = r.spielId; document.activeElement?.blur?.(); }
-    kurveSchleifeStarten();
-  }
   const hostName = r.spieler.get(r.hostId)?.name || r.bekannt.get(r.hostId)?.name;
 
   if (r.phase === 'warten') {
@@ -801,18 +809,11 @@ function raumZeichnen() {
     if ($('einst-auswahl').dataset.fuer !== r.einst.kategorie) { $('einst-auswahl').innerHTML = auswahlHtml; $('einst-auswahl').dataset.fuer = r.einst.kategorie; }
     document.querySelectorAll('#einst select').forEach(s => { s.value = String(r.einst[s.dataset.e] ?? STANDARD[s.dataset.e] ?? ''); s.disabled = !r.binHost; });
     if (!kat.tippen) { $('einst-modus').value = 'auswahl'; $('einst-modus').disabled = true; }
-    // Bei Spielen gibt es keine Fragen: Antworten, Runden und Zeit ausblenden
-    for (const e of ['modus', 'runden', 'zeit']) document.querySelector(`#einst [data-e=${e}]`).closest('label').hidden = !!kat.spiel;
-    $('einst-auswahl-titel').textContent = kat.spiel ? 'Spiel' : 'Auswahl';
     einstFelder.forEach(f => f.aktualisieren());
     $('los').hidden = !r.binHost;
     const genug = r.startBereit;
     $('los').disabled = !genug;
-    const wieviele = r.spieler.size === 1 ? 'bist nur du' : `seid ihr ${r.spieler.size}`;
-    const [min, max] = r.spielerSpanne;
-    $('los-hinweis').textContent = genug ? '' : kat.spiel
-      ? `${SPIEL_NAME[r.einst.auswahl] || 'Das Spiel'} spielt ihr ${min === max ? `genau zu ${min === 2 ? 'zweit' : min}` : `mit ${min} bis ${max} Leuten`}. Gerade ${wieviele} im Raum.`
-      : r.binHost
+    $('los-hinweis').textContent = genug ? '' : r.binHost
         ? 'Starten geht ab 2 Leuten. Klick oben auf den Code und schick den Link rum.'
         : 'Es geht los, sobald genug Leute da sind.';
     $('warten-text').textContent = !r.hostId ? 'Verbinde mit dem Raum …'
@@ -874,10 +875,13 @@ function raumZeichnen() {
 
   if (r.phase === 'ende') {
     const liste = r.ergebnis || [];
-    $('ende-titel').textContent = !r.istSpiel ? 'Endstand' : r.unentschieden ? 'Unentschieden' : `${liste[0]?.name || '?'} gewinnt`;
+    $('ende-titel').textContent = 'Endstand';
     if (gezeichnet.ende !== r.spielId) {
       gezeichnet.ende = r.spielId;
-      $('podest').innerHTML = liste.map((e, i) => `<li style="--i:${i}"${e.id === r.ich.id ? ' class="ich"' : ''}><span class="platz">${i + 1}.</span>${avatarHtml(e)}<span class="podest-name">${i === 0 && !r.unentschieden ? '<span class="krone" aria-hidden="true">👑</span>' : ''}${esc(e.name)}</span><span class="wert" data-pkt="${e.pkt}">0</span></li>`).join('');
+      $('podest').innerHTML = liste.map((e, i) => {
+        const kl = [i < 3 && e.pkt > 0 ? `top p${i + 1}` : '', e.id === r.ich.id ? 'ich' : ''].filter(Boolean).join(' ');
+        return `<li style="--i:${i}"${kl ? ` class="${kl}"` : ''}><span class="platz">${i + 1}</span><span class="bf-avatar">${i === 0 && !r.unentschieden && e.pkt > 0 ? '<span class="krone" aria-hidden="true">👑</span>' : ''}${avatarHtml(e)}</span><span class="podest-name">${esc(e.name)}</span><span class="wert" data-pkt="${e.pkt}">0</span></li>`;
+      }).join('');
       $('podest').querySelectorAll('.wert').forEach((w, i) => setTimeout(() => hochzaehlen(w, Number(w.dataset.pkt)), 250 + i * 140));
       // Konfetti je nach eigenem Platz (bei mehreren Leuten)
       const platz = liste.findIndex(e => e.id === r.ich.id);
@@ -908,65 +912,6 @@ function raumZeichnen() {
       ? `<li class="daneben"><span class="daneben-x" aria-label="falsch">✗</span><b>${esc(m.name)}</b> <span class="daneben-text">${esc(m.text)}</span></li>`
       : `<li><b>${esc(m.avatar || '')} ${esc(m.name)}:</b> ${esc(m.text)}</li>`).join('');
   if (unten) cl.scrollTop = cl.scrollHeight;
-}
-
-// ---------- Kurvenkampf zeichnen ----------
-const FARBNAME = ['Sand', 'Grün', 'Rosa', 'Blau', 'Lila', 'Orange', 'Hellgrün', 'Weiß'];
-let spielCountdownZahl = null;
-let kurveLaeuft = false;
-let kurveInfo = '';
-function kurveSchleifeStarten() {
-  if (kurveLaeuft) return;
-  kurveLaeuft = true;
-  const schritt = () => {
-    const r = raum;
-    if (!r || !r.kurvenBild || !(r.phase === 'spiel' || r.phase === 'countdown') || $('s-raum').hidden) { kurveLaeuft = false; return; }
-    const ids = r.kurveIds || [];
-    const name = id => r.bekannt.get(id)?.name || '?';
-    r.kurvenBild.zeichnen($('spiel-feld'), name, ids.indexOf(r.ich.id));
-    const lage = r.kurvenBild.lage;
-    const info = ids.map((id, i) => `<span class="wer" style="--f:${KURVEN_FARBEN[i]}"><span class="punkt"></span>${esc(name(id))}${id === r.ich.id ? ' (du)' : ''} <small>${lage?.punkte?.[i] ?? 0}${lage?.munition?.[i] ? ` · 🚀${lage.munition[i]}` : ''}</small></span>`).join('')
-      + (lage ? `<span class="wer"><small>Ziel ${lage.ziel}</small></span>` : '');
-    if (info !== kurveInfo) { kurveInfo = info; $('spiel-info').innerHTML = info; }
-    if (lage && r.phase === 'spiel') $('raum-runde').textContent = `Snake · Runde ${lage.runde}`;
-    requestAnimationFrame(schritt);
-  };
-  requestAnimationFrame(schritt);
-}
-
-// Kurvenkampf lenken: Taste gedrückt halten
-const kurveTasten = { l: false, r: false };
-function kurveTaste(e, unten) {
-  if (!raum || !raum.istSpiel || raum.einst.auswahl !== 'kurve' || (raum.phase !== 'spiel' && raum.phase !== 'countdown') || $('s-raum').hidden) return;
-  if (e.target?.id === 'chat-eingabe' || e.altKey || e.ctrlKey || e.metaKey) return;
-  const taste = e.key.length === 1 ? e.key.toLowerCase() : e.key;
-  if (unten && (taste === 'ArrowUp' || taste === 'w' || taste === ' ')) { e.preventDefault(); e.stopImmediatePropagation(); if (!e.repeat) raum.kurveFeuern(); return; }
-  const seite = taste === 'ArrowLeft' || taste === 'a' ? 'l' : taste === 'ArrowRight' || taste === 'd' ? 'r' : null;
-  if (!seite) return;
-  e.preventDefault(); e.stopImmediatePropagation();
-  if (kurveTasten[seite] === unten) return; // gehaltene Taste wiederholt sich, nur Änderungen schicken
-  kurveTasten[seite] = unten;
-  raum.kurveLenken(kurveTasten.l, kurveTasten.r);
-}
-document.addEventListener('keydown', e => kurveTaste(e, true), true);
-document.addEventListener('keyup', e => kurveTaste(e, false), true);
-window.addEventListener('blur', () => { if (kurveTasten.l || kurveTasten.r) { kurveTasten.l = kurveTasten.r = false; raum?.kurveLenken(false, false); } });
-
-// Handy: linke oder rechte Hälfte des Feldes drücken und halten
-{
-  const feld = () => $('spiel-feld');
-  const halten = new Map();
-  const melden = () => { const s = [...halten.values()]; raum?.kurveLenken(s.includes('l'), s.includes('r')); };
-  let letzterTipp = 0;
-  document.addEventListener('pointerdown', e => {
-    if (e.target !== feld() || raum?.einst.auswahl !== 'kurve') return;
-    if (e.pointerType === 'touch' && performance.now() - letzterTipp < 280) raum.kurveFeuern(); // Doppeltipp feuert
-    letzterTipp = performance.now();
-    const box = feld().getBoundingClientRect();
-    halten.set(e.pointerId, e.clientX - box.left < box.width / 2 ? 'l' : 'r'); melden();
-  });
-  const los = e => { if (halten.delete(e.pointerId)) melden(); };
-  document.addEventListener('pointerup', los); document.addEventListener('pointercancel', los);
 }
 
 // ---------- Neue Version: von selbst neu laden, aber nur in einem ruhigen Moment ----------
@@ -1062,22 +1007,8 @@ setInterval(() => {
   }
   // Während gespielt wird, verschwindet die Leiste unten (verdeckt sonst auf kleinen Bildschirmen die Antworten)
   const spielt = (sprint && !$('s-sprint').hidden && (sprint.laeuft || !sprint.ende))
-    || (raum && !$('s-raum').hidden && ['countdown', 'frage', 'aufloesung', 'spiel'].includes(raum.phase));
+    || (raum && !$('s-raum').hidden && ['countdown', 'frage', 'aufloesung'].includes(raum.phase));
   document.body.classList.toggle('spielt', !!spielt);
-  const spielCountdown = raum && raum.istSpiel && raum.phase === 'countdown';
-  $('spiel-countdown').hidden = !spielCountdown;
-  if (!spielCountdown) spielCountdownZahl = null;
-  if (spielCountdown) {
-    const zahl = Math.max(1, Math.ceil((raum.countdownEnde - performance.now()) / 1000));
-    // nur neu setzen, wenn sich die Zahl ändert (sonst flackert es)
-    if (spielCountdownZahl !== zahl) {
-      spielCountdownZahl = zahl;
-      const i = (raum.kurveIds || []).indexOf(raum.ich.id);
-      const text = i >= 0 ? `Du bist <b style="color:${KURVEN_FARBEN[i]}">${FARBNAME[i]}</b>.` : 'Du schaust zu.';
-      $('spiel-countdown').innerHTML = `<span>${zahl}<small>${text}<br>← → lenken, ↑ oder Leertaste: Rakete</small></span>`;
-      pulsen($('spiel-countdown').firstElementChild);
-    }
-  }
   if (raum && raum.phase === 'frage') {
     const rest = raum.dauer - (performance.now() - raum.start);
     $('zeitleiste-fuellung').classList.toggle('knapp', rest < raum.dauer * 0.3);
@@ -1294,7 +1225,6 @@ let geroutet = null;
 
 function route(erzwingen = false) {
   const h = location.hash || '#/';
-  if (!h.startsWith('#/raum/')) document.body.classList.remove('grossfeld');
   if (!erzwingen && h === geroutet) return; // popstate und hashchange kommen oft beide
   geroutet = h;
   const nav = h === '#/lernen' ? 'lernen' : h.startsWith('#/sprint') ? 'sprint' : h.startsWith('#/raum/') || h.startsWith('#/profil') ? '' : 'bude';

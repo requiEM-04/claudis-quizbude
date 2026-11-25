@@ -60,8 +60,18 @@ end $$;
 revoke all on function public.spiel_eintragen(int, int, boolean) from public, anon;
 grant execute on function public.spiel_eintragen(int, int, boolean) to authenticated;
 
--- Sprint je Kategorie: gibt den (neuen) Rekord der Kategorie zurück
-drop function if exists public.sprint_eintragen(int);
+-- Sprint je Kategorie, jeder Lauf mit Datum (Saison-Wertung)
+create table if not exists public.sprint_laeufe (
+  id bigint generated always as identity primary key,
+  am timestamptz not null default now(),
+  von uuid not null references auth.users on delete cascade,
+  kategorie text not null,
+  wert int not null
+);
+create index if not exists sprint_laeufe_kat_am on public.sprint_laeufe (kategorie, am);
+alter table public.sprint_laeufe enable row level security;
+revoke all on public.sprint_laeufe from anon, authenticated;
+
 create or replace function public.sprint_eintragen(p_wert int, p_kategorie text default 'flaggen') returns int
 language plpgsql security definer set search_path = public as $$
 declare
@@ -73,6 +83,7 @@ begin
   if k not in ('flaggen', 'umrisse', 'hauptstaedte', 'groesser', 'wissen', 'emoji', 'gemischt') then
     raise exception 'Unbekannte Kategorie';
   end if;
+  insert into public.sprint_laeufe (von, kategorie, wert) values (auth.uid(), k, w);
   update public.profile set
     sprints = sprints + 1,
     sprint_rekord = case when k = 'flaggen' then greatest(sprint_rekord, w) else sprint_rekord end,
@@ -82,20 +93,24 @@ begin
   returning (rekorde->>k)::int into r;
   return r;
 end $$;
-revoke all on function public.sprint_eintragen(int, text) from public, anon;
-grant execute on function public.sprint_eintragen(int, text) to authenticated;
 
-create or replace function public.sprint_bestenliste(p_kategorie text)
+create or replace function public.sprint_bestenliste(p_kategorie text, p_seit timestamptz default null)
 returns table (id uuid, name text, avatar text, farbe text, wert int)
 language sql stable security definer set search_path = public as $$
-  select p.id, p.name, p.avatar, p.farbe, (p.rekorde->>p_kategorie)::int as wert
-  from public.profile p
-  where coalesce((p.rekorde->>p_kategorie)::int, 0) > 0
-  order by wert desc, p.name
-  limit 15;
+  select * from (
+    select p.id, p.name, p.avatar, p.farbe, x.wert
+    from (select von, max(wert)::int as wert from public.sprint_laeufe
+          where kategorie = p_kategorie and p_seit is not null and am >= p_seit group by von) x
+    join public.profile p on p.id = x.von
+    where x.wert > 0
+    union all
+    select p.id, p.name, p.avatar, p.farbe, (p.rekorde->>p_kategorie)::int
+    from public.profile p
+    where p_seit is null and coalesce((p.rekorde->>p_kategorie)::int, 0) > 0
+  ) t order by wert desc, name limit 15;
 $$;
-revoke all on function public.sprint_bestenliste(text) from public;
-grant execute on function public.sprint_bestenliste(text) to anon, authenticated;
+revoke all on function public.sprint_bestenliste(text, timestamptz) from public;
+grant execute on function public.sprint_bestenliste(text, timestamptz) to anon, authenticated;
 
 -- Verlauf der Raum-Spiele („Zuletzt gespielt") -------------------------
 create table if not exists public.spiele (
