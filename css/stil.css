@@ -543,6 +543,8 @@ img[src$="/np.svg"] { border-radius: 0 !important; }
 .detail-daten { display: grid; grid-template-columns: auto 1fr; gap: 8px 18px; margin: 0; }
 .detail-daten dt { color: var(--text-2); font-weight: 600; }
 .detail-daten dd { margin: 0; font-weight: 700; }
+.detail-auch { display: block; margin-top: 2px; color: var(--text-2); font-weight: 600; font-size: .88rem; }
+.detail-fuss { margin: 18px 0 0; color: var(--text-3); font-size: .86rem; }
 
 /* ---------- Dock ---------- */
 .dock {

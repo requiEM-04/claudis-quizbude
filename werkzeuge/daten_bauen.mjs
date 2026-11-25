@@ -186,6 +186,17 @@ function eindeutig(feldRoh, feldNeu, extraFuer) {
 }
 eindeutig('roh', 'antworten', c => EXTRA[c]);
 eindeutig('stadtRoh', 'stadtAntworten', c => STADT_EXTRA[c]);
+// Lesbare Kurzformen fürs Nachschlagen („Zählt auch"): nur die handgepflegten, die wirklich angenommen werden
+function lesbar(liste, haupt, erlaubt) {
+  const gesehen = new Set([kanon(haupt || '')]);
+  return (liste || []).filter(n => { const k = kanon(n); if (gesehen.has(k) || !erlaubt.includes(k)) return false; gesehen.add(k); return true; });
+}
+for (const l of liste) {
+  const auch = lesbar(EXTRA[l.code], l.name, l.antworten);
+  if (auch.length) l.auch = auch;
+  const stadtAuch = l.stadt ? lesbar(STADT_EXTRA[l.code], l.stadt, l.stadtAntworten) : [];
+  if (stadtAuch.length) l.stadtAuch = stadtAuch;
+}
 liste.sort((a, b) => a.name.localeCompare(b.name, 'de'));
 
 const fehlt = BEKANNT.filter(b => !liste.find(l => l.code === b));

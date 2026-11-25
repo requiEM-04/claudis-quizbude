@@ -1,18 +1,18 @@
-import { VERSION } from './config.js?v=0.4.1';
+import { VERSION } from './config.js?v=0.4.2';
 import {
   online, nameFehler, registrieren, anmelden, abmelden, sitzungHolen, profilLaden, profilSpeichern,
   bestenliste, letzteSpiele, sprintEintragen, sprintBestenliste, rangVon, spielerAnzahl, spieleVon, sb,
-} from './server.js?v=0.4.1';
-import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.4.1';
-import { Raum, codeNeu, STANDARD } from './raum.js?v=0.4.1';
-import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.4.1';
+} from './server.js?v=0.4.2';
+import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.4.2';
+import { Raum, codeNeu, STANDARD } from './raum.js?v=0.4.2';
+import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.4.2';
 import {
   KATEGORIEN, KATEGORIE_REIHE, kategorieVon, optionSchluessel, richtigeWahl, umrisseDa, umrisseLaden,
   sprintFrage, pruefeFrage, fragenVorladen, kanon,
-} from './kategorien.js?v=0.4.1';
-import { LAENDER } from './laender.js?v=0.4.1';
-import { auswahlfeld } from './auswahlfeld.js?v=0.4.1';
-import { KATEGORIE_SYMBOL } from './symbole.js?v=0.4.1';
+} from './kategorien.js?v=0.4.2';
+import { LAENDER } from './laender.js?v=0.4.2';
+import { auswahlfeld } from './auswahlfeld.js?v=0.4.2';
+import { KATEGORIE_SYMBOL } from './symbole.js?v=0.4.2';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -428,10 +428,12 @@ function lernenDetail(code) {
     <div class="detail-bilder"><img src="${flaggeUrl(code)}" alt="Flagge von ${esc(l.name)}">${umrissSvg(code)}</div>
     <h2>${esc(l.name)}</h2>
     <dl class="detail-daten">
-      ${stadtVon(l) ? `<dt>Hauptstadt</dt><dd>${esc(stadtVon(l))}</dd>` : ''}
+      ${stadtVon(l) ? `<dt>Hauptstadt</dt><dd>${esc(stadtVon(l))}${l.stadtAuch ? `<span class="detail-auch">zählt auch: ${l.stadtAuch.map(esc).join(', ')}</span>` : ''}</dd>` : ''}
       <dt>Fläche</dt><dd>${l.flaeche.toLocaleString('de-DE')} km²</dd>
       <dt>Kontinent</dt><dd>${REGIONEN[l.region] || '–'}</dd>
-    </dl>`;
+      ${l.auch ? `<dt>Zählt auch</dt><dd>${l.auch.map(esc).join(', ')}</dd>` : ''}
+    </dl>
+    <p class="detail-fuss">Kleine Tippfehler zählen beim Raten trotzdem.</p>`;
   $('lernen-detail').showModal();
 }
 
