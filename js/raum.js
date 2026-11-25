@@ -1,9 +1,8 @@
-import { sb, spielEintragen, spielLoggen } from './server.js?v=0.5.2';
-import { fragenBauen, pruefeFrage, richtigeWahl, fragenVorladen, KATEGORIEN, kategorieVon } from './kategorien.js?v=0.5.2';
-import { lobbyMelden, lobbyAbmelden } from './lobby.js?v=0.5.2';
-import { chatErlaubt, textPruefen } from './filter.js?v=0.5.2';
-import { snakeNeu, snakeSchritt, snakeErgebnis, snakeTakt, SNAKE_DAUER } from './snake.js?v=0.5.2';
-import { KurvenSim, KurvenBild } from './kurve.js?v=0.5.2';
+import { sb, spielEintragen, spielLoggen } from './server.js?v=0.6.0';
+import { fragenBauen, pruefeFrage, richtigeWahl, fragenVorladen, KATEGORIEN, kategorieVon } from './kategorien.js?v=0.6.0';
+import { lobbyMelden, lobbyAbmelden } from './lobby.js?v=0.6.0';
+import { chatErlaubt, textPruefen } from './filter.js?v=0.6.0';
+import { KurvenSim, KurvenBild } from './kurve.js?v=0.6.0';
 
 export const STANDARD = { kategorie: 'flaggen', runden: 10, zeit: 15, auswahl: 'alle', modus: 'tippen', chat: 'eingeschraenkt', sichtbar: 'geschlossen' };
 const COUNTDOWN = 3000;
@@ -68,12 +67,7 @@ export class Raum {
     this.hostSchritt = null;    // nur beim Gastgeber: welche Runde gerade läuft
     this.vergeben = new Set();
     this.weg = false;
-    // Spiele (Snake): Stand kommt vom Gastgeber, Lenkbefehle sammelt nur er
-    this.snake = null;
-    this.snakeRest = 0;
-    this.eingaben = new Map();
     this.unentschieden = false;
-    this.spielBild = null;      // wird von der Oberfläche gesetzt, zeichnet nur das Spielfeld neu
   }
 
   get istSpiel() { return !!KATEGORIEN[this.einst.kategorie]?.spiel; }
@@ -177,9 +171,7 @@ export class Raum {
     }
     if (this.istSpiel && (this.phase === 'countdown' || this.phase === 'spiel')) {
       // Der bisherige Gastgeber ist mitten im Spiel gegangen: wer noch da ist, gewinnt bzw. der Spielstand zählt
-      if (this.kurvenBild) { this.kurveBeenden(this.kurvenBild.lage?.punkte, this.kurveIds); return; }
-      if (this.snake) for (const s of this.snake.schlangen) if (!this.spieler.has(s.id)) s.lebt = false;
-      if (this.snake) this.snakeBeenden();
+      if (this.kurvenBild) this.kurveBeenden(this.kurvenBild.lage?.punkte, this.kurveIds);
       return;
     }
     if (this.phase === 'countdown') this.timer = setTimeout(() => this.frageSenden(0), 1500);
@@ -258,7 +250,7 @@ export class Raum {
         Object.assign(this, {
           einst: p.einst, fragen: p.fragen, spielId: p.spielId, idx: -1, phase: 'countdown',
           punkte: new Map(), geloest: new Map(), gesperrt: new Set(), ergebnis: null, meineTreffer: 0,
-          snake: p.snake || null, snakeRest: SNAKE_DAUER, eingaben: new Map(), unentschieden: false,
+          unentschieden: false,
           kurveIds: p.kurve?.ids || null, kurvenBild: p.kurve ? new KurvenBild() : null,
         });
         this.kurveStopp();
@@ -305,19 +297,6 @@ export class Raum {
       case 'aufloesung':
         this.phase = 'aufloesung';
         break;
-      case 'sn':
-        if (!this.binHost) {
-          if (this.snake && p.s.t <= this.snake.t && this.phase === 'spiel') return;
-          this.snake = p.s;
-        }
-        this.snakeRest = p.rest;
-        if (this.phase === 'countdown') { this.phase = 'spiel'; break; }
-        if (!this.binHost) this.spielBild?.(this);
-        return; // kein komplettes Neuzeichnen, nur das Spielfeld
-      case 'lenk':
-        if (!this.binHost || p.von === this.ich.id) return;
-        this.lenkenMerken(p.von, p.r);
-        return;
       case 'kv':
         if (!this.kurvenBild) return;
         this.kurvenBild.aufnehmen(p.b, p.l);
@@ -325,6 +304,9 @@ export class Raum {
         return;
       case 'kd':
         if (this.binHost && this.kurve) this.kurve.lenken(p.von, !!p.l, !!p.r);
+        return;
+      case 'kf':
+        if (this.binHost && this.kurve && p.von !== this.ich.id) this.kurve.feuern(p.von);
         return;
       case 'ende':
         this.phase = 'ende';
@@ -360,7 +342,7 @@ export class Raum {
   }
 
   starten() {
-    if (!this.binHost || !this.startBereit) return; // Quiz ab 2 Leuten, Snake genau zu zweit
+    if (!this.binHost || !this.startBereit) return; // Quiz ab 2 Leuten, Spiele je nach Spiel
     clearTimeout(this.timer);
     if (this.istSpiel) return this.spielStarten();
     const fragen = fragenBauen(this.einst);
@@ -409,7 +391,7 @@ export class Raum {
     for (const [id, s] of this.spieler) if (!this.punkte.has(id)) liste.push({ id, pkt: 0, name: s.name, avatar: s.avatar, farbe: s.farbe });
     liste.sort((a, b) => b.pkt - a.pkt);
     this.senden('ende', { liste });
-    spielLoggen({
+    if (!this.ich.gast) spielLoggen({
       code: this.code, kategorie: this.einst.kategorie, runden: this.fragen.length, modus: this.einst.modus, auswahl: this.einst.auswahl,
       spieler: liste.slice(0, 20).map(({ name, avatar, pkt }) => ({ name, avatar, pkt })),
     });
@@ -426,7 +408,7 @@ export class Raum {
   // ---------- Kurvenkampf ----------
   kurveStarten() {
     const ids = [...this.spieler.keys()].sort((a, b) => (a === this.hostId ? -1 : b === this.hostId ? 1 : (this.spieler.get(a).seit - this.spieler.get(b).seit)));
-    this.senden('start', { einst: this.einst, fragen: [], spielId: crypto.randomUUID(), kurve: { ids: ids.slice(0, 6) } });
+    this.senden('start', { einst: this.einst, fragen: [], spielId: crypto.randomUUID(), kurve: { ids: ids.slice(0, 8) } });
     this.timer = setTimeout(() => this.kurveLos(), COUNTDOWN);
   }
 
@@ -448,8 +430,8 @@ export class Raum {
     let n = Math.floor((jetzt - this.kurveUhr) / (1000 / 60));
     if (n > 20) { n = 20; this.kurveUhr = jetzt; } else this.kurveUhr += n * (1000 / 60);
     for (let i = 0; i < n; i++) this.kurveBuendel.push(sim.schritt());
-    // etwa 20 Sendungen pro Sekunde, jede mit den Schritten seit der letzten
-    if (this.kurveBuendel.length >= 3) {
+    // bis 4 Leute etwa 20 Sendungen pro Sekunde, darüber 12 (damit der Server nicht ans Limit kommt)
+    if (this.kurveBuendel.length >= (sim.ids.length > 4 ? 5 : 3)) {
       const b = this.kurveBuendel; this.kurveBuendel = [];
       const l = sim.lage();
       this.kurvenBild?.aufnehmen(b, l);
@@ -478,10 +460,16 @@ export class Raum {
     const unentschieden = liste.length > 1 && liste[0].pkt === liste[1].pkt;
     this.kurve = null;
     this.senden('ende', { liste, unentschieden });
-    spielLoggen({
+    if (!this.ich.gast) spielLoggen({
       code: this.code, kategorie: 'spiele', runden: null, modus: 'kurve', auswahl: 'kurve',
       spieler: liste.map(({ name, avatar, pkt }) => ({ name, avatar, pkt })),
     });
+  }
+
+  kurveFeuern() {
+    if (this.phase !== 'spiel') return;
+    if (this.binHost) this.kurve?.feuern(this.ich.id);
+    else this.senden('kf', {});
   }
 
   // Links/rechts gedrückt halten. Der Gastgeber gibt es direkt an seine Rechnung, alle anderen schicken es.
@@ -493,67 +481,13 @@ export class Raum {
     } else this.senden('kd', { l, r });
   }
 
-  // ---------- Snake ----------
-  spielStarten() {
-    if (this.einst.auswahl === 'kurve') return this.kurveStarten();
-    // Gastgeber ist Schlange 1 (sand), der andere Schlange 2 (salbei)
-    const ids = [...this.spieler.keys()].sort((a, b) => (a === this.hostId ? -1 : b === this.hostId ? 1 : 0));
-    this.senden('start', { einst: this.einst, fragen: [], spielId: crypto.randomUUID(), snake: snakeNeu(ids) });
-    this.timer = setTimeout(() => this.snakeLos(), COUNTDOWN);
-  }
-
-  snakeLos() {
-    if (!this.binHost || this.weg || !this.snake) return;
-    this.snakeEnde = performance.now() + SNAKE_DAUER;
-    this.eingaben = new Map();
-    this.snakeWeiter();
-  }
-
-  snakeWeiter() {
-    if (!this.binHost || this.weg || !this.snake || this.phase === 'ende') return;
-    const st = this.snake;
-    for (const s of st.schlangen) if (s.lebt && !this.spieler.has(s.id)) s.lebt = false; // wer geht, verliert
-    let vorbei = snakeSchritt(st, this.eingaben);
-    const rest = Math.max(0, this.snakeEnde - performance.now());
-    if (rest <= 0) vorbei = true;
-    this.snakeRest = rest;
-    this.senden('sn', { s: st, rest });
-    if (this.phase === 'spiel') this.spielBild?.(this);
-    this.timer = vorbei ? setTimeout(() => this.snakeBeenden(), 1400) : setTimeout(() => this.snakeWeiter(), snakeTakt(st));
-  }
-
-  snakeBeenden() {
-    if (!this.binHost || this.weg || !this.snake) return;
-    clearTimeout(this.timer);
-    const st = this.snake;
-    const { sieger, unentschieden } = snakeErgebnis(st);
-    const liste = st.schlangen.map(s => ({ id: s.id, pkt: s.pkt * 10 + (s.id === sieger ? 50 : 0), ...(this.bekannt.get(s.id) || { name: '?' }) }));
-    liste.sort((a, b) => (b.id === sieger) - (a.id === sieger) || b.pkt - a.pkt);
-    this.senden('ende', { liste, unentschieden });
-    spielLoggen({
-      code: this.code, kategorie: 'spiele', runden: null, modus: this.einst.auswahl, auswahl: this.einst.auswahl,
-      spieler: liste.map(({ name, avatar, pkt }) => ({ name, avatar, pkt })),
-    });
-  }
-
-  lenkenMerken(id, r) {
-    if (!['o', 'u', 'l', 'r'].includes(r)) return;
-    const liste = this.eingaben.get(id) || [];
-    if (liste.length < 3 && liste[liste.length - 1] !== r) liste.push(r);
-    this.eingaben.set(id, liste);
-  }
-
-  // Pfeiltaste gedrückt: der Gastgeber merkt sich das direkt, alle anderen schicken es an ihn
-  lenken(r) {
-    if (this.phase !== 'spiel' && this.phase !== 'countdown') return;
-    if (this.binHost) this.lenkenMerken(this.ich.id, r);
-    else this.senden('lenk', { r });
-  }
+  spielStarten() { return this.kurveStarten(); }
 
   // Alle zusammen zurück in den Warteraum, dort sucht der Gastgeber eine neue Kategorie aus
   zurueckInDenWarteraum() {
     if (!this.binHost) return;
     clearTimeout(this.timer);
+    this.kurveStopp();
     this.senden('warten', {});
   }
 
@@ -592,7 +526,7 @@ export class Raum {
   }
 
   eintragen() {
-    if (!this.spielId || this.eingetragen === this.spielId || !this.ergebnis) return;
+    if (!this.spielId || this.eingetragen === this.spielId || !this.ergebnis || this.ich.gast) return; // Gäste zählen nicht für die Bestenliste
     this.eingetragen = this.spielId;
     const ich = this.ergebnis.find(e => e.id === this.ich.id);
     if (!ich) return;

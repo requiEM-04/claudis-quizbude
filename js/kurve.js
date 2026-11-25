@@ -1,9 +1,10 @@
-// Kurvenkampf: frei lenken, Linie ziehen, nicht reinfahren. Im Stil von „Achtung, die Kurve!“.
+// Snake (frei gelenkt): Linie ziehen, nicht reinfahren, Raketen schießen. Im Stil von „Achtung, die Kurve!“.
 // Der Gastgeber rechnet mit 60 Schritten pro Sekunde und schickt die Schritte gebündelt an alle.
 // Alle zeichnen dieselben Schritte nach, leicht verzögert, damit es flüssig aussieht.
 
 export const KURVE = { b: 1000, h: 620 };
-export const KURVEN_FARBEN = ['#CDB68C', '#8FB3A2', '#CF8E8E', '#8FA8C8', '#B39DCB', '#D9A066'];
+export const KURVEN_FARBEN = ['#CDB68C', '#8FB3A2', '#CF8E8E', '#8FA8C8', '#B39DCB', '#D9A066', '#A9C47F', '#E4E7E4'];
+const SCHAERFE = 2;                    // Spur-Ebene in doppelter Auflösung, damit es auf großen Bildschirmen scharf bleibt
 const TAKT = 60;                       // Schritte pro Sekunde
 const TEMPO = 150 / TAKT;              // Einheiten pro Schritt
 const DREHUNG = 3.3 / TAKT;            // Bogenmaß pro Schritt
@@ -14,21 +15,25 @@ const BEREIT = 90;                     // 1,5 s stehen, bevor es losgeht
 const PAUSE = 150;                     // 2,5 s nach jeder Runde
 const LUECKE_WEG = 28;                 // so lang ist eine Lücke
 const PU_RADIUS = 15;
+const RAKETE_TEMPO = 8.5;              // Einheiten pro Schritt
+const LOCH = 38;                       // so groß sprengt eine Rakete ein Loch in Linien
 
 // Powerups: wen sie treffen und wie lange (in Schritten)
 export const POWERUPS = {
-  schnell: { fuer: 'ich', dauer: 240, zeichen: '»', text: 'schneller' },
-  langsam: { fuer: 'ich', dauer: 240, zeichen: '«', text: 'langsamer' },
-  duenn: { fuer: 'ich', dauer: 300, zeichen: '·', text: 'dünne Linie' },
-  geist: { fuer: 'ich', dauer: 180, zeichen: '◌', text: 'Geist: keine Linie, kein Zusammenstoß' },
-  gschnell: { fuer: 'andere', dauer: 240, zeichen: '»', text: 'die anderen schneller' },
-  dick: { fuer: 'andere', dauer: 300, zeichen: '●', text: 'die anderen dick' },
-  ecken: { fuer: 'andere', dauer: 300, zeichen: '⌐', text: 'die anderen nur noch eckig' },
-  spiegel: { fuer: 'andere', dauer: 300, zeichen: '⇄', text: 'die anderen verkehrt herum' },
-  tor: { fuer: 'alle', dauer: 420, zeichen: '□', text: 'Wände offen' },
-  wisch: { fuer: 'alle', dauer: 0, zeichen: '✕', text: 'alle Linien weg' },
+  rakete: { fuer: 'ich', dauer: 0, zeichen: '🚀', text: 'hat 3 Raketen (↑, W oder Leertaste)', gewicht: 4 },
+  schnell: { fuer: 'ich', dauer: 240, zeichen: '»', text: 'ist schneller' },
+  langsam: { fuer: 'ich', dauer: 240, zeichen: '«', text: 'ist langsamer' },
+  duenn: { fuer: 'ich', dauer: 300, zeichen: '·', text: 'zieht eine dünne Linie' },
+  geist: { fuer: 'ich', dauer: 180, zeichen: '◌', text: 'ist ein Geist: keine Linie, kein Zusammenstoß' },
+  gschnell: { fuer: 'andere', dauer: 240, zeichen: '»', text: 'macht alle anderen schneller' },
+  dick: { fuer: 'andere', dauer: 300, zeichen: '●', text: 'macht alle anderen dick' },
+  ecken: { fuer: 'andere', dauer: 300, zeichen: '⌐', text: 'lässt alle anderen nur eckig fahren' },
+  spiegel: { fuer: 'andere', dauer: 300, zeichen: '⇄', text: 'vertauscht links und rechts bei allen anderen' },
+  tor: { fuer: 'alle', dauer: 420, zeichen: '□', text: 'öffnet die Wände' },
+  wisch: { fuer: 'alle', dauer: 0, zeichen: '✕', text: 'wischt alle Linien weg' },
 };
-const PU_TYPEN = Object.keys(POWERUPS);
+// Raketen kommen am häufigsten
+const PU_TOPF = Object.entries(POWERUPS).flatMap(([typ, p]) => Array(p.gewicht || 1).fill(typ));
 export const PU_FARBE = { ich: '#8FB3A2', andere: '#CF8E8E', alle: '#CDB68C' };
 
 const zufall = (a, b) => a + Math.random() * (b - a);
@@ -38,11 +43,12 @@ const runden = n => Math.round(n * 10) / 10;
 export class KurvenSim {
   constructor(ids) {
     this.ids = ids.slice(0, KURVEN_FARBEN.length);
-    this.ziel = 5 * Math.max(1, this.ids.length - 1);
+    this.ziel = 5 + 3 * Math.max(0, this.ids.length - 2); // zu zweit 5, zu dritt 8, zu acht 23
     this.punkte = this.ids.map(() => 0);
     this.t = 0;
     this.runde = 0;
     this.lenk = new Map();             // id -> { l, r, lNeu, rNeu }
+    this.schuesse = new Set();         // wer im nächsten Schritt feuert
     this.vorbei = false;
     this.neueRunde();
   }
@@ -53,6 +59,7 @@ export class KurvenSim {
     this.zeit = new Uint32Array(GW * GH);
     this.pu = [];
     this.puNr = 0;
+    this.raketen = [];
     this.tor = 0;
     this.naechstesPu = this.t + BEREIT + Math.round(zufall(180, 300));
     this.phase = 'bereit';
@@ -67,7 +74,7 @@ export class KurvenSim {
       plaetze.push([x, y]);
       // grob zur Mitte zeigen, damit keiner sofort in die Wand fährt
       const a = Math.atan2(KURVE.h / 2 - y, KURVE.b / 2 - x) + zufall(-0.9, 0.9);
-      return { id, x, y, a, lebt: true, luecke: 0, naechsteLuecke: Math.round(zufall(90, 200)), eff: {}, sprung: false };
+      return { id, x, y, a, lebt: true, luecke: 0, naechsteLuecke: Math.round(zufall(90, 200)), eff: {}, sprung: false, munition: 0 };
     });
   }
 
@@ -75,6 +82,8 @@ export class KurvenSim {
     const alt = this.lenk.get(id) || { l: false, r: false, lNeu: false, rNeu: false };
     this.lenk.set(id, { l, r, lNeu: alt.lNeu || (l && !alt.l), rNeu: alt.rNeu || (r && !alt.r) });
   }
+
+  feuern(id) { this.schuesse.add(id); }
 
   aktiv(s, art) { return (s.eff[art] || 0) > this.t; }
   tempo(s) { return TEMPO * (this.aktiv(s, 'schnell') ? 1.7 : 1) * (this.aktiv(s, 'gschnell') ? 1.7 : 1) * (this.aktiv(s, 'langsam') ? 0.55 : 1); }
@@ -95,6 +104,7 @@ export class KurvenSim {
     const i = gy * GW + gx;
     const b = this.besitz[i];
     if (!b) return false;
+    if (nr === 255) return true;
     return b !== nr || this.zeit[i] < this.t - schonfrist;
   }
 
@@ -109,8 +119,51 @@ export class KurvenSim {
       this.neueRunde();
       return this.bild([this.ereignis]);
     }
-    if (this.phase === 'lauf') this.bewegen(ereignisse);
+    if (this.phase === 'lauf') { this.bewegen(ereignisse); this.raketenFliegen(ereignisse); }
+    this.schuesse.clear();
     return this.bild(ereignisse);
+  }
+
+  // Raketen: abfeuern, fliegen, treffen. Kopf getroffen = raus, Linie getroffen = Loch.
+  raketenFliegen(ereignisse) {
+    for (const id of this.schuesse) {
+      const i = this.ids.indexOf(id), s = this.s[i];
+      if (!s?.lebt || s.munition <= 0) continue;
+      s.munition--;
+      const abstand = this.dicke(s) / 2 + 9;
+      this.raketen.push({ x: s.x + Math.cos(s.a) * abstand, y: s.y + Math.sin(s.a) * abstand, a: s.a, von: i, flug: 0 });
+      ereignisse.push({ art: 'schuss', i });
+    }
+    const weg = [];
+    for (const r of this.raketen) {
+      let treffer = null;
+      for (let n = 0; n < 4 && !treffer; n++) {        // in kleinen Schritten, damit nichts durchrutscht
+        r.x += Math.cos(r.a) * RAKETE_TEMPO / 4; r.y += Math.sin(r.a) * RAKETE_TEMPO / 4;
+        if (r.x < 0 || r.y < 0 || r.x > KURVE.b || r.y > KURVE.h) { treffer = 'wand'; break; }
+        for (const [i, s] of this.s.entries()) {
+          if (!s.lebt || (i === r.von && r.flug < 20) || this.aktiv(s, 'geist')) continue;
+          if (Math.hypot(s.x - r.x, s.y - r.y) < this.dicke(s) / 2 + 7) { s.tot = true; treffer = 'kopf'; ereignisse.push({ art: 'abschuss', i, von: r.von }); break; }
+        }
+        if (!treffer && r.flug > 2 && this.belegt(r.x, r.y, 255, 0)) treffer = 'linie';
+      }
+      r.flug++;
+      if (treffer === 'linie' || treffer === 'kopf') this.sprengen(r.x, r.y, ereignisse);
+      if (treffer || r.flug > 400) weg.push(r);
+    }
+    this.raketen = this.raketen.filter(r => !weg.includes(r));
+    // Wer von einer Rakete getroffen wurde, scheidet hier aus (Punkte wie sonst auch)
+    const raus = this.s.filter(s => s.lebt && s.tot);
+    if (raus.length) this.ausscheiden(raus, ereignisse);
+  }
+
+  sprengen(x, y, ereignisse) {
+    const r = LOCH / 2;
+    const x0 = Math.max(0, Math.floor((x - r) / ZELLE)), x1 = Math.min(GW - 1, Math.floor((x + r) / ZELLE));
+    const y0 = Math.max(0, Math.floor((y - r) / ZELLE)), y1 = Math.min(GH - 1, Math.floor((y + r) / ZELLE));
+    for (let gy = y0; gy <= y1; gy++) for (let gx = x0; gx <= x1; gx++) {
+      if (((gx + .5) * ZELLE - x) ** 2 + ((gy + .5) * ZELLE - y) ** 2 <= r * r) this.besitz[gy * GW + gx] = 0;
+    }
+    ereignisse.push({ art: 'boom', x: runden(x), y: runden(y), r });
   }
 
   bewegen(ereignisse) {
@@ -178,25 +231,29 @@ export class KurvenSim {
         for (let n = 0; n < 30; n++) {
           const x = zufall(50, KURVE.b - 50), y = zufall(50, KURVE.h - 50);
           if (this.s.some(s => s.lebt && Math.hypot(s.x - x, s.y - y) < 80) || this.pu.some(p => Math.hypot(p.x - x, p.y - y) < 60)) continue;
-          this.pu.push({ n: ++this.puNr, typ: PU_TYPEN[Math.floor(Math.random() * PU_TYPEN.length)], x: runden(x), y: runden(y) });
+          this.pu.push({ n: ++this.puNr, typ: PU_TOPF[Math.floor(Math.random() * PU_TOPF.length)], x: runden(x), y: runden(y) });
           break;
         }
       }
     }
     // Wer ist raus? Alle, die noch leben, kriegen einen Punkt pro Ausgeschiedenem
     const raus = lebende.filter(s => s.tot);
-    if (raus.length) {
-      for (const s of raus) { s.lebt = false; s.tot = false; ereignisse.push({ art: 'raus', i: this.s.indexOf(s) }); }
-      this.s.forEach((s, i) => { if (s.lebt) this.punkte[i] += raus.length; });
-      const uebrig = this.s.filter(s => s.lebt);
-      if (uebrig.length <= 1) {
-        this.phase = 'pause';
-        this.phaseBis = this.t + PAUSE;
-        this.rundenSieger = uebrig[0]?.id || null;
-        const max = Math.max(...this.punkte);
-        this.vorbei = max >= this.ziel && this.punkte.filter(p => p === max).length === 1;
-        ereignisse.push({ art: 'runde', sieger: this.rundenSieger, vorbei: this.vorbei });
-      }
+    if (raus.length) this.ausscheiden(raus, ereignisse);
+  }
+
+  ausscheiden(raus, ereignisse) {
+    if (this.phase !== 'lauf') return;
+    for (const s of raus) { s.lebt = false; s.tot = false; ereignisse.push({ art: 'raus', i: this.s.indexOf(s) }); }
+    this.s.forEach((s, i) => { if (s.lebt) this.punkte[i] += raus.length; });
+    const uebrig = this.s.filter(s => s.lebt);
+    if (uebrig.length <= 1) {
+      this.phase = 'pause';
+      this.phaseBis = this.t + PAUSE;
+      this.raketen = [];
+      this.rundenSieger = uebrig[0]?.id || null;
+      const max = Math.max(...this.punkte);
+      this.vorbei = max >= this.ziel && this.punkte.filter(p => p === max).length === 1;
+      ereignisse.push({ art: 'runde', sieger: this.rundenSieger, vorbei: this.vorbei });
     }
   }
 
@@ -204,6 +261,7 @@ export class KurvenSim {
     const pu = POWERUPS[typ];
     const bis = this.t + pu.dauer;
     if (typ === 'wisch') { this.besitz.fill(0); ereignisse.push({ art: 'wisch' }); }
+    else if (typ === 'rakete') s.munition = Math.min(6, s.munition + 3);
     else if (typ === 'tor') this.tor = bis;
     else if (pu.fuer === 'ich') s.eff[typ] = bis;
     else for (const x of this.s) if (x !== s && x.lebt) x.eff[typ] = bis;
@@ -217,6 +275,7 @@ export class KurvenSim {
       return [runden(s.x), runden(s.y), runden(this.dicke(s)), flags, Math.round(s.a * 100) / 100];
     });
     const b = { t: this.t, p };
+    if (this.raketen.length) b.r = this.raketen.map(r => [runden(r.x), runden(r.y), Math.round(r.a * 100) / 100, r.von]);
     const e = ereignisse.filter(Boolean);
     if (e.length) b.e = e;
     return b;
@@ -224,7 +283,7 @@ export class KurvenSim {
 
   // Was sonst noch gezeigt wird (bei jeder Sendung dabei)
   lage() {
-    return { pu: this.pu, tor: Math.max(0, this.tor - this.t), punkte: this.punkte, ziel: this.ziel, phase: this.phase, runde: this.runde, ids: this.ids };
+    return { pu: this.pu, tor: Math.max(0, this.tor - this.t), punkte: this.punkte, ziel: this.ziel, phase: this.phase, runde: this.runde, ids: this.ids, munition: this.s.map(s => s.munition) };
   }
 }
 
@@ -239,8 +298,12 @@ export class KurvenBild {
     this.jetzt = null;     // zuletzt gezeichnete Positionen
     this.lage = null;
     this.spur = document.createElement('canvas');
-    this.spur.width = KURVE.b; this.spur.height = KURVE.h;
+    this.spur.width = KURVE.b * SCHAERFE; this.spur.height = KURVE.h * SCHAERFE;
+    this.spur.getContext('2d').setTransform(SCHAERFE, 0, 0, SCHAERFE, 0, 0);
     this.meldung = null;   // { text, bis }
+    this.raketen = [];     // zuletzt gezeigte Raketen
+    this.booms = [];       // laufende Explosionen { x, y, r, start }
+    this.wackeln = 0;      // Bildschirm wackelt kurz bei Treffern
     this.zuletzt = performance.now();
   }
 
@@ -266,17 +329,27 @@ export class KurvenBild {
   }
 
   anwenden(g, b, namen) {
+    this.raketen = b.r || [];
     for (const e of b.e || []) {
-      if (e.art === 'neu' || e.art === 'wisch') { g.clearRect(0, 0, KURVE.b, KURVE.h); if (e.art === 'neu') this.jetzt = null; }
+      if (e.art === 'neu' || e.art === 'wisch') { g.clearRect(0, 0, KURVE.b, KURVE.h); if (e.art === 'neu') { this.jetzt = null; this.booms = []; } }
+      if (e.art === 'boom') {
+        g.save(); g.globalCompositeOperation = 'destination-out';
+        g.beginPath(); g.arc(e.x, e.y, e.r, 0, Math.PI * 2); g.fill(); g.restore();
+        this.booms.push({ x: e.x, y: e.y, r: e.r, start: performance.now() });
+        this.wackeln = performance.now();
+      }
+      if (e.art === 'abschuss') this.meldung = { text: `🚀 ${namen(this.lage?.ids?.[e.von])} trifft ${namen(this.lage?.ids?.[e.i])}`, bis: performance.now() + 1800, farbe: KURVEN_FARBEN[e.von] };
       if (e.art === 'runde') this.meldung = { text: e.sieger ? `${namen(e.sieger)} holt die Runde` : 'Keiner überlebt', bis: performance.now() + 2300 };
-      if (e.art === 'pu') this.meldung = { text: `${POWERUPS[e.typ].zeichen} ${POWERUPS[e.typ].text}`, bis: performance.now() + 1400, farbe: PU_FARBE[POWERUPS[e.typ].fuer] };
+      if (e.art === 'pu') this.meldung = { text: `${POWERUPS[e.typ].zeichen} ${namen(this.lage?.ids?.[e.i])} ${POWERUPS[e.typ].text}`, bis: performance.now() + 1600, farbe: PU_FARBE[POWERUPS[e.typ].fuer] };
     }
     const vorher = this.jetzt;
     b.p.forEach(([x, y, d, f], i) => {
       const alt = vorher?.[i];
       if (!alt || !(f & 1) || (f & (2 | 4 | 8)) || !(alt[3] & 1)) return;
       g.strokeStyle = KURVEN_FARBEN[i]; g.lineWidth = d;
+      g.shadowColor = KURVEN_FARBEN[i]; g.shadowBlur = 7; // leichtes Leuchten
       g.beginPath(); g.moveTo(alt[0], alt[1]); g.lineTo(x, y); g.stroke();
+      g.shadowBlur = 0;
     });
     this.jetzt = b.p;
     this.gezeigtT = b.t;
@@ -290,14 +363,36 @@ export class KurvenBild {
     const m = canvas.width / KURVE.b;
     g.setTransform(1, 0, 0, 1, 0, 0);
     g.clearRect(0, 0, canvas.width, canvas.height);
-    g.setTransform(m, 0, 0, m, 0, 0);
+    // kurzes Wackeln nach einer Explosion
+    const seitWackeln = performance.now() - this.wackeln;
+    const w = seitWackeln < 260 && !matchMedia('(prefers-reduced-motion: reduce)').matches ? (1 - seitWackeln / 260) * 6 : 0;
+    g.setTransform(m, 0, 0, m, (Math.random() - .5) * w * m, (Math.random() - .5) * w * m);
     const lage = this.lage;
     // offene Wände: gestrichelter Rand
     if (lage?.tor > 0) {
       g.strokeStyle = 'rgba(205,182,140,.7)'; g.lineWidth = 3; g.setLineDash([14, 10]);
       g.strokeRect(2, 2, KURVE.b - 4, KURVE.h - 4); g.setLineDash([]);
     }
-    g.drawImage(this.spur, 0, 0);
+    g.drawImage(this.spur, 0, 0, KURVE.b, KURVE.h);
+    // Explosionen: Ring und Funken
+    const jetztB = performance.now();
+    this.booms = this.booms.filter(b => jetztB - b.start < 600);
+    for (const b of this.booms) {
+      const t = (jetztB - b.start) / 600;
+      g.strokeStyle = `rgba(232,196,140,${1 - t})`; g.lineWidth = 4 * (1 - t) + 1;
+      g.beginPath(); g.arc(b.x, b.y, b.r * (0.4 + t), 0, Math.PI * 2); g.stroke();
+      g.fillStyle = `rgba(255,236,200,${0.5 * (1 - t)})`;
+      g.beginPath(); g.arc(b.x, b.y, b.r * 0.6 * (1 - t), 0, Math.PI * 2); g.fill();
+    }
+    // Raketen
+    for (const [x, y, a, von] of this.raketen) {
+      g.save(); g.translate(x, y); g.rotate(a);
+      g.fillStyle = 'rgba(255,200,120,.75)';
+      g.beginPath(); g.moveTo(-6, -3); g.lineTo(-16 - Math.random() * 6, 0); g.lineTo(-6, 3); g.fill(); // Flamme
+      g.fillStyle = KURVEN_FARBEN[von];
+      g.beginPath(); g.moveTo(9, 0); g.lineTo(-6, -4.5); g.lineTo(-6, 4.5); g.closePath(); g.fill();
+      g.restore();
+    }
     // Powerups
     for (const p of lage?.pu || []) {
       const pu = POWERUPS[p.typ];
@@ -311,8 +406,9 @@ export class KurvenBild {
       if (!(f & 1)) return;
       const farbe = KURVEN_FARBEN[i];
       g.globalAlpha = f & 4 ? .45 : 1;
-      g.fillStyle = farbe;
-      g.beginPath(); g.arc(x, y, d / 2 + 2, 0, Math.PI * 2); g.fill();
+      g.fillStyle = farbe; g.shadowColor = farbe; g.shadowBlur = 12;
+      g.beginPath(); g.arc(x, y, d / 2 + 2.5, 0, Math.PI * 2); g.fill();
+      g.shadowBlur = 0;
       g.fillStyle = '#16191B';
       g.beginPath(); g.arc(x + Math.cos(a) * (d / 2), y + Math.sin(a) * (d / 2), 1.6, 0, Math.PI * 2); g.fill();
       g.globalAlpha = 1;

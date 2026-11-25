@@ -207,6 +207,14 @@ body.spielt .dock { opacity: 0; visibility: hidden; transform: translate(-50%, 2
 .dock-gast .avatar { background: var(--flaeche-aktiv); }
 
 /* ---------- Spiele (Snake) ---------- */
+/* großes Feld: Seitenleiste weg, so breit und hoch wie der Bildschirm erlaubt */
+body.grossfeld main { max-width: min(1600px, 100%); padding-top: 12px; padding-bottom: 24px; }
+.raum-raster.spielmodus { grid-template-columns: minmax(0, 1fr); }
+.raum-raster.spielmodus > .seite { display: none; }
+.raum-raster.spielmodus .buehne-karte { padding: 14px 18px 18px; }
+.raum-raster.spielmodus .spiel-feld { width: min(100%, calc((100vh - 150px) * 1.6129)); margin: 0 auto; }
+.raum-raster.spielmodus .spiel-kopf { margin-bottom: 10px; }
+.raum-raster.spielmodus #spiel-hilfe { display: none; }
 .spiel-kopf { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px 26px; margin-bottom: 14px; font-weight: 700; }
 .spiel-kopf .wer { display: inline-flex; align-items: center; gap: 8px; }
 .spiel-kopf .punkt { width: 12px; height: 12px; border-radius: 4px; background: var(--f); }

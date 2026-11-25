@@ -1,21 +1,20 @@
-import { VERSION } from './config.js?v=0.5.2';
+import { VERSION } from './config.js?v=0.6.0';
 import {
   online, nameFehler, registrieren, anmelden, abmelden, sitzungHolen, profilLaden, profilSpeichern,
   bestenliste, letzteSpiele, sprintEintragen, sprintBestenliste, rangVon, spielerAnzahl, spieleVon, sb,
-} from './server.js?v=0.5.2';
-import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.5.2';
-import { Raum, codeNeu, STANDARD } from './raum.js?v=0.5.2';
-import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.5.2';
+} from './server.js?v=0.6.0';
+import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.6.0';
+import { Raum, codeNeu, STANDARD } from './raum.js?v=0.6.0';
+import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.6.0';
 import {
   KATEGORIEN, KATEGORIE_REIHE, RAUM_REIHE, SPIEL_NAME, kategorieVon, optionSchluessel, richtigeWahl, umrisseDa, umrisseLaden,
   sprintFrage, pruefeFrage, fragenVorladen, kanon,
-} from './kategorien.js?v=0.5.2';
-import { LAENDER } from './laender.js?v=0.5.2';
-import { auswahlfeld } from './auswahlfeld.js?v=0.5.2';
-import { KATEGORIE_SYMBOL } from './symbole.js?v=0.5.2';
-import { snakeZeichnen, SCHLANGEN_FARBEN, SNAKE_DAUER } from './snake.js?v=0.5.2';
-import { KURVEN_FARBEN } from './kurve.js?v=0.5.2';
-import { konfetti } from './konfetti.js?v=0.5.2';
+} from './kategorien.js?v=0.6.0';
+import { LAENDER } from './laender.js?v=0.6.0';
+import { auswahlfeld } from './auswahlfeld.js?v=0.6.0';
+import { KATEGORIE_SYMBOL } from './symbole.js?v=0.6.0';
+import { KURVEN_FARBEN } from './kurve.js?v=0.6.0';
+import { konfetti } from './konfetti.js?v=0.6.0';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -201,6 +200,7 @@ function anmeldenAufbauen() {
       f.passwort.value = '';
       gast = false;
       try { localStorage.removeItem(GAST); } catch { /* egal */ }
+      if (location.hash === '#/anmelden') history.replaceState({ qbTiefe: 0 }, '', '#/');
       route(true);
     } catch (err) {
       fehler.textContent = err.message;
@@ -212,7 +212,9 @@ function anmeldenAufbauen() {
   $('gast-los').onclick = () => {
     gast = true;
     try { localStorage.setItem(GAST, '1'); } catch { /* egal */ }
-    navigieren('#/sprint');
+    lobbyStart();
+    history.replaceState({ qbTiefe: 0 }, '', '#/');
+    route(true);
   };
 }
 
@@ -251,12 +253,23 @@ const AUS_ICON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" st
 const GAST = 'quizbude.gast';
 let gast = (() => { try { return localStorage.getItem(GAST) === '1'; } catch { return false; } })();
 
+// Als Gast in Räumen: jeder Tab bekommt eine eigene Gast-Kennung und einen Namen wie „Gast 42“
+function gastIch() {
+  let g = null;
+  try { g = JSON.parse(sessionStorage.getItem('quizbude.gastIch') || 'null'); } catch { /* egal */ }
+  if (!g) {
+    g = { id: 'gast-' + crypto.randomUUID(), name: 'Gast ' + (10 + Math.floor(Math.random() * 90)), avatar: '👤', farbe: '#6F777A', gast: true };
+    try { sessionStorage.setItem('quizbude.gastIch', JSON.stringify(g)); } catch { /* egal */ }
+  }
+  return g;
+}
+const mitspieler = () => ich || gastIch();
+
 function chipZeichnen() {
   const chip = $('profil-chip');
   $('dock').hidden = !ich && !gast;
-  document.querySelector('.dock-link[data-nav=bude]').hidden = !ich;
   if (!ich) {
-    chip.innerHTML = gast ? `<span class="dock-gast">${avatarHtml({ avatar: '👤', farbe: '#353B3F' })}Gast</span><a class="knopf zweit klein" href="#/">Anmelden</a>` : '';
+    chip.innerHTML = gast ? `<span class="dock-gast">${avatarHtml({ avatar: '👤', farbe: '#353B3F' })}${esc(gastIch().name)}</span><a class="knopf zweit klein" href="#/anmelden">Anmelden</a>` : '';
     return;
   }
   const aufProfil = (location.hash || '#/') === '#/profil';
@@ -276,7 +289,7 @@ function budeZeigen() {
   zeige('bude');
   faecherFuellen();
   kachelnZeichnen();
-  $('bude-claudi').textContent = zufall(SPRUCH.hallo).replace('{name}', ich.name);
+  $('bude-claudi').textContent = zufall(SPRUCH.hallo).replace('{name}', mitspieler().name);
   if (lobbyAus) lobbyAus();
   lobbyAus = lobbyAbo(raeumeZeichnen);
   bestenLaden();
@@ -602,8 +615,7 @@ async function raumBetreten(code) {
   $('chat-liste').innerHTML = '';
   $('spieler-liste').innerHTML = '';
   const alsHost = neuErstellt?.code === code;
-  raum = new Raum(code, ich, () => raumZeichnen(), alsHost);
-  raum.spielBild = r => { if (r === raum) spielZeichnen(r); };
+  raum = new Raum(code, mitspieler(), () => raumZeichnen(), alsHost);
   if (alsHost) raum.einst = neuErstellt.einst;
   neuErstellt = null;
   raumZeichnen();
@@ -699,20 +711,14 @@ function raumZeichnen() {
   const spielfeld = r.istSpiel && (r.phase === 'countdown' || r.phase === 'spiel');
   const sichtbar = spielfeld ? 'p-spiel' : { warten: 'p-warten', countdown: 'p-countdown', frage: 'p-frage', aufloesung: 'p-frage', ende: 'p-ende' }[r.phase];
   for (const id of ['p-warten', 'p-countdown', 'p-frage', 'p-spiel', 'p-ende']) $(id).hidden = id !== sichtbar;
-  const istKurve = r.istSpiel && r.einst.auswahl === 'kurve';
-  $('zeitleiste').hidden = !(r.phase === 'frage' || r.phase === 'aufloesung' || (r.phase === 'spiel' && !istKurve));
-  $('spiel-hilfe').textContent = istKurve
-    ? 'Lenken mit ← → oder A D, am Handy links oder rechts aufs Feld drücken und halten. Durch die Lücken in den Linien kommt man durch. Grüne Kreise helfen dir, rote treffen die anderen, sandfarbene alle.'
-    : 'Lenken mit den Pfeiltasten oder W A S D, am Handy durch Wischen. Fahr nicht in die Wand oder in eine Schlange, rote Punkte machen dich länger.';
-  if (spielfeld && istKurve) {
+  $('zeitleiste').hidden = !(r.phase === 'frage' || r.phase === 'aufloesung');
+  // Spielfeld groß: Seitenleiste weg, Fläche so breit und hoch wie möglich
+  document.querySelector('.raum-raster').classList.toggle('spielmodus', spielfeld);
+  document.body.classList.toggle('grossfeld', spielfeld);
+  if (spielfeld) {
     if (spielFokus !== r.spielId) { spielFokus = r.spielId; document.activeElement?.blur?.(); }
     kurveSchleifeStarten();
   }
-  if (spielfeld && !istKurve) {
-    if (spielFokus !== r.spielId) { spielFokus = r.spielId; document.activeElement?.blur?.(); } // Pfeiltasten sollen lenken, nicht im Chat landen
-    spielZeichnen(r);
-  }
-
   const hostName = r.spieler.get(r.hostId)?.name || r.bekannt.get(r.hostId)?.name;
 
   if (r.phase === 'warten') {
@@ -833,24 +839,9 @@ function raumZeichnen() {
   if (unten) cl.scrollTop = cl.scrollHeight;
 }
 
-// ---------- Spielfeld ----------
-function spielZeichnen(r) {
-  if (!r.snake) return;
-  snakeZeichnen($('spiel-feld'), r.snake, r.ich.id);
-  $('spiel-info').innerHTML = r.snake.schlangen.map((s, i) => {
-    const wer = r.bekannt.get(s.id);
-    return `<span class="wer${s.lebt ? '' : ' raus'}" style="--f:${SCHLANGEN_FARBEN[i]}"><span class="punkt"></span>${esc(wer?.name || '?')}${s.id === r.ich.id ? ' (du)' : ''} <small>${s.pkt} gefressen</small></span>`;
-  }).join('');
-  if (r.phase === 'spiel') {
-    const sek = Math.ceil(r.snakeRest / 1000);
-    $('raum-runde').textContent = `${SPIEL_NAME[r.einst.auswahl] || 'Spiel'} · ${Math.floor(sek / 60)}:${String(sek % 60).padStart(2, '0')}`;
-    const fl = $('zeitleiste-fuellung');
-    fl.style.transition = 'none'; fl.style.width = `${(r.snakeRest / SNAKE_DAUER) * 100}%`;
-  }
-}
-
 // ---------- Kurvenkampf zeichnen ----------
-const FARBNAME = ['sandfarbene', 'grüne', 'rosa', 'blaue', 'lila', 'orange'];
+const FARBNAME = ['Sand', 'Grün', 'Rosa', 'Blau', 'Lila', 'Orange', 'Hellgrün', 'Weiß'];
+let spielCountdownZahl = null;
 let kurveLaeuft = false;
 let kurveInfo = '';
 function kurveSchleifeStarten() {
@@ -863,10 +854,10 @@ function kurveSchleifeStarten() {
     const name = id => r.bekannt.get(id)?.name || '?';
     r.kurvenBild.zeichnen($('spiel-feld'), name, ids.indexOf(r.ich.id));
     const lage = r.kurvenBild.lage;
-    const info = ids.map((id, i) => `<span class="wer" style="--f:${KURVEN_FARBEN[i]}"><span class="punkt"></span>${esc(name(id))}${id === r.ich.id ? ' (du)' : ''} <small>${lage?.punkte?.[i] ?? 0}</small></span>`).join('')
+    const info = ids.map((id, i) => `<span class="wer" style="--f:${KURVEN_FARBEN[i]}"><span class="punkt"></span>${esc(name(id))}${id === r.ich.id ? ' (du)' : ''} <small>${lage?.punkte?.[i] ?? 0}${lage?.munition?.[i] ? ` · 🚀${lage.munition[i]}` : ''}</small></span>`).join('')
       + (lage ? `<span class="wer"><small>Ziel ${lage.ziel}</small></span>` : '');
     if (info !== kurveInfo) { kurveInfo = info; $('spiel-info').innerHTML = info; }
-    if (lage && r.phase === 'spiel') $('raum-runde').textContent = `Kurvenkampf · Runde ${lage.runde}`;
+    if (lage && r.phase === 'spiel') $('raum-runde').textContent = `Snake · Runde ${lage.runde}`;
     requestAnimationFrame(schritt);
   };
   requestAnimationFrame(schritt);
@@ -878,6 +869,7 @@ function kurveTaste(e, unten) {
   if (!raum || !raum.istSpiel || raum.einst.auswahl !== 'kurve' || (raum.phase !== 'spiel' && raum.phase !== 'countdown') || $('s-raum').hidden) return;
   if (e.target?.id === 'chat-eingabe' || e.altKey || e.ctrlKey || e.metaKey) return;
   const taste = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+  if (unten && (taste === 'ArrowUp' || taste === 'w' || taste === ' ')) { e.preventDefault(); e.stopImmediatePropagation(); if (!e.repeat) raum.kurveFeuern(); return; }
   const seite = taste === 'ArrowLeft' || taste === 'a' ? 'l' : taste === 'ArrowRight' || taste === 'd' ? 'r' : null;
   if (!seite) return;
   e.preventDefault(); e.stopImmediatePropagation();
@@ -894,27 +886,16 @@ window.addEventListener('blur', () => { if (kurveTasten.l || kurveTasten.r) { ku
   const feld = () => $('spiel-feld');
   const halten = new Map();
   const melden = () => { const s = [...halten.values()]; raum?.kurveLenken(s.includes('l'), s.includes('r')); };
+  let letzterTipp = 0;
   document.addEventListener('pointerdown', e => {
     if (e.target !== feld() || raum?.einst.auswahl !== 'kurve') return;
+    if (e.pointerType === 'touch' && performance.now() - letzterTipp < 280) raum.kurveFeuern(); // Doppeltipp feuert
+    letzterTipp = performance.now();
     const box = feld().getBoundingClientRect();
     halten.set(e.pointerId, e.clientX - box.left < box.width / 2 ? 'l' : 'r'); melden();
   });
   const los = e => { if (halten.delete(e.pointerId)) melden(); };
   document.addEventListener('pointerup', los); document.addEventListener('pointercancel', los);
-}
-
-// Wischen auf dem Spielfeld (Handy, Snake)
-{
-  let start = null;
-  const feld = () => $('spiel-feld');
-  document.addEventListener('pointerdown', e => { if (e.target === feld()) start = [e.clientX, e.clientY]; });
-  document.addEventListener('pointerup', e => {
-    if (!start || !raum || raum.einst.auswahl === 'kurve') { start = null; return; }
-    const dx = e.clientX - start[0], dy = e.clientY - start[1];
-    start = null;
-    if (Math.max(Math.abs(dx), Math.abs(dy)) < 18) return;
-    raum.lenken(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'r' : 'l') : (dy > 0 ? 'u' : 'o'));
-  });
 }
 
 // ---------- Neue Version: von selbst neu laden, aber nur in einem ruhigen Moment ----------
@@ -1014,18 +995,17 @@ setInterval(() => {
   document.body.classList.toggle('spielt', !!spielt);
   const spielCountdown = raum && raum.istSpiel && raum.phase === 'countdown';
   $('spiel-countdown').hidden = !spielCountdown;
+  if (!spielCountdown) spielCountdownZahl = null;
   if (spielCountdown) {
     const zahl = Math.max(1, Math.ceil((raum.countdownEnde - performance.now()) / 1000));
-    let text;
-    if (raum.einst.auswahl === 'kurve') {
+    // nur neu setzen, wenn sich die Zahl ändert (sonst flackert es)
+    if (spielCountdownZahl !== zahl) {
+      spielCountdownZahl = zahl;
       const i = (raum.kurveIds || []).indexOf(raum.ich.id);
-      text = i >= 0 ? `Du bist die <b style="color:${KURVEN_FARBEN[i]}">${FARBNAME[i]}</b> Linie.` : 'Du schaust zu.';
-    } else {
-      const i = raum.snake?.schlangen.findIndex(s => s.id === raum.ich.id) ?? -1;
-      text = i === 0 ? 'Du bist die sandfarbene Schlange links.' : i === 1 ? 'Du bist die grüne Schlange rechts.' : 'Du schaust zu.';
+      const text = i >= 0 ? `Du bist <b style="color:${KURVEN_FARBEN[i]}">${FARBNAME[i]}</b>.` : 'Du schaust zu.';
+      $('spiel-countdown').innerHTML = `<span>${zahl}<small>${text}<br>← → lenken, ↑ oder Leertaste: Rakete</small></span>`;
+      pulsen($('spiel-countdown').firstElementChild);
     }
-    const neu = `<span>${zahl}<small>${text}</small></span>`;
-    if ($('spiel-countdown').innerHTML !== neu) { $('spiel-countdown').innerHTML = neu; pulsen($('spiel-countdown').firstElementChild); }
   }
   if (raum && raum.phase === 'frage') {
     const rest = raum.dauer - (performance.now() - raum.start);
@@ -1203,17 +1183,6 @@ function sprintUeberspringen() {
 }
 
 // Tastenkürzel: Pfeil rechts oder Alt+D = überspringen, 1–4 = Antwort wählen
-// Snake lenken: Pfeiltasten oder WASD (nicht, solange man im Chat tippt)
-const LENKTASTE = { ArrowUp: 'o', ArrowDown: 'u', ArrowLeft: 'l', ArrowRight: 'r', w: 'o', s: 'u', a: 'l', d: 'r' };
-document.addEventListener('keydown', e => {
-  if (!raum || !raum.istSpiel || raum.einst.auswahl !== 'snake' || (raum.phase !== 'spiel' && raum.phase !== 'countdown') || $('s-raum').hidden) return;
-  if (e.target?.id === 'chat-eingabe' || e.altKey || e.ctrlKey || e.metaKey) return;
-  const r = LENKTASTE[e.key.length === 1 ? e.key.toLowerCase() : e.key];
-  if (!r) return;
-  e.preventDefault();
-  raum.lenken(r);
-}, true);
-
 document.addEventListener('keydown', e => {
   const imSprint = sprint?.laeuft && !$('s-sprint').hidden;
   const imRaum = raum && raum.phase === 'frage' && !$('s-raum').hidden;
@@ -1240,6 +1209,7 @@ let geroutet = null;
 
 function route(erzwingen = false) {
   const h = location.hash || '#/';
+  if (!h.startsWith('#/raum/')) document.body.classList.remove('grossfeld');
   if (!erzwingen && h === geroutet) return; // popstate und hashchange kommen oft beide
   geroutet = h;
   const nav = h === '#/lernen' ? 'lernen' : h.startsWith('#/sprint') ? 'sprint' : h.startsWith('#/raum/') || h.startsWith('#/profil') ? '' : 'bude';
@@ -1253,7 +1223,9 @@ function route(erzwingen = false) {
   if (h === '#/sprint') return sprintWahlZeigen();
   const sm = h.match(/^#\/sprint\/([a-z]+)$/);
   if (sm) return sprintStart(sm[1]);
-  if (!ich) return anmeldenZeigen();
+  if (h === '#/anmelden') return anmeldenZeigen();
+  if (!ich && !gast) return anmeldenZeigen();
+  if (!ich && h.startsWith('#/profil')) return anmeldenZeigen(); // Profil gibt es nur mit Konto
   chipZeichnen();
   const pm = h.match(/^#\/profil(?:\/([0-9a-f-]{36}))?$/);
   if (pm) return profilZeigen(pm[1]);
@@ -1287,6 +1259,7 @@ async function los() {
     try {
       const user = await sitzungHolen();
       if (user) await profilHolen(user);
+      if (!ich && gast) lobbyStart(); // Gäste sehen die offenen Räume auch
     } catch (e) {
       console.warn('[Quizbude] Sitzung nicht wiederhergestellt', e);
     }

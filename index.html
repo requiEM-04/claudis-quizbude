@@ -7,7 +7,7 @@
 <meta name="description" content="Flaggen raten in der Pause, allein oder zusammen im Raum.">
 <meta name="theme-color" content="#1B1E21">
 <link rel="icon" href="bilder/icon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="css/stil.css?v=0.5.2">
+<link rel="stylesheet" href="css/stil.css?v=0.6.0">
 </head>
 <body>
 <main>
@@ -41,7 +41,7 @@
         <p class="hinweis" id="offline-hinweis" hidden>Der Server ist gerade nicht erreichbar. Bis dahin geht nur das Spielen als Gast.</p>
         <div class="oder" aria-hidden="true"><span>oder</span></div>
         <button class="knopf zweit breit" id="gast-los">Als Gast spielen</button>
-        <p class="hinweis gast-hinweis">Ohne Konto gehen Sprint und Lernen. Deine Rekorde bleiben dann nur auf diesem Gerät. Für Räume mit anderen brauchst du ein Konto.</p>
+        <p class="hinweis gast-hinweis">Ohne Konto kannst du alles spielen, auch in Räumen mit anderen. Deine Ergebnisse zählen dann aber nicht für die Bestenliste, und Rekorde bleiben nur auf diesem Gerät.</p>
       </div>
     </div>
   </section>
@@ -200,7 +200,7 @@
               <canvas class="spiel-feld" id="spiel-feld" aria-label="Spielfeld"></canvas>
               <p class="spiel-countdown" id="spiel-countdown" hidden></p>
             </div>
-            <p class="phase-text" id="spiel-hilfe">Lenken mit den Pfeiltasten oder W A S D, am Handy durch Wischen. Fahr nicht in die Wand oder in eine Schlange, rote Punkte machen dich länger.</p>
+            <p class="phase-text" id="spiel-hilfe">Lenken mit ← → oder A D, Rakete mit ↑, W oder Leertaste. Am Handy links oder rechts aufs Feld drücken und halten, Doppeltipp feuert.</p>
           </div>
 
           <div class="phase" id="p-ende">
@@ -283,7 +283,7 @@
 </nav>
 <div class="toast" id="toast" role="status" hidden></div>
 
-<script src="vendor/supabase.js?v=0.5.2"></script>
-<script type="module" src="js/app.js?v=0.5.2"></script>
+<script src="vendor/supabase.js?v=0.6.0"></script>
+<script type="module" src="js/app.js?v=0.6.0"></script>
 </body>
 </html>
