@@ -56,14 +56,15 @@ export function freiAb(art, rangId) {
 }
 
 // Sonder-Freischaltungen, die nicht am Ruhm hängen (Winter 2026). Ob jemand sie wirklich hat, prüft der Server beim Speichern.
-// quest: Stand der Winterquest { raumspiele, siege, sprints } im Dezember 2026
+// quest: Stand der Winterquest { raumspiele, siege, treffer } im Dezember 2026.
+// Raumspiele und Siege zählen nur mit mind. zwei anderen Konten (älter als 7 Tage), die alle Punkte geholt haben; Siege ab 1.000 Punkten.
 const WINTER_AB = new Date('2026-12-01T00:00:00+01:00'), WINTER_BIS = new Date('2027-01-01T00:00:00+01:00');
 export const WINTERQUEST = {
   ab: WINTER_AB, bis: WINTER_BIS,
   stufen: [
-    { id: 1, name: 'Erster Schnee', ziel: 10, was: 'Raumspiele', feld: 'raumspiele', art: 'rahmen', belohnung: 'eis' },
-    { id: 2, name: 'Schneegestöber', ziel: 15, was: 'Sprints', feld: 'sprints', art: 'effekt', belohnung: 'schnee' },
-    { id: 3, name: 'Heilige Nacht', ziel: 3, was: 'Siege im Raum', feld: 'siege', art: 'hintergrund', belohnung: 'weihnacht' },
+    { id: 1, name: 'Erster Schnee', ziel: 10, was: 'Raumspiele mit mind. 3 Leuten', feld: 'raumspiele', art: 'rahmen', belohnung: 'eis' },
+    { id: 2, name: 'Schneegestöber', ziel: 250, was: 'Sprint-Treffer', feld: 'treffer', art: 'effekt', belohnung: 'schnee' },
+    { id: 3, name: 'Heilige Nacht', ziel: 3, was: 'Siege mit mind. 1.000 Punkten', feld: 'siege', art: 'hintergrund', belohnung: 'weihnacht' },
   ],
 };
 // geschafft = wie viele Stufen nacheinander erreicht sind

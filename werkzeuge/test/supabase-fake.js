@@ -175,7 +175,7 @@
           }
           return { data: null, error: null };
         }
-        if (name === 'winterquest_stand') return { data: L.get('fake.winter', { raumspiele: 0, siege: 0, sprints: 0 }), error: null };
+        if (name === 'winterquest_stand') return { data: L.get('fake.winter', { raumspiele: 0, siege: 0, treffer: 0 }), error: null };
         if (name === 'spiel_loggen') L.set('fake.spiele', [{ ...a.p, am: new Date().toISOString() }, ...L.get('fake.spiele', [])]);
         return { data: null, error: null };
       },

@@ -2,7 +2,7 @@
 
 ## Aktuell (25.11.2026)
 
-- **Version:** 0.10.1
+- **Version:** 0.10.2
 - **Live:** https://requiem-04.github.io/claudis-quizbude/ (Repo `requiEM-04/claudis-quizbude`, Branch `main`, GitHub Pages)
 - **Server:** Supabase-Projekt `quizbude` (Ref `jgvjjjiwfjxynbzjaxsg`, Frankfurt), E-Mail-Bestätigung aus, Realtime mit öffentlichen Kanälen.
 - **Inhalt:** Konten (Name + Passwort ab 4 Zeichen), Räume mit 4-Buchstaben-Code (live über Realtime), Flaggenraten (tippen oder 4 zur Auswahl), Flaggen-Sprint (60 s), Bestenliste (Siege, Punkte, Sprint), „Zuletzt gespielt".
@@ -136,12 +136,16 @@
 
 - **Neu in 0.10.1 (Winter):**
   - Winterzauber (Hintergrund „winter“, reiner Winter: Mond, Berge, verschneite Tannen; bewegt: funkelnde Sterne, Sternschnuppe, drei Schnee-Ebenen). Ab 1.12.2026 frei für alle Konten mit erstellt vor 1.1.2027, bleibt danach. Im Dezember einmal Hinweis mit Anlegen-Knopf (nie automatisch).
-  - Winterquest Dezember 2026 (Migration 006, qb_winterquest/winterquest_stand, Prüfung in qb_sonder_frei): Stufe 1 = 10 Raumspiele → Rahmen Eiskristall, Stufe 2 = 15 Sprints → Effekt Schneegestöber, Stufe 3 = 3 Siege → Hintergrund Weihnachtsnacht. Gezählt wird nur Dezember 2026, Stufen nacheinander.
   - Weihnachtsnacht: Dorf mit leuchtenden Fenstern, Kirche, geschmückter Baum, Mond; bewegt: blinkende Lichterkette, Schlitten vor dem Himmel, Sternschnuppe, Schnee.
   - Questkarte in der rechten Spalte unter der Bestenliste (vor Dezember als Vorschau „startet in … Tagen“), Feier-Fenster je geschaffter Stufe mit Anlegen-Knopf.
   - Bewegte Ebenen als #winterwelt (nur transform/opacity), im Kartenmodus aus.
 
+- **Neu in 0.10.2:**
+  - Winterquest fest gegen Nebenkonten (Migration 007): Raumspiel zählt nur mit mind. zwei anderen Konten, die älter als 7 Tage sind, und alle anderen im Raum haben Punkte. Stufe 1 = 10 solche Raumspiele → Rahmen Eiskristall, Stufe 2 = 250 Sprint-Treffer im Dezember → Effekt Schneegestöber, Stufe 3 = 3 Siege in solchen Räumen mit mind. 1.000 Punkten → Hintergrund Weihnachtsnacht. Stufen nacheinander, nur Dezember 2026.
+  - Winterzauber neu: Nordlicht (zwei Bänder, langsam bewegt), Mond mit Kratern oben links in der Ecke (nie hinter dem Logo), drei Bergketten mit Schnee, Schatten und Dunst, zwei Reihen verschneiter Wald, glitzernder Schnee, Sternschnuppe, drei Schnee-Ebenen.
+
 ## Als Nächstes (mit Colin besprochen)
+- Reihenfolge jetzt: neue Profilbilder (eigene Figuren, Kreis-Hintergründe, Randfarben) → Freunde und Einladungen → neue Quizze Nachbarn und Buchstabensalat → vorgemerkt: Seitenverhältnisse (von Flaggen) raten. Kein Tagesrätsel nach Loldle-Art.
 
 1. Eigene Profilbilder statt Emojis (mit Colin zusammen gestalten).
 2. (erledigt in 0.9.3) Admin-Bereich (eigenes Konto `requiem-admin`, Login mit Name „Admin“, Tabelle `admins`, `is_admin()` in jeder Funktion, eigene Seite `admin.html`): Spieler, Räume, Nachricht an alle, Server, Protokoll. Colin legt das Konto selbst in Supabase an.

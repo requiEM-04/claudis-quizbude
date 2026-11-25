@@ -1,26 +1,26 @@
-import { VERSION } from './config.js?v=0.10.1';
+import { VERSION } from './config.js?v=0.10.2';
 import {
   online, nameFehler, registrieren, anmelden, abmelden, sitzungHolen, profilLaden, profilSpeichern,
   bestenliste, spieleSeit, alleProfile, sprintEintragen, sprintBestenliste, rangVon, spielerAnzahl, spieleVon, sb,
   adminAnmelden, istAdminName, konfigLaden, adminEinrichten, einrichtungOffen, abzeichenVon, saisonAbschliessen, winterquestStand,
-} from './server.js?v=0.10.1';
-import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.10.1';
-import { Raum, codeNeu, STANDARD, TIPPFEHLER_ABZUG } from './raum.js?v=0.10.1';
-import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.10.1';
+} from './server.js?v=0.10.2';
+import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.10.2';
+import { Raum, codeNeu, STANDARD, TIPPFEHLER_ABZUG } from './raum.js?v=0.10.2';
+import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.10.2';
 import {
   KATEGORIEN, KATEGORIE_REIHE, SPRINT_REIHE, kategorieVon, optionSchluessel, richtigeWahl, umrisseDa, umrisseLaden,
   sprintFrage, pruefeFrage, fragenVorladen, kanon,
-} from './kategorien.js?v=0.10.1';
-import { LAENDER } from './laender.js?v=0.10.1';
-import { auswahlfeld } from './auswahlfeld.js?v=0.10.1';
-import { KATEGORIE_SYMBOL } from './symbole.js?v=0.10.1';
-import { konfetti } from './konfetti.js?v=0.10.1';
-import { karteBauen, karteLaden, auswerten } from './weltkarte.js?v=0.10.1';
-import { STUFEN, ERFOLGE, erfolgStand, emblem, wertungName, saisonName, saisonKurz, vitrineLesen } from './abzeichen.js?v=0.10.1';
+} from './kategorien.js?v=0.10.2';
+import { LAENDER } from './laender.js?v=0.10.2';
+import { auswahlfeld } from './auswahlfeld.js?v=0.10.2';
+import { KATEGORIE_SYMBOL } from './symbole.js?v=0.10.2';
+import { konfetti } from './konfetti.js?v=0.10.2';
+import { karteBauen, karteLaden, auswerten } from './weltkarte.js?v=0.10.2';
+import { STUFEN, ERFOLGE, erfolgStand, emblem, wertungName, saisonName, saisonKurz, vitrineLesen } from './abzeichen.js?v=0.10.2';
 import {
   RAENGE, BILDER, ARTEN, JOKER, SONDER, sonderVon, sonderFrei, WINTERQUEST, questGeschafft, ruhmInfo, stufeVon, stufeInfo, wappen, effektHtml, rahmenDeko, stilVon, istFrei, freiAb, neuFrei,
   belohnungName, rangVonId, symbol, symbolSvg, SCHWELLEN,
-} from './ruhm.js?v=0.10.1';
+} from './ruhm.js?v=0.10.2';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -141,7 +141,7 @@ function hintergrundSetzen() {
   if (!soll) return;
   const el = document.createElement('div');
   el.id = 'winterwelt'; el.className = `winterwelt ww-${soll}`; el.dataset.art = soll; el.setAttribute('aria-hidden', 'true');
-  el.innerHTML = '<b class="ww-funkeln"></b>' + (soll === 'weihnacht' ? '<b class="ww-lichter a"></b><b class="ww-lichter b"></b><b class="ww-schnuppe"></b><b class="ww-schlitten"></b>' : '<b class="ww-schnuppe"></b>')
+  el.innerHTML = '<b class="ww-funkeln"></b>' + (soll === 'weihnacht' ? '<b class="ww-lichter a"></b><b class="ww-lichter b"></b><b class="ww-schnuppe"></b><b class="ww-schlitten"></b>' : '<b class="ww-polarlicht"></b><b class="ww-polarlicht"></b><b class="ww-mond"></b><b class="ww-schnuppe"></b><b class="ww-glitzern"></b>')
     + '<i class="ww-schnee s1"></i><i class="ww-schnee s2"></i><i class="ww-schnee s3"></i>';
   document.body.prepend(el);
 }
@@ -150,7 +150,7 @@ function hintergrundSetzen() {
 let winterStand = null;
 async function winterLaden() {
   if (!ich || ich.gast || !online()) { winterStand = null; return; }
-  if (new Date() < WINTERQUEST.ab) { winterStand = { raumspiele: 0, siege: 0, sprints: 0 }; return; }
+  if (new Date() < WINTERQUEST.ab) { winterStand = { raumspiele: 0, siege: 0, treffer: 0 }; return; }
   try { winterStand = await winterquestStand(); } catch { winterStand = winterStand || null; }
 }
 const WQ_SYMBOL = ['<path d="M12 2v20M3.3 7l17.4 10M3.3 17 20.7 7"/>', '<circle cx="12" cy="13.5" r="7.5"/><path d="M12 13.5V10M10 2.5h4M12 2.5V6"/>', '<path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5Z"/>'];
@@ -160,7 +160,7 @@ function questZeichnen() {
   if (jetzt >= WINTERQUEST.bis) { box.hidden = true; return; }
   const laeuft = jetzt >= WINTERQUEST.ab;
   const tage = Math.ceil(((laeuft ? WINTERQUEST.bis : WINTERQUEST.ab) - jetzt) / 86400000);
-  const q = winterStand || { raumspiele: 0, siege: 0, sprints: 0 }, fertig = questGeschafft(q);
+  const q = winterStand || { raumspiele: 0, siege: 0, treffer: 0 }, fertig = questGeschafft(q);
   const zeile = (s, i) => {
     const wert = Math.min(q[s.feld] || 0, s.ziel), geschafft = i < fertig, dran = i === fertig;
     const preis = sonderVon(s.art, s.belohnung);
@@ -168,16 +168,17 @@ function questZeichnen() {
       <span class="wq-symbol"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${geschafft ? '<path d="M5 12.5 10 17.5 19 7"/>' : WQ_SYMBOL[i]}</svg></span>
       <span class="wq-mitte">
         <b>${esc(s.name)}</b>
-        <small>${s.ziel} ${esc(s.was)}${i ? ' (nach Stufe ' + i + ')' : ''}</small>
+        <small>${s.ziel.toLocaleString('de-DE')} ${esc(s.was)}</small>
         <span class="wq-balken" style="--anteil:${(wert / s.ziel).toFixed(3)}"><i></i></span>
       </span>
-      <span class="wq-preis" title="${esc(belohnungTitel(s.art, preis))}">${kachelProbe(s.art, preis)}<small>${laeuft ? `${wert}/${s.ziel}` : ''}</small></span>
+      <span class="wq-preis" title="${esc(belohnungTitel(s.art, preis))}">${kachelProbe(s.art, preis)}<small>${laeuft ? `${wert.toLocaleString('de-DE')}/${s.ziel.toLocaleString('de-DE')}` : ''}</small></span>
     </li>`;
   };
   box.innerHTML = `
     <div class="wq-kopf"><h2 id="wq-titel">Winterquest</h2><small>${laeuft ? `noch ${tage} ${tage === 1 ? 'Tag' : 'Tage'}` : `startet in ${tage} ${tage === 1 ? 'Tag' : 'Tagen'}`}</small></div>
     <p class="wq-text">${laeuft ? (ich && !ich.gast ? 'Drei Stufen im Dezember, jede mit einer Belohnung. Zum Schluss wartet die Weihnachtsnacht.' : 'Mit Konto spielst du um drei Winter-Belohnungen.') : 'Ab 1. Dezember: drei Stufen, drei Belohnungen, zum Schluss die Weihnachtsnacht als Hintergrund.'}</p>
-    <ol class="wq-stufen">${WINTERQUEST.stufen.map(zeile).join('')}</ol>`;
+    <ol class="wq-stufen">${WINTERQUEST.stufen.map(zeile).join('')}</ol>
+    <p class="wq-fuss">Raumspiele zählen mit mindestens zwei anderen Konten, die schon eine Woche dabei sind und Punkte holen.</p>`;
   box.hidden = false;
 }
 const belohnungTitel = (art, s) => `${art === 'rahmen' ? 'Rahmen' : art === 'effekt' ? 'Effekt' : 'Hintergrund'} ${s?.[art] || ''}`;
@@ -217,7 +218,7 @@ function winterHinweis() {
   try { localStorage.setItem(schluessel, '1'); } catch { /* egal */ }
   $('aufstieg-inhalt').style.setProperty('--rang', '#CFE3EE');
   $('aufstieg-inhalt').innerHTML = `
-    <div class="winter-vorschau hgf-winter"><span class="winterwelt mini ww-winter"><b class="ww-funkeln"></b><i class="ww-schnee s1"></i><i class="ww-schnee s2"></i></span></div>
+    <div class="winter-vorschau hgf-winter"><span class="winterwelt mini ww-winter"><b class="ww-polarlicht"></b><b class="ww-funkeln"></b><i class="ww-schnee s1"></i><i class="ww-schnee s2"></i></span></div>
     <p class="ueber">Ein Geschenk zum Dezember</p>
     <h2 id="aufstieg-titel">Winterzauber</h2>
     <p class="unterzeile">Ein Hintergrund für alle, die bis Ende Dezember dabei sind. Er bleibt dir auch danach.</p>
