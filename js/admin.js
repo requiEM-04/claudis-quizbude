@@ -1,6 +1,6 @@
-import { VERSION } from './config.js?v=0.10.0';
-import { adminClient, adminAnmelden } from './server.js?v=0.10.0';
-import { ruhmInfo, wappen, stilVon } from './ruhm.js?v=0.10.0';
+import { VERSION } from './config.js?v=0.10.1';
+import { adminClient, adminAnmelden } from './server.js?v=0.10.1';
+import { ruhmInfo, wappen, stilVon } from './ruhm.js?v=0.10.1';
 
 // Admin-Bereich: eigenes Konto, eigene Sitzung (quizbude.admin), alles läuft über admin_*-Funktionen mit Protokoll
 const $ = id => document.getElementById(id);

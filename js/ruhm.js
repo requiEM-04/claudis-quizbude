@@ -55,15 +55,30 @@ export function freiAb(art, rangId) {
   return i < 0 ? Infinity : i * 4 + ARTEN.find(a => a.id === art).ab;
 }
 
-// Sonder-Hintergründe, die nicht am Ruhm hängen. Winterzauber: ab 1. Dezember 2026 für alle Konten,
-// die bis Ende Dezember 2026 angelegt wurden (bleibt danach für immer).
+// Sonder-Freischaltungen, die nicht am Ruhm hängen (Winter 2026). Ob jemand sie wirklich hat, prüft der Server beim Speichern.
+// quest: Stand der Winterquest { raumspiele, siege, sprints } im Dezember 2026
 const WINTER_AB = new Date('2026-12-01T00:00:00+01:00'), WINTER_BIS = new Date('2027-01-01T00:00:00+01:00');
-export const SONDER_HG = [
-  { id: 'weihnacht', hintergrund: 'Winterzauber', farbe: '#CFE3EE', ab: WINTER_AB,
-    hinweis: 'Ab 1. Dezember für alle, die bis Ende Dezember dabei sind',
-    frei: p => new Date() >= WINTER_AB && (!p?.erstellt || new Date(p.erstellt) < WINTER_BIS) },
-];
-export const sonderFrei = (id, p) => !!SONDER_HG.find(s => s.id === id)?.frei(p);
+export const WINTERQUEST = {
+  ab: WINTER_AB, bis: WINTER_BIS,
+  stufen: [
+    { id: 1, name: 'Erster Schnee', ziel: 10, was: 'Raumspiele', feld: 'raumspiele', art: 'rahmen', belohnung: 'eis' },
+    { id: 2, name: 'Schneegestöber', ziel: 15, was: 'Sprints', feld: 'sprints', art: 'effekt', belohnung: 'schnee' },
+    { id: 3, name: 'Heilige Nacht', ziel: 3, was: 'Siege im Raum', feld: 'siege', art: 'hintergrund', belohnung: 'weihnacht' },
+  ],
+};
+// geschafft = wie viele Stufen nacheinander erreicht sind
+export const questGeschafft = q => { let n = 0; for (const s of WINTERQUEST.stufen) { if ((q?.[s.feld] || 0) >= s.ziel) n++; else break; } return n; };
+export const SONDER = {
+  hintergrund: [
+    { id: 'winter', hintergrund: 'Winterzauber', farbe: '#CFE3EE', hinweis: 'Ab 1. Dezember für alle, die bis Ende Dezember dabei sind',
+      frei: p => new Date() >= WINTER_AB && (!p?.erstellt || new Date(p.erstellt) < WINTER_BIS) },
+    { id: 'weihnacht', hintergrund: 'Weihnachtsnacht', farbe: '#F2C35B', hinweis: 'Belohnung der Winterquest, Stufe 3', frei: (p, q) => questGeschafft(q) >= 3 },
+  ],
+  rahmen: [{ id: 'eis', rahmen: 'Eiskristall', farbe: '#BFE3F5', hinweis: 'Belohnung der Winterquest, Stufe 1', frei: (p, q) => questGeschafft(q) >= 1 }],
+  effekt: [{ id: 'schnee', effekt: 'Schneegestöber', farbe: '#E6F2FA', hinweis: 'Belohnung der Winterquest, Stufe 2', frei: (p, q) => questGeschafft(q) >= 2 }],
+};
+export const sonderVon = (art, id) => (SONDER[art] || []).find(s => s.id === id);
+export const sonderFrei = (art, id, p, q) => !!sonderVon(art, id)?.frei(p, q);
 export const istFrei = (art, rangId, ruhm) => stufeVon(ruhm) >= freiAb(art, rangId);
 
 // Was wird mit Stufe i neu frei?
@@ -78,7 +93,8 @@ export function stilVon(p) {
   const st = p?.stil || {}, aus = {};
   for (const a of ARTEN) {
     const v = st[a.id];
-    if (v && (istFrei(a.id, v, p.ruhm || 0) || (a.id === 'hintergrund' && sonderFrei(v, p)))) aus[a.id] = v;
+    // Sonderstücke prüft der Server beim Speichern, hier reicht, dass es sie gibt
+    if (v && (istFrei(a.id, v, p.ruhm || 0) || sonderVon(a.id, v))) aus[a.id] = v;
   }
   return aus;
 }
@@ -168,6 +184,7 @@ export function effektHtml(rangId) {
   if (rangId === 'herz') innen = verteilt(7, (i, a, b) => `<i style="--x:${a * 92}%;--t:${(7 + b * 5).toFixed(2)}s;--d:${(-b * 10).toFixed(2)}s;--r:${(a * 80 - 40).toFixed(0)}deg">${symbolSvg(['herz', 'karo', 'pik', 'kreuz'][i % 4], i % 4 < 2 ? 'rot' : 'schwarz')}</i>`).join('');
   if (rangId === 'kreuz') innen = '<b class="strahlen"></b><b class="schein"></b>';
   if (rangId === 'pik') innen = '<b class="glanz"></b>' + verteilt(7, (i, a, b) => `<i style="--x:${6 + a * 88}%;--y:${8 + b * 84}%;--t:${(2 + b * 2).toFixed(2)}s;--d:${(-a * 3).toFixed(2)}s">${symbolSvg('stern')}</i>`).join('');
+  if (rangId === 'schnee') innen = verteilt(12, (i, a, b) => `<i style="--x:${a * 100}%;--t:${(5 + b * 5).toFixed(2)}s;--d:${(-b * 9).toFixed(2)}s;--g:${(3 + (i % 3) * 1.5).toFixed(1)}px;--w:${(a * 30 - 15).toFixed(0)}px"></i>`).join('');
   if (rangId === 'joker') innen = '<b class="holo"></b><b class="glanz"></b>' + verteilt(6, (i, a, b) => `<i style="--x:${a * 94}%;--y:${b * 90}%;--t:${(2.5 + b * 2).toFixed(2)}s;--d:${(-a * 3).toFixed(2)}s">${symbolSvg(['stern', 'herz', 'karo', 'pik', 'kreuz'][i % 5])}</i>`).join('');
   return `<div class="effekt e-${rangId}" aria-hidden="true">${innen}</div>`;
 }
@@ -176,6 +193,7 @@ export function effektHtml(rangId) {
 export function rahmenDeko(rangId) {
   if (rangId === 'herz') return `<div class="rahmen-deko" aria-hidden="true">${['lo', 'ro', 'lu', 'ru'].map(p => `<span class="${p}">${symbolSvg('herz')}</span>`).join('')}</div>`;
   if (rangId === 'pik') return `<div class="rahmen-deko" aria-hidden="true">${['lo', 'ro', 'lu', 'ru'].map(p => `<span class="${p}">${symbolSvg('pik')}</span>`).join('')}</div>`;
+  if (rangId === 'eis') return `<div class="rahmen-deko" aria-hidden="true">${['lo', 'ro', 'lu', 'ru'].map(p => `<span class="${p}"><svg class="kf-symbol" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 2v20M3.3 7l17.4 10M3.3 17 20.7 7M12 2l-2.5 2.5M12 2l2.5 2.5M12 22l-2.5-2.5M12 22l2.5-2.5"/></svg></span>`).join('')}</div>`;
   if (rangId === 'kreuz') return `<div class="rahmen-deko" aria-hidden="true"><span class="krone"><svg viewBox="0 0 30 16"><path d="M2 15 0 3l7.5 5L15 0l7.5 8L30 3l-2 12Z" fill="currentColor"/></svg></span></div>`;
   return '';
 }

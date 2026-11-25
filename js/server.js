@@ -1,5 +1,5 @@
-import { CONFIG } from './config.js?v=0.10.0';
-import { textPruefen } from './filter.js?v=0.10.0';
+import { CONFIG } from './config.js?v=0.10.1';
+import { textPruefen } from './filter.js?v=0.10.1';
 
 // ?sitzung=2 in der Adresse = zweites Konto im selben Browser (zum Testen mit zwei Tabs)
 const sitzung = new URLSearchParams(location.search).get('sitzung');
@@ -201,4 +201,11 @@ export async function saisonAbschliessen(saison) {
   const { data, error } = await sb.rpc('saison_abschliessen', { p_saison: saison });
   if (error) throw new Error(error.message);
   return data || 0;
+}
+
+// Winterquest: eigener Stand im Dezember 2026 { raumspiele, siege, sprints }
+export async function winterquestStand() {
+  const { data, error } = await sb.rpc('winterquest_stand');
+  if (error) throw new Error(error.message);
+  return data || { raumspiele: 0, siege: 0, sprints: 0 };
 }
