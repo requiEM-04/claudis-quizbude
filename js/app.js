@@ -1,19 +1,20 @@
-import { VERSION } from './config.js?v=0.5.0';
+import { VERSION } from './config.js?v=0.5.1';
 import {
   online, nameFehler, registrieren, anmelden, abmelden, sitzungHolen, profilLaden, profilSpeichern,
   bestenliste, letzteSpiele, sprintEintragen, sprintBestenliste, rangVon, spielerAnzahl, spieleVon, sb,
-} from './server.js?v=0.5.0';
-import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.5.0';
-import { Raum, codeNeu, STANDARD } from './raum.js?v=0.5.0';
-import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.5.0';
+} from './server.js?v=0.5.1';
+import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.5.1';
+import { Raum, codeNeu, STANDARD } from './raum.js?v=0.5.1';
+import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.5.1';
 import {
   KATEGORIEN, KATEGORIE_REIHE, RAUM_REIHE, SPIEL_NAME, kategorieVon, optionSchluessel, richtigeWahl, umrisseDa, umrisseLaden,
   sprintFrage, pruefeFrage, fragenVorladen, kanon,
-} from './kategorien.js?v=0.5.0';
-import { LAENDER } from './laender.js?v=0.5.0';
-import { auswahlfeld } from './auswahlfeld.js?v=0.5.0';
-import { KATEGORIE_SYMBOL } from './symbole.js?v=0.5.0';
-import { snakeZeichnen, SCHLANGEN_FARBEN, SNAKE_DAUER } from './snake.js?v=0.5.0';
+} from './kategorien.js?v=0.5.1';
+import { LAENDER } from './laender.js?v=0.5.1';
+import { auswahlfeld } from './auswahlfeld.js?v=0.5.1';
+import { KATEGORIE_SYMBOL } from './symbole.js?v=0.5.1';
+import { snakeZeichnen, SCHLANGEN_FARBEN, SNAKE_DAUER } from './snake.js?v=0.5.1';
+import { KURVEN_FARBEN } from './kurve.js?v=0.5.1';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -653,8 +654,16 @@ function raumZeichnen() {
   const spielfeld = r.istSpiel && (r.phase === 'countdown' || r.phase === 'spiel');
   const sichtbar = spielfeld ? 'p-spiel' : { warten: 'p-warten', countdown: 'p-countdown', frage: 'p-frage', aufloesung: 'p-frage', ende: 'p-ende' }[r.phase];
   for (const id of ['p-warten', 'p-countdown', 'p-frage', 'p-spiel', 'p-ende']) $(id).hidden = id !== sichtbar;
-  $('zeitleiste').hidden = !(r.phase === 'frage' || r.phase === 'aufloesung' || r.phase === 'spiel');
-  if (spielfeld) {
+  const istKurve = r.istSpiel && r.einst.auswahl === 'kurve';
+  $('zeitleiste').hidden = !(r.phase === 'frage' || r.phase === 'aufloesung' || (r.phase === 'spiel' && !istKurve));
+  $('spiel-hilfe').textContent = istKurve
+    ? 'Lenken mit ← → oder A D, am Handy links oder rechts aufs Feld drücken und halten. Durch die Lücken in den Linien kommt man durch. Grüne Kreise helfen dir, rote treffen die anderen, sandfarbene alle.'
+    : 'Lenken mit den Pfeiltasten oder W A S D, am Handy durch Wischen. Fahr nicht in die Wand oder in eine Schlange, rote Punkte machen dich länger.';
+  if (spielfeld && istKurve) {
+    if (spielFokus !== r.spielId) { spielFokus = r.spielId; document.activeElement?.blur?.(); }
+    kurveSchleifeStarten();
+  }
+  if (spielfeld && !istKurve) {
     if (spielFokus !== r.spielId) { spielFokus = r.spielId; document.activeElement?.blur?.(); } // Pfeiltasten sollen lenken, nicht im Chat landen
     spielZeichnen(r);
   }
@@ -678,8 +687,9 @@ function raumZeichnen() {
     const genug = r.startBereit;
     $('los').disabled = !genug;
     const wieviele = r.spieler.size === 1 ? 'bist nur du' : `seid ihr ${r.spieler.size}`;
+    const [min, max] = r.spielerSpanne;
     $('los-hinweis').textContent = genug ? '' : kat.spiel
-      ? `${SPIEL_NAME[r.einst.auswahl] || 'Das Spiel'} spielt ihr genau zu ${r.spielerNoetig === 2 ? 'zweit' : r.spielerNoetig}. Gerade ${wieviele} im Raum.`
+      ? `${SPIEL_NAME[r.einst.auswahl] || 'Das Spiel'} spielt ihr ${min === max ? `genau zu ${min === 2 ? 'zweit' : min}` : `mit ${min} bis ${max} Leuten`}. Gerade ${wieviele} im Raum.`
       : r.binHost
         ? 'Starten geht ab 2 Leuten. Klick oben auf den Code und schick den Link rum.'
         : 'Es geht los, sobald genug Leute da sind.';
@@ -786,13 +796,67 @@ function spielZeichnen(r) {
   }
 }
 
-// Wischen auf dem Spielfeld (Handy)
+// ---------- Kurvenkampf zeichnen ----------
+const FARBNAME = ['sandfarbene', 'grüne', 'rosa', 'blaue', 'lila', 'orange'];
+let kurveLaeuft = false;
+let kurveInfo = '';
+function kurveSchleifeStarten() {
+  if (kurveLaeuft) return;
+  kurveLaeuft = true;
+  const schritt = () => {
+    const r = raum;
+    if (!r || !r.kurvenBild || !(r.phase === 'spiel' || r.phase === 'countdown') || $('s-raum').hidden) { kurveLaeuft = false; return; }
+    const ids = r.kurveIds || [];
+    const name = id => r.bekannt.get(id)?.name || '?';
+    r.kurvenBild.zeichnen($('spiel-feld'), name, ids.indexOf(r.ich.id));
+    const lage = r.kurvenBild.lage;
+    const info = ids.map((id, i) => `<span class="wer" style="--f:${KURVEN_FARBEN[i]}"><span class="punkt"></span>${esc(name(id))}${id === r.ich.id ? ' (du)' : ''} <small>${lage?.punkte?.[i] ?? 0}</small></span>`).join('')
+      + (lage ? `<span class="wer"><small>Ziel ${lage.ziel}</small></span>` : '');
+    if (info !== kurveInfo) { kurveInfo = info; $('spiel-info').innerHTML = info; }
+    if (lage && r.phase === 'spiel') $('raum-runde').textContent = `Kurvenkampf · Runde ${lage.runde}`;
+    requestAnimationFrame(schritt);
+  };
+  requestAnimationFrame(schritt);
+}
+
+// Kurvenkampf lenken: Taste gedrückt halten
+const kurveTasten = { l: false, r: false };
+function kurveTaste(e, unten) {
+  if (!raum || !raum.istSpiel || raum.einst.auswahl !== 'kurve' || (raum.phase !== 'spiel' && raum.phase !== 'countdown') || $('s-raum').hidden) return;
+  if (e.target?.id === 'chat-eingabe' || e.altKey || e.ctrlKey || e.metaKey) return;
+  const taste = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+  const seite = taste === 'ArrowLeft' || taste === 'a' ? 'l' : taste === 'ArrowRight' || taste === 'd' ? 'r' : null;
+  if (!seite) return;
+  e.preventDefault(); e.stopImmediatePropagation();
+  if (kurveTasten[seite] === unten) return; // gehaltene Taste wiederholt sich, nur Änderungen schicken
+  kurveTasten[seite] = unten;
+  raum.kurveLenken(kurveTasten.l, kurveTasten.r);
+}
+document.addEventListener('keydown', e => kurveTaste(e, true), true);
+document.addEventListener('keyup', e => kurveTaste(e, false), true);
+window.addEventListener('blur', () => { if (kurveTasten.l || kurveTasten.r) { kurveTasten.l = kurveTasten.r = false; raum?.kurveLenken(false, false); } });
+
+// Handy: linke oder rechte Hälfte des Feldes drücken und halten
+{
+  const feld = () => $('spiel-feld');
+  const halten = new Map();
+  const melden = () => { const s = [...halten.values()]; raum?.kurveLenken(s.includes('l'), s.includes('r')); };
+  document.addEventListener('pointerdown', e => {
+    if (e.target !== feld() || raum?.einst.auswahl !== 'kurve') return;
+    const box = feld().getBoundingClientRect();
+    halten.set(e.pointerId, e.clientX - box.left < box.width / 2 ? 'l' : 'r'); melden();
+  });
+  const los = e => { if (halten.delete(e.pointerId)) melden(); };
+  document.addEventListener('pointerup', los); document.addEventListener('pointercancel', los);
+}
+
+// Wischen auf dem Spielfeld (Handy, Snake)
 {
   let start = null;
   const feld = () => $('spiel-feld');
   document.addEventListener('pointerdown', e => { if (e.target === feld()) start = [e.clientX, e.clientY]; });
   document.addEventListener('pointerup', e => {
-    if (!start || !raum) return;
+    if (!start || !raum || raum.einst.auswahl === 'kurve') { start = null; return; }
     const dx = e.clientX - start[0], dy = e.clientY - start[1];
     start = null;
     if (Math.max(Math.abs(dx), Math.abs(dy)) < 18) return;
@@ -893,9 +957,16 @@ setInterval(() => {
   const spielCountdown = raum && raum.istSpiel && raum.phase === 'countdown';
   $('spiel-countdown').hidden = !spielCountdown;
   if (spielCountdown) {
-    const i = raum.snake?.schlangen.findIndex(s => s.id === raum.ich.id) ?? -1;
     const zahl = Math.max(1, Math.ceil((raum.countdownEnde - performance.now()) / 1000));
-    $('spiel-countdown').innerHTML = `<span>${zahl}<small>${i === 0 ? 'Du bist die sandfarbene Schlange links.' : i === 1 ? 'Du bist die grüne Schlange rechts.' : 'Du schaust zu.'}</small></span>`;
+    let text;
+    if (raum.einst.auswahl === 'kurve') {
+      const i = (raum.kurveIds || []).indexOf(raum.ich.id);
+      text = i >= 0 ? `Du bist die <b style="color:${KURVEN_FARBEN[i]}">${FARBNAME[i]}</b> Linie.` : 'Du schaust zu.';
+    } else {
+      const i = raum.snake?.schlangen.findIndex(s => s.id === raum.ich.id) ?? -1;
+      text = i === 0 ? 'Du bist die sandfarbene Schlange links.' : i === 1 ? 'Du bist die grüne Schlange rechts.' : 'Du schaust zu.';
+    }
+    $('spiel-countdown').innerHTML = `<span>${zahl}<small>${text}</small></span>`;
   }
   if (raum && raum.phase === 'frage') {
     const rest = raum.dauer - (performance.now() - raum.start);
@@ -1049,7 +1120,7 @@ function sprintUeberspringen() {
 // Snake lenken: Pfeiltasten oder WASD (nicht, solange man im Chat tippt)
 const LENKTASTE = { ArrowUp: 'o', ArrowDown: 'u', ArrowLeft: 'l', ArrowRight: 'r', w: 'o', s: 'u', a: 'l', d: 'r' };
 document.addEventListener('keydown', e => {
-  if (!raum || !raum.istSpiel || (raum.phase !== 'spiel' && raum.phase !== 'countdown') || $('s-raum').hidden) return;
+  if (!raum || !raum.istSpiel || raum.einst.auswahl !== 'snake' || (raum.phase !== 'spiel' && raum.phase !== 'countdown') || $('s-raum').hidden) return;
   if (e.target?.id === 'chat-eingabe' || e.altKey || e.ctrlKey || e.metaKey) return;
   const r = LENKTASTE[e.key.length === 1 ? e.key.toLowerCase() : e.key];
   if (!r) return;
