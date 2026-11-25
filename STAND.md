@@ -2,7 +2,7 @@
 
 ## Aktuell (25.11.2026)
 
-- **Version:** 0.9.8
+- **Version:** 0.9.9
 - **Live:** https://requiem-04.github.io/claudis-quizbude/ (Repo `requiEM-04/claudis-quizbude`, Branch `main`, GitHub Pages)
 - **Server:** Supabase-Projekt `quizbude` (Ref `jgvjjjiwfjxynbzjaxsg`, Frankfurt), E-Mail-Bestätigung aus, Realtime mit öffentlichen Kanälen.
 - **Inhalt:** Konten (Name + Passwort ab 4 Zeichen), Räume mit 4-Buchstaben-Code (live über Realtime), Flaggenraten (tippen oder 4 zur Auswahl), Flaggen-Sprint (60 s), Bestenliste (Siege, Punkte, Sprint), „Zuletzt gespielt".
@@ -125,7 +125,8 @@
 
 - **Neu in 0.9.8:**
   - Ruhm-Box im Endstand: Klasse „aufstieg“ kollidierte mit dem Aufstiegs-Fenster (Rand und Innenabstand weg), heißt jetzt rp-hoch und wird beim nächsten Spiel zurückgesetzt.
-  - Falsche Antworten in der Chat-Spalte werden immer streng gefiltert, auch bei offenem Chat.
+
+- **0.9.9:** Falsche Antworten richten sich wieder nach der Chat-Einstellung des Gastgebers (Colin will das so, nicht ändern).
 
 ## Als Nächstes (mit Colin besprochen)
 

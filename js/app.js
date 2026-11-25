@@ -1,25 +1,25 @@
-import { VERSION } from './config.js?v=0.9.8';
+import { VERSION } from './config.js?v=0.9.9';
 import {
   online, nameFehler, registrieren, anmelden, abmelden, sitzungHolen, profilLaden, profilSpeichern,
   bestenliste, spieleSeit, alleProfile, sprintEintragen, sprintBestenliste, rangVon, spielerAnzahl, spieleVon, sb,
   adminAnmelden, istAdminName, konfigLaden, adminEinrichten, einrichtungOffen,
-} from './server.js?v=0.9.8';
-import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.9.8';
-import { Raum, codeNeu, STANDARD, TIPPFEHLER_ABZUG } from './raum.js?v=0.9.8';
-import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.9.8';
+} from './server.js?v=0.9.9';
+import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.9.9';
+import { Raum, codeNeu, STANDARD, TIPPFEHLER_ABZUG } from './raum.js?v=0.9.9';
+import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.9.9';
 import {
   KATEGORIEN, KATEGORIE_REIHE, SPRINT_REIHE, kategorieVon, optionSchluessel, richtigeWahl, umrisseDa, umrisseLaden,
   sprintFrage, pruefeFrage, fragenVorladen, kanon,
-} from './kategorien.js?v=0.9.8';
-import { LAENDER } from './laender.js?v=0.9.8';
-import { auswahlfeld } from './auswahlfeld.js?v=0.9.8';
-import { KATEGORIE_SYMBOL } from './symbole.js?v=0.9.8';
-import { konfetti } from './konfetti.js?v=0.9.8';
-import { karteBauen, karteLaden, auswerten } from './weltkarte.js?v=0.9.8';
+} from './kategorien.js?v=0.9.9';
+import { LAENDER } from './laender.js?v=0.9.9';
+import { auswahlfeld } from './auswahlfeld.js?v=0.9.9';
+import { KATEGORIE_SYMBOL } from './symbole.js?v=0.9.9';
+import { konfetti } from './konfetti.js?v=0.9.9';
+import { karteBauen, karteLaden, auswerten } from './weltkarte.js?v=0.9.9';
 import {
   RAENGE, BILDER, ARTEN, JOKER, ruhmInfo, stufeVon, stufeInfo, wappen, effektHtml, rahmenDeko, stilVon, istFrei, freiAb, neuFrei,
   belohnungName, rangVonId, symbol, symbolSvg, SCHWELLEN,
-} from './ruhm.js?v=0.9.8';
+} from './ruhm.js?v=0.9.9';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
