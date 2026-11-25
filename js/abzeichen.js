@@ -46,6 +46,8 @@ export const ERFOLGE = [
   { id: 'r_umrisse', name: 'Umrissprofi', was: 'Umrisse-Rekord', sym: 'umrisse', wert: rekord('umrisse'), stufen: [5, 10, 15, 20, 25] },
   { id: 'r_hauptstaedte', name: 'Hauptstadtkenner', was: 'Hauptstädte-Rekord', sym: 'hauptstaedte', wert: rekord('hauptstaedte'), stufen: [5, 10, 15, 20, 25] },
   { id: 'r_stadtland', name: 'Länderfinder', was: 'Hauptstadt → Land-Rekord', sym: 'stadtland', wert: rekord('stadtland'), stufen: [5, 10, 15, 20, 25] },
+  { id: 'r_nachbarn', name: 'Grenzkenner', was: 'Nachbarn-Rekord', sym: 'nachbarn', wert: rekord('nachbarn'), stufen: [5, 10, 15, 20, 25] },
+  { id: 'r_buchstaben', name: 'Wortakrobat', was: 'Buchstabensalat-Rekord', sym: 'buchstaben', wert: rekord('buchstaben'), stufen: [4, 8, 12, 16, 20] },
   { id: 'r_groesser', name: 'Augenmaß', was: 'Größer-oder-kleiner-Rekord', sym: 'groesser', wert: rekord('groesser'), stufen: [10, 16, 22, 28, 34] },
   { id: 'r_wissen', name: 'Wissensdurst', was: 'Allgemeinwissen-Rekord', sym: 'wissen', wert: rekord('wissen'), stufen: [4, 8, 12, 16, 20] },
   { id: 'r_gemischt', name: 'Allrounder', was: 'Gemischt-Rekord', sym: 'gemischt', wert: rekord('gemischt'), stufen: [6, 12, 18, 24, 30] },

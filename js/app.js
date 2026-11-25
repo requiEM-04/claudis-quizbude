@@ -3,6 +3,7 @@ import {
   online, nameFehler, registrieren, anmelden, abmelden, sitzungHolen, profilLaden, profilSpeichern,
   bestenliste, spieleSeit, alleProfile, sprintEintragen, sprintBestenliste, rangVon, spielerAnzahl, spieleVon, sb,
   adminAnmelden, istAdminName, konfigLaden, adminEinrichten, einrichtungOffen, abzeichenVon, saisonAbschliessen, winterquestStand,
+  freundeListe, freundAnfragen, freundAntworten, freundEntfernen,
 } from './server.js?v=0.11.3';
 import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.11.3';
 import { Raum, codeNeu, STANDARD, TIPPFEHLER_ABZUG } from './raum.js?v=0.11.3';
@@ -20,6 +21,7 @@ import { STUFEN, ERFOLGE, erfolgStand, emblem, wertungName, saisonName, saisonKu
 import {
   RAENGE, BILDER, ARTEN, JOKER, SONDER, sonderVon, sonderFrei, WINTERQUEST, questGeschafft, ruhmInfo, stufeVon, stufeInfo, wappen, effektHtml, rahmenDeko, stilVon, istFrei, freiAb, neuFrei,
   belohnungName, rangVonId, symbol, symbolSvg, SCHWELLEN, flockeSvg, bildVon, BILD_ARTEN } from './ruhm.js?v=0.11.3';
+import { freundeStart, freundeStopp, freundeOrt, istOnline, onlineAbo, einladungAbo, anfrageAbo, einladen, anfrageMelden } from './freunde.js?v=0.11.3';
 import { FIGUREN, FREIE_FIGUREN, KREISE, RINGE, figurSvg, figurAusEmoji, figurVonId, bildFrei, bildFreiAb, bildEintrag } from './figuren.js?v=0.11.3';
 
 const $ = id => document.getElementById(id);
@@ -827,10 +829,12 @@ async function spielerFenster(id, platz) {
         </div>
       </div>
       <div class="sf-knoepfe">
+        ${ich && !ich.gast && id !== ich.id && !freunde.some(f => f.andere === id) ? '<button class="knopf zweit" type="button" data-sf="freund">Als Freund hinzufügen</button>' : ''}
         <button class="knopf zweit" type="button" data-sf="profil">Ganzes Profil ansehen</button>
         <button class="knopf haupt" type="button" data-sf="zu">Schließen</button>
       </div>`;
     innen.dataset.id = id;
+    innen.dataset.name = p.name;
   } catch (e) {
     innen.innerHTML = `<p class="sf-laden">${esc(e.message)}</p><div class="sf-knoepfe"><button class="knopf haupt" type="button" data-sf="zu">Schließen</button></div>`;
   }
@@ -849,6 +853,7 @@ function budeAufbauen() {
     const d = $('spieler-fenster');
     if (e.target === d) { d.close(); return; }
     const b = e.target.closest('[data-sf]'); if (!b) return;
+    if (b.dataset.sf === 'freund') { freundHinzufuegen($('sf-innen').dataset.name).then(ok => { if (ok) b.remove(); }); return; }
     d.close();
     if (b.dataset.sf === 'profil') navigieren('#/profil/' + $('sf-innen').dataset.id);
   });
@@ -1239,6 +1244,135 @@ function aufstiegZeigen(alt, neu, erstesMal) {
   };
 }
 
+// ---------- Freunde: Liste, Anfragen, wer online ist, Einladungen in den Raum ----------
+let freunde = [], freundeGeladen = false, einladungTimer = null;
+const FREUND_TEXT = { gesendet: 'Anfrage geschickt.', angenommen: 'Ihr seid jetzt Freunde.', schon: 'Ihr seid schon Freunde, oder eine Anfrage läuft noch.', unbekannt: 'Den Namen gibt es nicht.', selbst: 'Dich selbst kannst du nicht hinzufügen.', voll: 'Deine Liste ist voll.' };
+const meinRaumCode = () => (location.hash.match(/^#\/raum\/([A-Za-z]{4})$/) || [])[1]?.toUpperCase() || null;
+const mitKonto = () => !!ich && !ich.gast;
+function freundePruefen(h) {
+  const an = mitKonto();
+  $('dock-freunde').hidden = !an;
+  $('raum-freunde').hidden = !an;
+  if (!an) { if (freundeGeladen) { freunde = []; freundeGeladen = false; $('fr-innen').innerHTML = ''; } freundeStopp(); return; }
+  freundeStart(ich);
+  if (!/^#\/raum\//.test(h)) freundeOrt(null);
+  if (!freundeGeladen) freundeLaden();
+}
+async function freundeLaden() {
+  if (!mitKonto() || !online()) return;
+  try { freunde = await freundeListe(); freundeGeladen = true; } catch (e) { console.warn('[Quizbude] Freunde', e); return; }
+  freundeZaehlen();
+  if ($('freunde-fenster').open) freundeZeichnen();
+}
+function freundeZaehlen() {
+  const anfragen = freunde.filter(f => f.status === 'offen' && f.richtung === 'ein').length;
+  const da = freunde.filter(f => f.status === 'ok' && istOnline(f.andere)).length;
+  const z = $('freunde-zahl');
+  z.hidden = !(anfragen || da);
+  z.textContent = anfragen || da;
+  z.classList.toggle('anfrage', !!anfragen);
+  $('dock-freunde').title = anfragen ? `${anfragen === 1 ? 'Eine neue Anfrage' : `${anfragen} neue Anfragen`}` : `${da} ${da === 1 ? 'Freund' : 'Freunde'} online`;
+}
+const ortText = o => !o ? 'offline' : o.raum ? `im Raum ${o.raum}${o.kat ? `, ${o.kat}` : ''}` : 'online';
+function freundeZeichnen() {
+  const hier = meinRaumCode();
+  const ein = freunde.filter(f => f.status === 'offen' && f.richtung === 'ein');
+  const aus = freunde.filter(f => f.status === 'offen' && f.richtung === 'aus');
+  const ok = freunde.filter(f => f.status === 'ok').map(f => ({ ...f, o: istOnline(f.andere) }))
+    .sort((a, b) => (!!b.o - !!a.o) || a.name.localeCompare(b.name, 'de'));
+  const person = (f, unter) => `${avatarMitWappen({ ...f, id: f.andere }, 13)}<span class="fr-name"><b class="${nameKlasse(f).trim()}">${esc(f.name)}</b><small>${unter}</small></span>`;
+  const zeile = f => {
+    const imSelben = hier && f.o?.raum === hier;
+    const knopf = hier && f.o && !imSelben ? `<button class="knopf haupt klein" type="button" data-fr="einladen" data-an="${f.andere}">Einladen</button>`
+      : !hier && f.o?.raum ? `<button class="knopf haupt klein" type="button" data-fr="beitreten" data-code="${esc(f.o.raum)}">Mitspielen</button>` : '';
+    return `<li class="${f.o ? 'da' : ''}">${person(f, `<i class="fr-punkt"></i>${esc(imSelben ? 'hier im Raum' : ortText(f.o))}`)}<span class="fr-knoepfe">${knopf}<button class="fr-weg" type="button" data-fr="weg" data-andere="${f.andere}" data-name="${esc(f.name)}" title="Aus der Liste nehmen" aria-label="${esc(f.name)} entfernen">×</button></span></li>`;
+  };
+  if (!$('fr-form')) $('fr-innen').innerHTML = `
+    <header class="sf-kopf"><div><h2>Freunde</h2><p class="sf-summe" id="fr-summe"></p></div>
+      <button class="sf-zu" type="button" data-fr="zu" aria-label="Schließen"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></header>
+    <form class="fr-form" id="fr-form" autocomplete="off"><input name="wer" maxlength="16" placeholder="Name eintippen" aria-label="Name"><button class="knopf haupt" type="submit">Anfrage schicken</button></form>
+    <div id="fr-listen"></div>`;
+  $('fr-summe').innerHTML = `<b>${ok.filter(f => f.o).length}</b> von <b>${ok.length}</b> online${hier ? ` · du bist in Raum <b>${esc(hier)}</b>` : ''}`;
+  $('fr-listen').innerHTML = `
+    ${ein.length ? `<h3 class="fr-titel">Anfragen an dich</h3><ul class="fr-liste">${ein.map(f => `<li class="neu">${person(f, 'möchte mit dir befreundet sein')}<span class="fr-knoepfe"><button class="knopf haupt klein" type="button" data-fr="ja" data-id="${f.id}" data-name="${esc(f.name)}">Annehmen</button><button class="knopf zweit klein" type="button" data-fr="nein" data-id="${f.id}">Ablehnen</button></span></li>`).join('')}</ul>` : ''}
+    <h3 class="fr-titel">Deine Freunde</h3>
+    ${ok.length ? `<ul class="fr-liste">${ok.map(zeile).join('')}</ul>` : `<p class="fr-leer">Noch niemand. Schick oben eine Anfrage oder klick in der Bestenliste auf jemanden.</p>`}
+    ${aus.length ? `<h3 class="fr-titel">Gesendet</h3><ul class="fr-liste">${aus.map(f => `<li>${person(f, 'wartet auf Antwort')}<span class="fr-knoepfe"><button class="knopf zweit klein" type="button" data-fr="weg" data-andere="${f.andere}" data-name="${esc(f.name)}">Zurückziehen</button></span></li>`).join('')}</ul>` : ''}`;
+}
+async function freundHinzufuegen(name) {
+  try {
+    const r = await freundAnfragen(name);
+    toast(FREUND_TEXT[r] || r);
+    if (r === 'gesendet' || r === 'angenommen') anfrageMelden(name);
+    await freundeLaden();
+    return r === 'gesendet' || r === 'angenommen' || r === 'schon';
+  } catch (e) { toast(e.message); return false; }
+}
+function freundeOeffnen() {
+  freundeZeichnen();
+  if (!$('freunde-fenster').open) $('freunde-fenster').showModal();
+  freundeLaden();
+}
+function einladungZeigen(p) {
+  if (!freunde.some(f => f.status === 'ok' && f.andere === p.von) || meinRaumCode() === p.code) return;
+  const el = $('einladung');
+  el.innerHTML = `<span class="ei-text"><span><b>${esc(p.name)}</b> lädt dich in Raum <b>${esc(p.code)}</b> ein</span>${p.kat ? `<small>${esc(p.kat)}</small>` : ''}</span>
+    <button class="knopf haupt klein" type="button" data-ei="ja">Beitreten</button><button class="ei-zu" type="button" data-ei="nein" aria-label="Einladung schließen">×</button><i class="ei-zeit"></i>`;
+  el.hidden = false;
+  el.classList.remove('an'); void el.offsetWidth; el.classList.add('an');
+  clearTimeout(einladungTimer);
+  einladungTimer = setTimeout(() => { el.hidden = true; }, 15000);
+  el.onclick = e => {
+    const b = e.target.closest('[data-ei]'); if (!b) return;
+    el.hidden = true; clearTimeout(einladungTimer);
+    if (b.dataset.ei === 'ja') navigieren('#/raum/' + p.code);
+  };
+}
+function freundeAufbauen() {
+  $('dock-freunde').onclick = freundeOeffnen;
+  $('raum-freunde').onclick = freundeOeffnen;
+  const d = $('freunde-fenster');
+  d.addEventListener('click', async e => {
+    if (e.target === d) { d.close(); return; }
+    const b = e.target.closest('[data-fr]'); if (!b) return;
+    const was = b.dataset.fr;
+    try {
+      if (was === 'zu') d.close();
+      else if (was === 'ja' || was === 'nein') {
+        b.disabled = true;
+        await freundAntworten(Number(b.dataset.id), was === 'ja');
+        if (was === 'ja') { toast('Ihr seid jetzt Freunde.'); anfrageMelden(b.dataset.name); }
+        await freundeLaden();
+      } else if (was === 'einladen') {
+        await einladen(b.dataset.an, meinRaumCode(), raum ? KATEGORIEN[raum.einst?.kategorie]?.name : null);
+        b.disabled = true; b.textContent = 'Eingeladen';
+      } else if (was === 'beitreten') { d.close(); navigieren('#/raum/' + b.dataset.code); }
+      else if (was === 'weg') {
+        if (b.dataset.sicher !== '1') {
+          const vorher = b.textContent;
+          b.dataset.sicher = '1'; b.textContent = 'Sicher?'; b.classList.add('sicher');
+          setTimeout(() => { if (b.isConnected && b.dataset.sicher === '1') { b.dataset.sicher = ''; b.textContent = vorher; b.classList.remove('sicher'); } }, 3000);
+          return;
+        }
+        await freundEntfernen(b.dataset.andere);
+        anfrageMelden(b.dataset.name);
+        await freundeLaden();
+      }
+    } catch (err) { b.disabled = false; toast(err.message); }
+  });
+  d.addEventListener('submit', async e => {
+    e.preventDefault();
+    const feld = e.target.elements.namedItem('wer'), name = feld.value.trim();
+    if (!name) return;
+    if (await freundHinzufuegen(name)) feld.value = '';
+  });
+  onlineAbo(() => { if (!mitKonto()) return; freundeZaehlen(); if (d.open) freundeZeichnen(); });
+  anfrageAbo(p => freundeLaden().then(() => {
+    if (freunde.some(f => f.status === 'offen' && f.richtung === 'ein' && f.andere === p.von)) toast(`${p.name} möchte mit dir befreundet sein.`);
+  }));
+  einladungAbo(p => (freundeGeladen ? Promise.resolve() : freundeLaden()).then(() => einladungZeigen(p)));
+}
+
 // ---------- Profil ----------
 const profilWahl = { avatar: '', farbe: '', figur: '', kreis: '', ring: '' };
 
@@ -1626,6 +1760,7 @@ function raumZeichnen() {
   if (!raum) return;
   const r = raum;
   $('raum-code').textContent = r.code;
+  freundeOrt(r.code, KATEGORIEN[r.einst?.kategorie]?.name || null);
   const n = r.fragen.length;
   $('raum-runde').textContent = r.phase === 'frage' || r.phase === 'aufloesung' ? `Frage ${r.idx + 1} von ${n}`
     : r.phase === 'ende' ? 'Fertig' : r.phase === 'countdown' ? 'Gleich geht\'s los' : 'Warteraum';
@@ -2119,7 +2254,7 @@ function ruhmAufschluesseln(box, vorher, posten, gesamt) {
 }
 
 // Region für Sprints in Flaggen, Umrisse, Hauptstädte (Übung)
-const REGION_KATEGORIEN = ['flaggen', 'karte', 'umrisse', 'hauptstaedte', 'stadtland'];
+const REGION_KATEGORIEN = ['flaggen', 'karte', 'umrisse', 'hauptstaedte', 'stadtland', 'nachbarn', 'buchstaben'];
 let sprintRichtung = (() => { try { return localStorage.getItem('quizbude.sprintRichtung') === 'stadt' ? 'stadt' : 'land'; } catch { return 'land'; } })();
 const sprintKat = k => (k === 'hauptstaedte' && sprintRichtung === 'stadt' ? 'stadtland' : k);
 const REGIONEN_SPRINT = { alle: 'Alle', europa: 'Europa', afrika: 'Afrika', asien: 'Asien', amerika: 'Amerika', ozeanien: 'Ozeanien' };
@@ -2253,6 +2388,7 @@ function route(erzwingen = false) {
   if (sprint && !/^#\/sprint\/[a-z]+$/.test(h)) { sprint.laeuft = false; sprint = null; }
   if (h !== '#/' && lobbyAus) { lobbyAus(); lobbyAus = null; }
   if (!$('s-lernen').hidden && h !== '#/lernen' && $('lernen-detail').open) $('lernen-detail').close();
+  freundePruefen(h);
   chipZeichnen();
   if (h === '#/lernen') return lernenZeigen();
   if (h === '#/sprint') return sprintWahlZeigen();
@@ -2314,6 +2450,7 @@ async function los() {
   sprintAufbauen();
   profilAufbauen();
   lernenAufbauen();
+  freundeAufbauen();
   zustandWiederherstellen();
   // Direktlink (z. B. Einladung in einen Raum): die Bude kommt darunter, damit „Zurück" dorthin führt
   const start = location.hash || '#/';

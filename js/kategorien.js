@@ -259,8 +259,7 @@ const groesseres = f => (LAND[f.c].flaeche >= LAND[f.d].flaeche ? f.c : f.d);
 export const KATEGORIE_REIHE = ['flaggen', 'karte', 'umrisse', 'hauptstaedte', 'nachbarn', 'buchstaben', 'groesser', 'wissen', 'gemischt'];
 export const ARTEN = ['flaggen', 'umrisse', 'hauptstaedte', 'stadtland', 'nachbarn', 'buchstaben', 'groesser', 'wissen'];
 // Kategorien mit Sprint-Rekord und eigener Sprint-Bestenliste (Hauptstädte gibt es in zwei Richtungen)
-// Nachbarn und Buchstabensalat kommen in den Sprint, sobald der Server sie kennt (Migration 010)
-export const SPRINT_REIHE = ['flaggen', 'karte', 'umrisse', 'hauptstaedte', 'stadtland', 'groesser', 'wissen', 'gemischt'];
+export const SPRINT_REIHE = ['flaggen', 'karte', 'umrisse', 'hauptstaedte', 'stadtland', 'nachbarn', 'buchstaben', 'groesser', 'wissen', 'gemischt'];
 
 // Eine einzelne Frage für den Sprint. Länder-Kategorien fangen leicht an und werden mit jedem Treffer schwerer.
 export function sprintFrage(kategorie, stand, benutzt, region = null) {
