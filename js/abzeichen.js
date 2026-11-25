@@ -25,6 +25,8 @@ const SYM = {
   umrisse: '<path d="M7 4c3 0 4 2 6 2s3-1 5 1-1 4 0 6 2 5-1 6-4-1-6 0-5 3-7 1 1-4-1-6-3-3-1-6 2-4 4-4Z"/>',
   hauptstaedte: '<path d="M3 21h18"/><path d="M5 21V9l4-3v15"/><path d="M9 21V4l6 3v14"/><path d="M15 21V11l4 2v8"/>',
   stadtland: '<path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.5"/>',
+  nachbarn: '<path d="M3 6.5 8 4l4 2.5 4-2.5 5 2.5v13L16 22l-4-2.5L8 22l-5-2.5Z"/><path d="M12 6.5v13"/>',
+  buchstaben: '<rect x="3" y="6" width="8" height="8" rx="1.8"/><rect x="13" y="10" width="8" height="8" rx="1.8"/>',
   groesser: '<rect x="4" y="12" width="6" height="8" rx="1.2"/><rect x="14" y="4" width="6" height="16" rx="1.2"/>',
   wissen: '<circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 0 1 4.8 1c0 1.7-2.4 2.2-2.4 3.7"/><path d="M12 17.2h.01"/>',
   gemischt: '<rect x="4" y="4" width="16" height="16" rx="3.5"/><path d="M8.5 8.5h.01M15.5 8.5h.01M12 12h.01M8.5 15.5h.01M15.5 15.5h.01"/>',
@@ -121,7 +123,7 @@ export function emblem(e, stufe, groesse = 44) {
 }
 
 // Saison-Medaillen: Name der Wertung
-const KAT_NAME = { flaggen: 'Flaggen', karte: 'Weltkarte', umrisse: 'Umrisse', hauptstaedte: 'Hauptstädte', stadtland: 'Hauptstadt → Land', groesser: 'Größer oder kleiner', wissen: 'Allgemeinwissen', gemischt: 'Gemischt', emoji: 'Emoji' };
+const KAT_NAME = { flaggen: 'Flaggen', karte: 'Weltkarte', umrisse: 'Umrisse', hauptstaedte: 'Hauptstädte', stadtland: 'Hauptstadt → Land', nachbarn: 'Nachbarn', buchstaben: 'Buchstabensalat', groesser: 'Größer oder kleiner', wissen: 'Allgemeinwissen', gemischt: 'Gemischt', emoji: 'Emoji' };
 export function wertungName(w) {
   if (w === 'punkte') return 'Punkte';
   if (w === 'siege') return 'Siege';

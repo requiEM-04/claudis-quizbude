@@ -66,7 +66,7 @@ async def main():
         print('Lobby:', (await B.inner_text('#raum-liste')).replace('\n', ' | '))
         code = (await A.inner_text('#raum-code')).strip()
         await B.goto(BASIS + '?sitzung=2#/raum/' + code); await B.wait_for_selector('#p-warten:not([hidden])')
-        for kat in ['gemischt', 'flaggen', 'umrisse', 'hauptstaedte', 'groesser', 'wissen']:
+        for kat in ['gemischt', 'flaggen', 'umrisse', 'hauptstaedte', 'nachbarn', 'buchstaben', 'groesser', 'wissen']:
             await waehle(A, '#einst-kategorie', kat); await A.wait_for_timeout(300)
             await waehle(A, '#einst [data-e=runden]', '10' if kat == 'gemischt' else '5')
             await waehle(A, '#einst [data-e=zeit]', '10'); await A.wait_for_timeout(300)

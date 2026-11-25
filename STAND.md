@@ -2,7 +2,7 @@
 
 ## Aktuell (25.11.2026)
 
-- **Version:** 0.11.1
+- **Version:** 0.11.2
 - **Live:** https://requiem-04.github.io/claudis-quizbude/ (Repo `requiEM-04/claudis-quizbude`, Branch `main`, GitHub Pages)
 - **Server:** Supabase-Projekt `quizbude` (Ref `jgvjjjiwfjxynbzjaxsg`, Frankfurt), E-Mail-Bestätigung aus, Realtime mit öffentlichen Kanälen.
 - **Inhalt:** Konten (Name + Passwort ab 4 Zeichen), Räume mit 4-Buchstaben-Code (live über Realtime), Flaggenraten (tippen oder 4 zur Auswahl), Flaggen-Sprint (60 s), Bestenliste (Siege, Punkte, Sprint), „Zuletzt gespielt".
@@ -163,6 +163,11 @@
 - Echte Konten am 25.11.: 🐙, 🐸, 🦉 werden automatisch Krake, Frosch, Eule; 🚧 bleibt Emoji, bis gewählt wird.
 
 - **Neu in 0.11.1:** Abzeichen-Stufen Bronze, Silber, Gold, Platin, Diamant (statt gewöhnlich bis mythisch, kein Grün mehr). Emblem als Metall-Medaillon: Bronze mit Band, Silber mit Lorbeer, Gold mit Kranz, Krone und Funkeln, Platin mit drehendem Strahlenkranz, Diamant mit Regenbogen-Strahlen und Edelsteinen. Glanzstreifen über jedem erreichten Abzeichen, schneller je höher die Stufe.
+
+- **Neu in 0.11.2:**
+  - Neue Kategorien **Nachbarn** (Land gegeben, ein Nachbarland nennen, jedes zählt; Auswahl: das eine angrenzende Land finden; Daten `js/grenzen.js` aus world-countries über `werkzeuge/grenzen_bauen.mjs`, 158 Länder mit Landgrenze) und **Buchstabensalat** (Ländername mit gemischten Buchstaben als Kacheln, der Gastgeber mischt, Auswahl mit ähnlich langen Namen). Beide in Räumen und bei „Gemischt“. Im Sprint erst nach Migration 010 (Server-Liste der Kategorien).
+  - Abzeichen größer: Spielerkarte 52 px, Übersicht 58 px, Reiter 68 px.
+  - Lange Lösungen (z. B. viele Nachbarländer) werden kleiner gesetzt.
 
 ## Als Nächstes (mit Colin besprochen)
 - Reihenfolge jetzt: neue Profilbilder (live in 0.11.0) → Freunde und Einladungen → neue Quizze Nachbarn und Buchstabensalat → vorgemerkt: Seitenverhältnisse (von Flaggen) raten. Kein Tagesrätsel nach Loldle-Art.

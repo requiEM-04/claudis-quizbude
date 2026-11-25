@@ -1,26 +1,26 @@
-import { VERSION } from './config.js?v=0.11.1';
+import { VERSION } from './config.js?v=0.11.2';
 import {
   online, nameFehler, registrieren, anmelden, abmelden, sitzungHolen, profilLaden, profilSpeichern,
   bestenliste, spieleSeit, alleProfile, sprintEintragen, sprintBestenliste, rangVon, spielerAnzahl, spieleVon, sb,
   adminAnmelden, istAdminName, konfigLaden, adminEinrichten, einrichtungOffen, abzeichenVon, saisonAbschliessen, winterquestStand,
-} from './server.js?v=0.11.1';
-import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.11.1';
-import { Raum, codeNeu, STANDARD, TIPPFEHLER_ABZUG } from './raum.js?v=0.11.1';
-import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.11.1';
+} from './server.js?v=0.11.2';
+import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.11.2';
+import { Raum, codeNeu, STANDARD, TIPPFEHLER_ABZUG } from './raum.js?v=0.11.2';
+import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.11.2';
 import {
   KATEGORIEN, KATEGORIE_REIHE, SPRINT_REIHE, kategorieVon, optionSchluessel, richtigeWahl, umrisseDa, umrisseLaden,
   sprintFrage, pruefeFrage, fragenVorladen, kanon,
-} from './kategorien.js?v=0.11.1';
-import { LAENDER } from './laender.js?v=0.11.1';
-import { auswahlfeld } from './auswahlfeld.js?v=0.11.1';
-import { KATEGORIE_SYMBOL } from './symbole.js?v=0.11.1';
-import { konfetti } from './konfetti.js?v=0.11.1';
-import { karteBauen, karteLaden, auswerten } from './weltkarte.js?v=0.11.1';
-import { STUFEN, ERFOLGE, erfolgStand, emblem, wertungName, saisonName, saisonKurz, vitrineLesen } from './abzeichen.js?v=0.11.1';
+} from './kategorien.js?v=0.11.2';
+import { LAENDER } from './laender.js?v=0.11.2';
+import { auswahlfeld } from './auswahlfeld.js?v=0.11.2';
+import { KATEGORIE_SYMBOL } from './symbole.js?v=0.11.2';
+import { konfetti } from './konfetti.js?v=0.11.2';
+import { karteBauen, karteLaden, auswerten } from './weltkarte.js?v=0.11.2';
+import { STUFEN, ERFOLGE, erfolgStand, emblem, wertungName, saisonName, saisonKurz, vitrineLesen } from './abzeichen.js?v=0.11.2';
 import {
   RAENGE, BILDER, ARTEN, JOKER, SONDER, sonderVon, sonderFrei, WINTERQUEST, questGeschafft, ruhmInfo, stufeVon, stufeInfo, wappen, effektHtml, rahmenDeko, stilVon, istFrei, freiAb, neuFrei,
-  belohnungName, rangVonId, symbol, symbolSvg, SCHWELLEN, flockeSvg, bildVon, BILD_ARTEN } from './ruhm.js?v=0.11.1';
-import { FIGUREN, FREIE_FIGUREN, KREISE, RINGE, figurSvg, figurAusEmoji, figurVonId, bildFrei, bildFreiAb, bildEintrag } from './figuren.js?v=0.11.1';
+  belohnungName, rangVonId, symbol, symbolSvg, SCHWELLEN, flockeSvg, bildVon, BILD_ARTEN } from './ruhm.js?v=0.11.2';
+import { FIGUREN, FREIE_FIGUREN, KREISE, RINGE, figurSvg, figurAusEmoji, figurVonId, bildFrei, bildFreiAb, bildEintrag } from './figuren.js?v=0.11.2';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -166,7 +166,7 @@ async function winterLaden() {
     if (neu.length) toast(`Tagesaufgabe geschafft: +${neu.reduce((x, a) => x + a.flocken, 0)} Schneeflocken`);
   }
 }
-const KAT_KURZ = { flaggen: 'Flaggen', karte: 'Weltkarte', umrisse: 'Umrisse', hauptstaedte: 'Hauptstädte', stadtland: 'Hauptstadt → Land', groesser: 'Größer oder kleiner', wissen: 'Allgemeinwissen', gemischt: 'Gemischt' };
+const KAT_KURZ = { flaggen: 'Flaggen', karte: 'Weltkarte', umrisse: 'Umrisse', hauptstaedte: 'Hauptstädte', stadtland: 'Hauptstadt → Land', nachbarn: 'Nachbarn', buchstaben: 'Buchstabensalat', groesser: 'Größer oder kleiner', wissen: 'Allgemeinwissen', gemischt: 'Gemischt' };
 function aufgabeText(a) {
   const z = Number(a.ziel).toLocaleString('de-DE');
   switch (a.typ) {
@@ -892,7 +892,7 @@ function sprintRekord(k) {
 }
 
 function kachelnHtml(mitRekord) {
-  return KATEGORIE_REIHE.map(k => {
+  return KATEGORIE_REIHE.filter(k => !mitRekord || SPRINT_REIHE.includes(k)).map(k => {
     const kk = mitRekord ? sprintKat(k) : k; // im Sprint: Hauptstädte in der gewählten Richtung
     const rekord = mitRekord ? sprintRekord(kk) : 0;
     return `
@@ -967,6 +967,8 @@ function kachelBild(k) {
     case 'karte': return '<img class="kb-karte" src="bilder/weltkarte-vorschau.svg" alt="">';
     case 'umrisse': return '<img class="kb-umriss" src="bilder/umriss-vorschau.svg" alt="">';
     case 'hauptstaedte': return '<span class="kb-text">Wien?</span>';
+    case 'nachbarn': return `<span class="kb-nachbarn">${f('DE')}<i></i>${f('FR')}</span>`;
+    case 'buchstaben': return '<span class="kb-salat"><b>N</b><b>R</b><b>O</b><b>W</b><b>E</b><b>E</b><b>G</b><b>N</b></span>';
     case 'groesser': return `<span class="kb-duell">${f('CA')}<b>oder</b>${f('BR')}</span>`;
     case 'wissen': return '<span class="kb-text kb-gross">?</span>';
     case 'emoji': return '<span class="kb-emoji">🦁👑</span>';
@@ -1081,7 +1083,7 @@ let auswahlStil = null;  // angetippt, aber noch nicht angelegt
 
 // Ein Platz der Vitrine auf der Karte: Abzeichen oder Saison-Medaille
 function vitrineTeil(v) {
-  if (v.art === 'e') return `<span class="hk-abz st-${STUFEN[v.stufe - 1].id}" title="${esc(v.e.name)}, ${STUFEN[v.stufe - 1].name}">${emblem(v.e, v.stufe, 30)}<small>${esc(v.e.name)}</small></span>`;
+  if (v.art === 'e') return `<span class="hk-abz st-${STUFEN[v.stufe - 1].id}" title="${esc(v.e.name)}, ${STUFEN[v.stufe - 1].name}">${emblem(v.e, v.stufe, 52)}<small>${esc(v.e.name)}</small></span>`;
   return `<span class="hk-abz hk-medaille" title="Platz ${v.platz}, ${esc(wertungName(v.wertung))}, Saison ${esc(saisonName(v.saison))}">${abzeichenSvg(v.platz, saisonKurz(v.saison))}<small>${esc(wertungName(v.wertung))}</small></span>`;
 }
 function hochkarteHtml(p, st, medaillen = null) {
@@ -1339,7 +1341,7 @@ async function abzeichenLaden(p, eigenes, abruf) {
   // kurze Übersicht für alle Profile: erreichte Abzeichen und Medaillen
   const erreicht = ERFOLGE.map(e => ({ e, st: erfolgStand(e, p, { medaillen: med.length }) })).filter(x => x.st.stufe).sort((a, b) => b.st.stufe - a.st.stufe);
   $('profil-abzeichen').innerHTML = med.map(m => `<span class="abz-mini" title="Platz ${m.platz}, ${esc(wertungName(m.wertung))}, Saison ${esc(saisonName(m.saison))}">${abzeichenSvg(m.platz, saisonKurz(m.saison))}</span>`).join('')
-    + erreicht.map(x => `<span class="abz-mini" title="${esc(x.e.name)}, ${STUFEN[x.st.stufe - 1].name}">${emblem(x.e, x.st.stufe, 34)}</span>`).join('')
+    + erreicht.map(x => `<span class="abz-mini" title="${esc(x.e.name)}, ${STUFEN[x.st.stufe - 1].name}">${emblem(x.e, x.st.stufe, 58)}</span>`).join('')
     || `<p class="leer">${eigenes ? 'Noch keine Abzeichen. Spiel ein paar Runden, die ersten kommen schnell.' : 'Noch keine Abzeichen.'}</p>`;
   if (eigenes) abzeichenZeichnen();
 }
@@ -1351,7 +1353,7 @@ function abzeichenZeichnen() {
   const liste = vitrineLesen(ich, extra, meineMedaillen);
   $('abz-vitrine').innerHTML = [0, 1, 2].map(i => {
     const v = liste[i];
-    return v ? `<button class="abz-platz voll" data-v="${esc(v.id)}" title="Von der Karte nehmen">${v.art === 'e' ? emblem(v.e, v.stufe, 46) : abzeichenSvg(v.platz, saisonKurz(v.saison))}<span>${esc(v.art === 'e' ? v.e.name : wertungName(v.wertung))}</span><small>runternehmen</small></button>`
+    return v ? `<button class="abz-platz voll" data-v="${esc(v.id)}" title="Von der Karte nehmen">${v.art === 'e' ? emblem(v.e, v.stufe, 66) : abzeichenSvg(v.platz, saisonKurz(v.saison))}<span>${esc(v.art === 'e' ? v.e.name : wertungName(v.wertung))}</span><small>runternehmen</small></button>`
       : `<div class="abz-platz"><span class="abz-leer">${i + 1}</span><small>frei</small></div>`;
   }).join('');
   $('abz-medaillen').innerHTML = meineMedaillen.length ? meineMedaillen.map(m => {
@@ -1365,7 +1367,7 @@ function abzeichenZeichnen() {
       ? `<span class="abz-balken" style="--f:${naechste.farbe};--anteil:${st.anteil.toFixed(3)}"><i></i></span><small>${zahl(st.wert)} / ${zahl(st.naechste)} ${esc(e.was)} bis ${naechste.name}</small>`
       : `<small class="abz-max">Höchste Stufe erreicht, ${zahl(st.wert)} ${esc(e.was)}</small>`;
     return `<button class="abz-kachel${st.stufe ? '' : ' gesperrt'}${an ? ' an' : ''}" data-v="${id}" ${st.stufe ? '' : 'aria-disabled="true"'}>
-      ${emblem(e, st.stufe, 54)}
+      ${emblem(e, st.stufe, 68)}
       <span class="abz-text"><b>${esc(e.name)}</b><span class="abz-stufe" style="--f:${stufe?.farbe || 'var(--text-3)'}">${stufe ? stufe.name : 'Noch nicht erreicht'}${an ? ' · auf der Karte' : ''}</span>${fortschritt}</span>
     </button>`;
   }).join('');
@@ -1712,6 +1714,7 @@ function raumZeichnen() {
       fl.style.transition = 'none'; fl.style.width = '0%';
       eingabe.disabled = true;
       $('aufgeloest').textContent = kat.loesung(f);
+      $('aufgeloest').classList.toggle('lang', $('aufgeloest').textContent.length > 40);
       $('frage-info').innerHTML = (kat.nachher ? kat.nachher(f) : '') + esc(kat.info ? kat.info(f) : '');
       if (istKarte) {
         const pins = [...r.geloest].filter(([, g]) => g.lon != null).map(([id, g]) => {
@@ -1913,7 +1916,7 @@ const SPRINT_FALSCH = 5000;  // falsch geklickt (nur bei Auswahl-Fragen)
 const SPRINT_COUNTDOWN = 2;  // Sekunden vor der ersten Frage
 
 async function sprintStart(kategorie = 'flaggen') {
-  if (!KATEGORIEN[kategorie]) kategorie = 'flaggen';
+  if (!KATEGORIEN[kategorie] || !SPRINT_REIHE.includes(kategorie)) kategorie = 'flaggen';
   zeige('sprint');
   const region = REGION_KATEGORIEN.includes(kategorie) && sprintRegion !== 'alle' ? sprintRegion : null;
   const s = { kategorie, region, punkte: 0, ende: 0, benutzt: new Set(), verpasst: [], richtige: [], serie: 0, besteSerie: 0, laeuft: false, vorrat: [], frage: null };

@@ -1,9 +1,10 @@
-import { LAENDER } from './laender.js?v=0.11.1';
-import { WISSEN, WISSEN_THEMEN } from './wissen.js?v=0.11.1';
-import { EMOJI, EMOJI_THEMEN } from './emoji.js?v=0.11.1';
-import { kanon } from './kanon.js?v=0.11.1';
-import { LAND, AUSWAHL, pruefe, mischen, flaggeUrl, abgleichen } from './abgleich.js?v=0.11.1';
-import { karteLaden } from './weltkarte.js?v=0.11.1';
+import { LAENDER } from './laender.js?v=0.11.2';
+import { WISSEN, WISSEN_THEMEN } from './wissen.js?v=0.11.2';
+import { EMOJI, EMOJI_THEMEN } from './emoji.js?v=0.11.2';
+import { kanon } from './kanon.js?v=0.11.2';
+import { LAND, AUSWAHL, pruefe, mischen, flaggeUrl, abgleichen } from './abgleich.js?v=0.11.2';
+import { karteLaden } from './weltkarte.js?v=0.11.2';
+import { GRENZEN } from './grenzen.js?v=0.11.2';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const zahl = n => n.toLocaleString('de-DE');
@@ -13,7 +14,7 @@ let UMRISSE = null;
 let umrisseLaeuft = null;
 export function umrisseLaden() {
   if (UMRISSE) return Promise.resolve(UMRISSE);
-  umrisseLaeuft ||= import('./umrisse.js?v=0.11.1').then(m => { UMRISSE = m.UMRISSE; return UMRISSE; });
+  umrisseLaeuft ||= import('./umrisse.js?v=0.11.2').then(m => { UMRISSE = m.UMRISSE; return UMRISSE; });
   return umrisseLaeuft;
 }
 export const umrisseDa = () => !!UMRISSE;
@@ -26,6 +27,31 @@ function nachbarn(l, passt = () => true, anzahl = 3) {
   const nah = mischen(LAENDER.filter(x => x.code !== l.code && x.region === l.region && passt(x)));
   const fern = mischen(LAENDER.filter(x => x.code !== l.code && x.region !== l.region && passt(x)));
   return nah.concat(fern).slice(0, anzahl);
+}
+
+// Nachbarn: jedes Nachbarland zählt; ein anderes echtes Land ist sofort falsch (kein „knapp“)
+function nachbarPruefen(text, f) {
+  const nb = GRENZEN[f.c] || [];
+  return abgleichen(text, nb.flatMap(n => LAND[n].antworten), k => LAENDER.some(x => !nb.includes(x.code) && x.antworten.includes(k)));
+}
+const nachbarListe = c => (GRENZEN[c] || []).map(n => LAND[n].name).sort((a, b) => a.localeCompare(b, 'de')).join(', ');
+
+// Buchstabensalat: Buchstaben jedes Worts mischen, Leerzeichen und Bindestriche bleiben stehen, nie die richtige Reihenfolge
+function salat(name) {
+  return name.split(/(\s+|-)/).map(teil => {
+    if (/^(\s+|-)$/.test(teil) || teil.length < 2) return teil.toUpperCase();
+    const b = [...teil.toUpperCase()];
+    if (new Set(b).size === 1) return b.join('');
+    for (let v = 0; v < 12; v++) { const m = mischen(b).join(''); if (m !== b.join('')) return m; }
+    return b.reverse().join('');
+  }).join('');
+}
+const buchstabenZahl = n => n.replace(/[^\p{L}]/gu, '').length;
+// drei falsche Länder mit ähnlich langem Namen (sonst verrät die Länge die Antwort)
+function aehnlichLang(l) {
+  const n = buchstabenZahl(l.name);
+  const nah = mischen(LAENDER.filter(x => x.code !== l.code && Math.abs(buchstabenZahl(x.name) - n) <= 1 && (!l.bekannt || x.bekannt)));
+  return nah.concat(nachbarn(l).filter(x => !nah.includes(x))).slice(0, 3);
 }
 
 function stadtPruefen(text, l) {
@@ -118,6 +144,45 @@ export const KATEGORIEN = {
     kurz: f => `<img src="${flaggeUrl(f.c)}" alt=""><span><b>${esc(LAND[f.c].stadt)}</b>: ${esc(LAND[f.c].name)}</span>`,
   },
 
+  // Nachbarn: Land ist gegeben, ein Nachbarland nennen (tippen: jedes zählt) oder das eine richtige auswählen
+  nachbarn: {
+    name: 'Nachbarn', text: 'Welche Länder grenzen aneinander?', tippen: true, zeit: 15, land: true,
+    auswahlen: LAENDER_AUSWAHL, standard: 'bekannt',
+    pool: a => laenderPool(a, l => GRENZEN[l.code]),
+    frage: (l, mitOptionen) => {
+      if (!mitOptionen) return { k: 'nachbarn', c: l.code };
+      const nb = GRENZEN[l.code], richtig = nb[Math.floor(Math.random() * nb.length)];
+      const keinNachbar = x => x.code !== l.code && !nb.includes(x.code);
+      const falsch = mischen(LAENDER.filter(x => keinNachbar(x) && x.region === l.region && (!l.bekannt || x.bekannt)))
+        .concat(mischen(LAENDER.filter(x => keinNachbar(x) && x.region === l.region))).concat(mischen(LAENDER.filter(keinNachbar)));
+      const drei = [...new Set(falsch.map(x => x.code))].slice(0, 3);
+      return { k: 'nachbarn', c: l.code, o: mischen([richtig, ...drei]) };
+    },
+    hinweis: f => f.o ? 'Welches Land grenzt daran?' : 'Nenne ein Nachbarland. Jedes zählt.',
+    bild: f => `<div class="bild-land bild-nachbarn"><img src="${flaggeUrl(f.c)}" alt=""><span>${esc(LAND[f.c].name)}</span><small>${GRENZEN[f.c].length === 1 ? 'hat 1 Nachbarland' : `hat ${GRENZEN[f.c].length} Nachbarländer`}</small></div>`,
+    option: (key) => esc(LAND[key].name),
+    pruefe: (text, f) => nachbarPruefen(text, f),
+    richtig: (key, f) => GRENZEN[f.c].includes(key),
+    loesung: f => nachbarListe(f.c),
+    kurz: f => `<img src="${flaggeUrl(f.c)}" alt=""><span>${esc(LAND[f.c].name)}: <b>${esc(nachbarListe(f.c))}</b></span>`,
+  },
+
+  // Buchstabensalat: Ländername mit gemischten Buchstaben; der Gastgeber mischt, alle sehen denselben Salat
+  buchstaben: {
+    name: 'Buchstabensalat', text: 'Ländernamen aus gemischten Buchstaben', tippen: true, zeit: 20, land: true,
+    auswahlen: LAENDER_AUSWAHL, standard: 'bekannt',
+    pool: a => laenderPool(a, l => buchstabenZahl(l.name) >= 4 && buchstabenZahl(l.name) <= 20),
+    frage: (l, mitOptionen) => ({ k: 'buchstaben', c: l.code, s: salat(l.name), ...(mitOptionen && { o: mischen([l.code, ...aehnlichLang(l).map(x => x.code)]) }) }),
+    hinweis: () => 'Welches Land steckt in den Buchstaben?',
+    bild: f => `<div class="bild-salat" aria-label="Gemischte Buchstaben: ${esc(f.s)}">${f.s.split(/(\s+)/).filter(w => w.trim()).map((w, wi, alle) => `<span class="salat-wort">${[...w].map((ch, i) => `<b style="--i:${alle.slice(0, wi).reduce((n, x) => n + x.length, 0) + i}">${esc(ch)}</b>`).join('')}</span>`).join('')}</div>`,
+    option: (key) => esc(LAND[key].name),
+    pruefe: (text, f) => pruefe(text, f.c),
+    richtig: (key, f) => key === f.c,
+    loesung: f => LAND[f.c].name,
+    nachher: f => `<img class="info-flagge" src="${flaggeUrl(f.c)}" alt="">`,
+    kurz: f => `<img src="${flaggeUrl(f.c)}" alt=""><span>${esc(f.s)}: <b>${esc(LAND[f.c].name)}</b></span>`,
+  },
+
   groesser: {
     name: 'Größer oder kleiner', text: 'Welches Land ist größer?', tippen: false, zeit: 10, land: true,
     auswahlen: LAENDER_AUSWAHL, standard: 'bekannt',
@@ -191,9 +256,10 @@ export const KATEGORIEN = {
 const groesseres = f => (LAND[f.c].flaeche >= LAND[f.d].flaeche ? f.c : f.d);
 
 // Emoji-Rätsel ist vorerst raus (wird inhaltlich überarbeitet), die Weltkarte steht direkt nach Flaggen
-export const KATEGORIE_REIHE = ['flaggen', 'karte', 'umrisse', 'hauptstaedte', 'groesser', 'wissen', 'gemischt'];
-export const ARTEN = ['flaggen', 'umrisse', 'hauptstaedte', 'stadtland', 'groesser', 'wissen'];
+export const KATEGORIE_REIHE = ['flaggen', 'karte', 'umrisse', 'hauptstaedte', 'nachbarn', 'buchstaben', 'groesser', 'wissen', 'gemischt'];
+export const ARTEN = ['flaggen', 'umrisse', 'hauptstaedte', 'stadtland', 'nachbarn', 'buchstaben', 'groesser', 'wissen'];
 // Kategorien mit Sprint-Rekord und eigener Sprint-Bestenliste (Hauptstädte gibt es in zwei Richtungen)
+// Nachbarn und Buchstabensalat kommen in den Sprint, sobald der Server sie kennt (Migration 010)
 export const SPRINT_REIHE = ['flaggen', 'karte', 'umrisse', 'hauptstaedte', 'stadtland', 'groesser', 'wissen', 'gemischt'];
 
 // Eine einzelne Frage für den Sprint. Länder-Kategorien fangen leicht an und werden mit jedem Treffer schwerer.
@@ -214,7 +280,7 @@ export function sprintFrage(kategorie, stand, benutzt, region = null) {
 
 export function fragenBauen({ kategorie = 'flaggen', auswahl, runden, modus, ziel }) {
   if (kategorie === 'gemischt') {
-    const arten = ['flaggen', 'umrisse', 'hauptstaedte', 'groesser', 'wissen'];
+    const arten = ['flaggen', 'umrisse', 'hauptstaedte', 'nachbarn', 'buchstaben', 'groesser', 'wissen'];
     const vorrat = Object.fromEntries(arten.map(k => [k, mischen(KATEGORIEN[k].pool(k === 'wissen' ? 'alle' : auswahl))]));
     const fragen = [];
     let letzte = '';
@@ -242,7 +308,7 @@ export function fragenVorladen(fragen) {
   const bilder = new Set();
   let umrisse = false;
   for (const f of fragen) {
-    if (['flaggen', 'umrisse', 'hauptstaedte', 'karte', 'stadtland'].includes(f.k)) bilder.add(f.c);
+    if (['flaggen', 'umrisse', 'hauptstaedte', 'karte', 'stadtland', 'nachbarn', 'buchstaben'].includes(f.k)) bilder.add(f.c);
     if (f.k === 'groesser') { bilder.add(f.c); bilder.add(f.d); }
     if (f.k === 'umrisse') umrisse = true;
   }
