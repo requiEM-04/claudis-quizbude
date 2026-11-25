@@ -1,26 +1,25 @@
-import { VERSION } from './config.js?v=0.10.2';
+import { VERSION } from './config.js?v=0.10.3';
 import {
   online, nameFehler, registrieren, anmelden, abmelden, sitzungHolen, profilLaden, profilSpeichern,
   bestenliste, spieleSeit, alleProfile, sprintEintragen, sprintBestenliste, rangVon, spielerAnzahl, spieleVon, sb,
   adminAnmelden, istAdminName, konfigLaden, adminEinrichten, einrichtungOffen, abzeichenVon, saisonAbschliessen, winterquestStand,
-} from './server.js?v=0.10.2';
-import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.10.2';
-import { Raum, codeNeu, STANDARD, TIPPFEHLER_ABZUG } from './raum.js?v=0.10.2';
-import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.10.2';
+} from './server.js?v=0.10.3';
+import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.10.3';
+import { Raum, codeNeu, STANDARD, TIPPFEHLER_ABZUG } from './raum.js?v=0.10.3';
+import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.10.3';
 import {
   KATEGORIEN, KATEGORIE_REIHE, SPRINT_REIHE, kategorieVon, optionSchluessel, richtigeWahl, umrisseDa, umrisseLaden,
   sprintFrage, pruefeFrage, fragenVorladen, kanon,
-} from './kategorien.js?v=0.10.2';
-import { LAENDER } from './laender.js?v=0.10.2';
-import { auswahlfeld } from './auswahlfeld.js?v=0.10.2';
-import { KATEGORIE_SYMBOL } from './symbole.js?v=0.10.2';
-import { konfetti } from './konfetti.js?v=0.10.2';
-import { karteBauen, karteLaden, auswerten } from './weltkarte.js?v=0.10.2';
-import { STUFEN, ERFOLGE, erfolgStand, emblem, wertungName, saisonName, saisonKurz, vitrineLesen } from './abzeichen.js?v=0.10.2';
+} from './kategorien.js?v=0.10.3';
+import { LAENDER } from './laender.js?v=0.10.3';
+import { auswahlfeld } from './auswahlfeld.js?v=0.10.3';
+import { KATEGORIE_SYMBOL } from './symbole.js?v=0.10.3';
+import { konfetti } from './konfetti.js?v=0.10.3';
+import { karteBauen, karteLaden, auswerten } from './weltkarte.js?v=0.10.3';
+import { STUFEN, ERFOLGE, erfolgStand, emblem, wertungName, saisonName, saisonKurz, vitrineLesen } from './abzeichen.js?v=0.10.3';
 import {
   RAENGE, BILDER, ARTEN, JOKER, SONDER, sonderVon, sonderFrei, WINTERQUEST, questGeschafft, ruhmInfo, stufeVon, stufeInfo, wappen, effektHtml, rahmenDeko, stilVon, istFrei, freiAb, neuFrei,
-  belohnungName, rangVonId, symbol, symbolSvg, SCHWELLEN,
-} from './ruhm.js?v=0.10.2';
+  belohnungName, rangVonId, symbol, symbolSvg, SCHWELLEN, flockeSvg } from './ruhm.js?v=0.10.3';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -141,7 +140,7 @@ function hintergrundSetzen() {
   if (!soll) return;
   const el = document.createElement('div');
   el.id = 'winterwelt'; el.className = `winterwelt ww-${soll}`; el.dataset.art = soll; el.setAttribute('aria-hidden', 'true');
-  el.innerHTML = '<b class="ww-funkeln"></b>' + (soll === 'weihnacht' ? '<b class="ww-lichter a"></b><b class="ww-lichter b"></b><b class="ww-schnuppe"></b><b class="ww-schlitten"></b>' : '<b class="ww-polarlicht"></b><b class="ww-polarlicht"></b><b class="ww-mond"></b><b class="ww-schnuppe"></b><b class="ww-glitzern"></b>')
+  el.innerHTML = '<b class="ww-funkeln"></b>' + (soll === 'weihnacht' ? '<b class="ww-lichter a"></b><b class="ww-lichter b"></b><b class="ww-schnuppe"></b>' : '<b class="ww-polarlicht"></b><b class="ww-polarlicht"></b><b class="ww-mond"></b><b class="ww-schnuppe"></b><b class="ww-glitzern"></b>')
     + '<i class="ww-schnee s1"></i><i class="ww-schnee s2"></i><i class="ww-schnee s3"></i>';
   document.body.prepend(el);
 }
@@ -150,35 +149,60 @@ function hintergrundSetzen() {
 let winterStand = null;
 async function winterLaden() {
   if (!ich || ich.gast || !online()) { winterStand = null; return; }
-  if (new Date() < WINTERQUEST.ab) { winterStand = { raumspiele: 0, siege: 0, treffer: 0 }; return; }
-  try { winterStand = await winterquestStand(); } catch { winterStand = winterStand || null; }
+  if (new Date() < WINTERQUEST.ab || new Date() >= WINTERQUEST.bis) { winterStand = { flocken: 0, heute: [] }; return; }
+  const vorher = winterStand;
+  try { winterStand = await winterquestStand(); } catch { return; }
+  // gerade eine Tagesaufgabe geschafft? (beim ersten Laden nicht melden)
+  if (vorher?.heute?.length) {
+    const neu = (winterStand.heute || []).filter(a => a.wert >= a.ziel && !vorher.heute.some(b => b.nr === a.nr && b.wert >= b.ziel));
+    if (neu.length) toast(`Tagesaufgabe geschafft: +${neu.reduce((x, a) => x + a.flocken, 0)} Schneeflocken`);
+  }
 }
-const WQ_SYMBOL = ['<path d="M12 2v20M3.3 7l17.4 10M3.3 17 20.7 7"/>', '<circle cx="12" cy="13.5" r="7.5"/><path d="M12 13.5V10M10 2.5h4M12 2.5V6"/>', '<path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5Z"/>'];
+const KAT_KURZ = { flaggen: 'Flaggen', karte: 'Weltkarte', umrisse: 'Umrisse', hauptstaedte: 'Hauptstädte', stadtland: 'Hauptstadt → Land', groesser: 'Größer oder kleiner', wissen: 'Allgemeinwissen', gemischt: 'Gemischt' };
+function aufgabeText(a) {
+  const z = Number(a.ziel).toLocaleString('de-DE');
+  switch (a.typ) {
+    case 'raumspiele': return `Spiel ${z} Raumspiele`;
+    case 'raumpunkte': return `Hol ${z} Punkte in Räumen`;
+    case 'raumsieg': return 'Gewinn ein Raumspiel';
+    case 'treffer': return `Sammel ${z} Sprint-Treffer`;
+    case 'sprint_best': return `Schaff ${z} Treffer in einem Sprint`;
+    case 'sprint_kat': return `Schaff ${z} Treffer im Sprint ${KAT_KURZ[a.kategorie] || a.kategorie}`;
+    default: return a.typ;
+  }
+}
+const SCHNEEFLOCKE = flockeSvg('wq-flocke');
 function questZeichnen() {
   const box = $('winterquest');
   const jetzt = new Date();
   if (jetzt >= WINTERQUEST.bis) { box.hidden = true; return; }
   const laeuft = jetzt >= WINTERQUEST.ab;
   const tage = Math.ceil(((laeuft ? WINTERQUEST.bis : WINTERQUEST.ab) - jetzt) / 86400000);
-  const q = winterStand || { raumspiele: 0, siege: 0, treffer: 0 }, fertig = questGeschafft(q);
-  const zeile = (s, i) => {
-    const wert = Math.min(q[s.feld] || 0, s.ziel), geschafft = i < fertig, dran = i === fertig;
-    const preis = sonderVon(s.art, s.belohnung);
-    return `<li class="wq-stufe${geschafft ? ' fertig' : ''}${dran && laeuft ? ' dran' : ''}" style="--i:${i}">
-      <span class="wq-symbol"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${geschafft ? '<path d="M5 12.5 10 17.5 19 7"/>' : WQ_SYMBOL[i]}</svg></span>
-      <span class="wq-mitte">
-        <b>${esc(s.name)}</b>
-        <small>${s.ziel.toLocaleString('de-DE')} ${esc(s.was)}</small>
-        <span class="wq-balken" style="--anteil:${(wert / s.ziel).toFixed(3)}"><i></i></span>
-      </span>
-      <span class="wq-preis" title="${esc(belohnungTitel(s.art, preis))}">${kachelProbe(s.art, preis)}<small>${laeuft ? `${wert.toLocaleString('de-DE')}/${s.ziel.toLocaleString('de-DE')}` : ''}</small></span>
+  const q = winterStand || { flocken: 0, heute: [] }, f = q.flocken || 0, max = WINTERQUEST.stufen[2].ziel;
+  const mitKonto = ich && !ich.gast;
+  // Gesamtbalken mit den drei Belohnungen als Marken
+  const marken = WINTERQUEST.stufen.map(s => {
+    const preis = sonderVon(s.art, s.belohnung), da = f >= s.ziel;
+    return `<span class="wq-marke${da ? ' da' : ''}" style="--pos:${(s.ziel / max * 100).toFixed(1)}%" title="${esc(belohnungTitel(s.art, preis))} ab ${s.ziel} Schneeflocken">${kachelProbe(s.art, preis)}<small>${s.ziel}</small></span>`;
+  }).join('');
+  const neuIn = (() => { const m = new Date(jetzt); m.setHours(24, 0, 0, 0); const h = Math.floor((m - jetzt) / 3600000); return h >= 1 ? `in ${h} Std.` : 'gleich'; })();
+  const aufgaben = (q.heute || []).map((a, i) => {
+    const fertig = a.wert >= a.ziel;
+    return `<li class="wq-aufgabe${fertig ? ' fertig' : ''}" style="--i:${i}">
+      <span class="wq-haken">${fertig ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5 10 17.5 19 7"/></svg>' : ''}</span>
+      <span class="wq-mitte"><b>${esc(aufgabeText(a))}</b><span class="wq-balken" style="--anteil:${Math.min(1, a.wert / a.ziel).toFixed(3)}"><i></i></span></span>
+      <span class="wq-lohn">+${a.flocken}${SCHNEEFLOCKE}<small>${Math.min(a.wert, a.ziel).toLocaleString('de-DE')}/${Number(a.ziel).toLocaleString('de-DE')}</small></span>
     </li>`;
-  };
+  }).join('');
   box.innerHTML = `
     <div class="wq-kopf"><h2 id="wq-titel">Winterquest</h2><small>${laeuft ? `noch ${tage} ${tage === 1 ? 'Tag' : 'Tage'}` : `startet in ${tage} ${tage === 1 ? 'Tag' : 'Tagen'}`}</small></div>
-    <p class="wq-text">${laeuft ? (ich && !ich.gast ? 'Drei Stufen im Dezember, jede mit einer Belohnung. Zum Schluss wartet die Weihnachtsnacht.' : 'Mit Konto spielst du um drei Winter-Belohnungen.') : 'Ab 1. Dezember: drei Stufen, drei Belohnungen, zum Schluss die Weihnachtsnacht als Hintergrund.'}</p>
-    <ol class="wq-stufen">${WINTERQUEST.stufen.map(zeile).join('')}</ol>
-    <p class="wq-fuss">Raumspiele zählen mit mindestens zwei anderen Konten, die schon eine Woche dabei sind und Punkte holen.</p>`;
+    <div class="wq-gesamt">
+      <div class="wq-zahl">${SCHNEEFLOCKE}<b>${f.toLocaleString('de-DE')}</b><small>/ ${max} Schneeflocken</small></div>
+      <div class="wq-leiste" style="--anteil:${Math.min(1, f / max).toFixed(3)}"><i></i>${marken}</div>
+    </div>
+    ${laeuft && mitKonto
+      ? `<div class="wq-heute"><span>Heute</span><small>neue Aufgaben ${neuIn}</small></div><ol class="wq-aufgaben">${aufgaben || '<li class="leer">Aufgaben werden geladen …</li>'}</ol>`
+      : `<p class="wq-text">${laeuft ? 'Mit Konto bekommst du jeden Tag drei Aufgaben und sammelst Schneeflocken.' : `Ab 1. Dezember jeden Tag drei Aufgaben. Für jede gibt es Schneeflocken, bis zu ${WINTERQUEST.proTag} am Tag. Bei 100, 200 und 300 wartet eine Belohnung, zum Schluss die Weihnachtsnacht.`}</p>`}`;
   box.hidden = false;
 }
 const belohnungTitel = (art, s) => `${art === 'rahmen' ? 'Rahmen' : art === 'effekt' ? 'Effekt' : 'Hintergrund'} ${s?.[art] || ''}`;
@@ -193,12 +217,13 @@ function questPruefen() {
   if (dlg.open || (raum && ['countdown', 'frage', 'aufloesung'].includes(raum.phase)) || sprint?.laeuft) { setTimeout(questPruefen, 4000); return; }
   try { localStorage.setItem(schluessel, String(fertig)); } catch { /* egal */ }
   const s = WINTERQUEST.stufen[fertig - 1], preis = sonderVon(s.art, s.belohnung);
+  // (Stufen-Fenster) Schneeflocken-Stand steht im Text
   $('aufstieg-inhalt').style.setProperty('--rang', '#BFE3F5');
   $('aufstieg-inhalt').innerHTML = `
     <div class="winter-vorschau wq-gross ${s.art === 'hintergrund' ? 'hgf-' + s.belohnung : ''}">${s.art === 'hintergrund' ? '<span class="winterwelt mini ww-' + s.belohnung + '"><b class="ww-funkeln"></b><i class="ww-schnee s1"></i><i class="ww-schnee s2"></i></span>' : kachelProbe(s.art, preis)}</div>
-    <p class="ueber">Winterquest, Stufe ${fertig} von 3 geschafft</p>
+    <p class="ueber">Winterquest: ${s.ziel} Schneeflocken gesammelt</p>
     <h2 id="aufstieg-titel">${esc(preis[s.art])}</h2>
-    <p class="unterzeile">${esc(belohnungTitel(s.art, preis))} gehört jetzt dir${fertig < 3 ? `. Weiter geht es mit „${esc(WINTERQUEST.stufen[fertig].name)}“.` : '. Alle drei Stufen geschafft, frohe Weihnachten!'}</p>
+    <p class="unterzeile">${esc(belohnungTitel(s.art, preis))} gehört jetzt dir${fertig < 3 ? `. Bei ${WINTERQUEST.stufen[fertig].ziel} Schneeflocken wartet die nächste Belohnung.` : '. Alle drei Belohnungen geschafft, frohe Weihnachten!'}</p>
     <div class="zeile mitte"><button class="knopf haupt" id="aufstieg-ansehen">Anlegen</button><button class="knopf zweit" id="aufstieg-weiter">Später</button></div>`;
   dlg.showModal();
   setTimeout(() => konfetti(fertig >= 3 ? 3 : 2), 500);

@@ -1671,15 +1671,13 @@ body.kartenmodus .winterwelt { display: none; }
 @keyframes ww-fall1 { to { transform: translate3d(30px, 320px, 0); } }
 @keyframes ww-fall2 { to { transform: translate3d(-50px, 460px, 0); } }
 @keyframes ww-fall3 { to { transform: translate3d(60px, 640px, 0); } }
-.ww-schnuppe { top: 9%; left: 70%; width: 170px; height: 2px; border-radius: 2px; background: linear-gradient(90deg, rgba(255,255,255,0), #fff); opacity: 0; transform-origin: right center; animation: ww-schnuppe 13s ease-in 3s infinite; }
+.ww-schnuppe { top: 5%; left: 64%; width: 170px; height: 2px; border-radius: 2px; background: linear-gradient(90deg, #fff, rgba(255,255,255,.55) 18%, rgba(255,255,255,0)); box-shadow: -2px 0 6px rgba(255,255,255,.6); opacity: 0; transform-origin: left center; animation: ww-schnuppe 13s ease-in 3s infinite; }
 @keyframes ww-schnuppe { 0% { opacity: 0; transform: rotate(-18deg) translateX(0); } 2% { opacity: 1; } 7% { opacity: 0; transform: rotate(-18deg) translateX(-420px); } 100% { opacity: 0; transform: rotate(-18deg) translateX(-420px); } }
-.ww-weihnacht .ww-schnuppe { left: 55%; top: 12%; animation-duration: 17s; }
+.ww-weihnacht .ww-schnuppe { left: 60%; top: 6%; animation-duration: 17s; }
 .ww-lichter { left: 0; right: 0; top: 0; height: 70px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='70' viewBox='0 0 420 70'%3E%3Cpath d='M0 8 Q105 40 210 8 T420 8' fill='none' stroke='%2305090D' stroke-opacity='.6' stroke-width='1.6'/%3E%3Ccircle cx='31.5' cy='23.2' r='11' fill='%23F2A65A' fill-opacity='.2'/%3E%3Crect x='29.9' y='15.2' width='3.2' height='3.4' rx='.8' fill='%232A3138'/%3E%3Cellipse cx='31.5' cy='22.4' rx='3.2' ry='4.7' fill='%23F2A65A'/%3E%3Cellipse cx='30.5' cy='21.0' rx='.9' ry='1.6' fill='%23fff' fill-opacity='.55'/%3E%3Ccircle cx='73.5' cy='29.6' r='11' fill='%23E46F6F' fill-opacity='.2'/%3E%3Crect x='71.9' y='21.6' width='3.2' height='3.4' rx='.8' fill='%232A3138'/%3E%3Cellipse cx='73.5' cy='28.8' rx='3.2' ry='4.7' fill='%23E46F6F'/%3E%3Cellipse cx='72.5' cy='27.4' rx='.9' ry='1.6' fill='%23fff' fill-opacity='.55'/%3E%3Ccircle cx='105.0' cy='31.0' r='11' fill='%237FD1A0' fill-opacity='.2'/%3E%3Crect x='103.4' y='23.0' width='3.2' height='3.4' rx='.8' fill='%232A3138'/%3E%3Cellipse cx='105.0' cy='30.2' rx='3.2' ry='4.7' fill='%237FD1A0'/%3E%3Cellipse cx='104.0' cy='28.8' rx='.9' ry='1.6' fill='%23fff' fill-opacity='.55'/%3E%3Ccircle cx='136.5' cy='29.6' r='11' fill='%238EC5FF' fill-opacity='.2'/%3E%3Crect x='134.9' y='21.6' width='3.2' height='3.4' rx='.8' fill='%232A3138'/%3E%3Cellipse cx='136.5' cy='28.8' rx='3.2' ry='4.7' fill='%238EC5FF'/%3E%3Cellipse cx='135.5' cy='27.4' rx='.9' ry='1.6' fill='%23fff' fill-opacity='.55'/%3E%3Ccircle cx='178.5' cy='23.2' r='11' fill='%23F6E39A' fill-opacity='.2'/%3E%3Crect x='176.9' y='15.2' width='3.2' height='3.4' rx='.8' fill='%232A3138'/%3E%3Cellipse cx='178.5' cy='22.4' rx='3.2' ry='4.7' fill='%23F6E39A'/%3E%3Cellipse cx='177.5' cy='21.0' rx='.9' ry='1.6' fill='%23fff' fill-opacity='.55'/%3E%3Ccircle cx='241.5' cy='23.2' r='11' fill='%23F2A65A' fill-opacity='.2'/%3E%3Crect x='239.9' y='15.2' width='3.2' height='3.4' rx='.8' fill='%232A3138'/%3E%3Cellipse cx='241.5' cy='22.4' rx='3.2' ry='4.7' fill='%23F2A65A'/%3E%3Cellipse cx='240.5' cy='21.0' rx='.9' ry='1.6' fill='%23fff' fill-opacity='.55'/%3E%3Ccircle cx='283.5' cy='29.6' r='11' fill='%23E46F6F' fill-opacity='.2'/%3E%3Crect x='281.9' y='21.6' width='3.2' height='3.4' rx='.8' fill='%232A3138'/%3E%3Cellipse cx='283.5' cy='28.8' rx='3.2' ry='4.7' fill='%23E46F6F'/%3E%3Cellipse cx='282.5' cy='27.4' rx='.9' ry='1.6' fill='%23fff' fill-opacity='.55'/%3E%3Ccircle cx='315.0' cy='31.0' r='11' fill='%237FD1A0' fill-opacity='.2'/%3E%3Crect x='313.4' y='23.0' width='3.2' height='3.4' rx='.8' fill='%232A3138'/%3E%3Cellipse cx='315.0' cy='30.2' rx='3.2' ry='4.7' fill='%237FD1A0'/%3E%3Cellipse cx='314.0' cy='28.8' rx='.9' ry='1.6' fill='%23fff' fill-opacity='.55'/%3E%3Ccircle cx='346.5' cy='29.6' r='11' fill='%238EC5FF' fill-opacity='.2'/%3E%3Crect x='344.9' y='21.6' width='3.2' height='3.4' rx='.8' fill='%232A3138'/%3E%3Cellipse cx='346.5' cy='28.8' rx='3.2' ry='4.7' fill='%238EC5FF'/%3E%3Cellipse cx='345.5' cy='27.4' rx='.9' ry='1.6' fill='%23fff' fill-opacity='.55'/%3E%3Ccircle cx='388.5' cy='23.2' r='11' fill='%23F6E39A' fill-opacity='.2'/%3E%3Crect x='386.9' y='15.2' width='3.2' height='3.4' rx='.8' fill='%232A3138'/%3E%3Cellipse cx='388.5' cy='22.4' rx='3.2' ry='4.7' fill='%23F6E39A'/%3E%3Cellipse cx='387.5' cy='21.0' rx='.9' ry='1.6' fill='%23fff' fill-opacity='.55'/%3E%3C/svg%3E") top center / 420px 70px repeat-x; }
 .ww-lichter.b { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='70' viewBox='0 0 420 70'%3E%3Cpath d='M0 8 Q105 40 210 8 T420 8' fill='none' stroke='%2305090D' stroke-opacity='.6' stroke-width='1.6'/%3E%3Ccircle cx='31.5' cy='23.2' r='11' fill='%23E46F6F' fill-opacity='.2'/%3E%3Crect x='29.9' y='15.2' width='3.2' height='3.4' rx='.8' fill='%232A3138'/%3E%3Cellipse cx='31.5' cy='22.4' rx='3.2' ry='4.7' fill='%23E46F6F'/%3E%3Cellipse cx='30.5' cy='21.0' rx='.9' ry='1.6' fill='%23fff' fill-opacity='.55'/%3E%3Ccircle cx='73.5' cy='29.6' r='11' fill='%237FD1A0' fill-opacity='.2'/%3E%3Crect x='71.9' y='21.6' width='3.2' height='3.4' rx='.8' fill='%232A3138'/%3E%3Cellipse cx='73.5' cy='28.8' rx='3.2' ry='4.7' fill='%237FD1A0'/%3E%3Cellipse cx='72.5' cy='27.4' rx='.9' ry='1.6' fill='%23fff' fill-opacity='.55'/%3E%3Ccircle cx='105.0' cy='31.0' r='11' fill='%238EC5FF' fill-opacity='.2'/%3E%3Crect x='103.4' y='23.0' width='3.2' height='3.4' rx='.8' fill='%232A3138'/%3E%3Cellipse cx='105.0' cy='30.2' rx='3.2' ry='4.7' fill='%238EC5FF'/%3E%3Cellipse cx='104.0' cy='28.8' rx='.9' ry='1.6' fill='%23fff' fill-opacity='.55'/%3E%3Ccircle cx='136.5' cy='29.6' r='11' fill='%23F6E39A' fill-opacity='.2'/%3E%3Crect x='134.9' y='21.6' width='3.2' height='3.4' rx='.8' fill='%232A3138'/%3E%3Cellipse cx='136.5' cy='28.8' rx='3.2' ry='4.7' fill='%23F6E39A'/%3E%3Cellipse cx='135.5' cy='27.4' rx='.9' ry='1.6' fill='%23fff' fill-opacity='.55'/%3E%3Ccircle cx='178.5' cy='23.2' r='11' fill='%23F2A65A' fill-opacity='.2'/%3E%3Crect x='176.9' y='15.2' width='3.2' height='3.4' rx='.8' fill='%232A3138'/%3E%3Cellipse cx='178.5' cy='22.4' rx='3.2' ry='4.7' fill='%23F2A65A'/%3E%3Cellipse cx='177.5' cy='21.0' rx='.9' ry='1.6' fill='%23fff' fill-opacity='.55'/%3E%3Ccircle cx='241.5' cy='23.2' r='11' fill='%23E46F6F' fill-opacity='.2'/%3E%3Crect x='239.9' y='15.2' width='3.2' height='3.4' rx='.8' fill='%232A3138'/%3E%3Cellipse cx='241.5' cy='22.4' rx='3.2' ry='4.7' fill='%23E46F6F'/%3E%3Cellipse cx='240.5' cy='21.0' rx='.9' ry='1.6' fill='%23fff' fill-opacity='.55'/%3E%3Ccircle cx='283.5' cy='29.6' r='11' fill='%237FD1A0' fill-opacity='.2'/%3E%3Crect x='281.9' y='21.6' width='3.2' height='3.4' rx='.8' fill='%232A3138'/%3E%3Cellipse cx='283.5' cy='28.8' rx='3.2' ry='4.7' fill='%237FD1A0'/%3E%3Cellipse cx='282.5' cy='27.4' rx='.9' ry='1.6' fill='%23fff' fill-opacity='.55'/%3E%3Ccircle cx='315.0' cy='31.0' r='11' fill='%238EC5FF' fill-opacity='.2'/%3E%3Crect x='313.4' y='23.0' width='3.2' height='3.4' rx='.8' fill='%232A3138'/%3E%3Cellipse cx='315.0' cy='30.2' rx='3.2' ry='4.7' fill='%238EC5FF'/%3E%3Cellipse cx='314.0' cy='28.8' rx='.9' ry='1.6' fill='%23fff' fill-opacity='.55'/%3E%3Ccircle cx='346.5' cy='29.6' r='11' fill='%23F6E39A' fill-opacity='.2'/%3E%3Crect x='344.9' y='21.6' width='3.2' height='3.4' rx='.8' fill='%232A3138'/%3E%3Cellipse cx='346.5' cy='28.8' rx='3.2' ry='4.7' fill='%23F6E39A'/%3E%3Cellipse cx='345.5' cy='27.4' rx='.9' ry='1.6' fill='%23fff' fill-opacity='.55'/%3E%3Ccircle cx='388.5' cy='23.2' r='11' fill='%23F2A65A' fill-opacity='.2'/%3E%3Crect x='386.9' y='15.2' width='3.2' height='3.4' rx='.8' fill='%232A3138'/%3E%3Cellipse cx='388.5' cy='22.4' rx='3.2' ry='4.7' fill='%23F2A65A'/%3E%3Cellipse cx='387.5' cy='21.0' rx='.9' ry='1.6' fill='%23fff' fill-opacity='.55'/%3E%3C/svg%3E"); animation: ww-blinken 2.4s steps(1, end) infinite; }
 @keyframes ww-blinken { 0% { opacity: 0; } 50% { opacity: 1; } }
-.ww-schlitten { top: 12%; left: 100%; width: 260px; height: 60px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='60' viewBox='0 0 260 60'%3E%3Cg fill='%230B1020'%3E%3Cellipse cx='150' cy='30' rx='11' ry='5' /%3E%3Cpath d='M142 33 l-3 9 M147 34 l1 9 M155 34 l-1 9 M159 33 l3 8' stroke='%230B1020' stroke-width='2.2' stroke-linecap='round'/%3E%3Cpath d='M159 28 q5-6 9-9 l2 3 q-4 3-7 9Z'/%3E%3Cpath d='M168 19 l-2-6 M168 19 l3-6 M167 15 l-3-2 M170 15 l3-2' stroke='%230B1020' stroke-width='1.6' stroke-linecap='round'/%3E%3Cellipse cx='185' cy='30' rx='11' ry='5' /%3E%3Cpath d='M177 33 l-3 9 M182 34 l1 9 M190 34 l-1 9 M194 33 l3 8' stroke='%230B1020' stroke-width='2.2' stroke-linecap='round'/%3E%3Cpath d='M194 28 q5-6 9-9 l2 3 q-4 3-7 9Z'/%3E%3Cpath d='M203 19 l-2-6 M203 19 l3-6 M202 15 l-3-2 M205 15 l3-2' stroke='%230B1020' stroke-width='1.6' stroke-linecap='round'/%3E%3Cellipse cx='220' cy='30' rx='11' ry='5' /%3E%3Cpath d='M212 33 l-3 9 M217 34 l1 9 M225 34 l-1 9 M229 33 l3 8' stroke='%230B1020' stroke-width='2.2' stroke-linecap='round'/%3E%3Cpath d='M229 28 q5-6 9-9 l2 3 q-4 3-7 9Z'/%3E%3Cpath d='M238 19 l-2-6 M238 19 l3-6 M237 15 l-3-2 M240 15 l3-2' stroke='%230B1020' stroke-width='1.6' stroke-linecap='round'/%3E%3Cpath d='M12 38 h80 q14 0 14-10' fill='none' stroke='%230B1020' stroke-width='3' stroke-linecap='round'/%3E%3Cpath d='M20 36 q-6-14 6-18 h50 l10 14 q-6 4-14 4Z'/%3E%3Ccircle cx='52' cy='14' r='7'/%3E%3Cpath d='M44 22 h18 v10 h-18Z'/%3E%3Cpath d='M100 30 L140 30' stroke='%230B1020' stroke-width='1.2'/%3E%3C/g%3E%3C/svg%3E") 0 0 / 260px 60px no-repeat; opacity: .9; animation: ww-schlitten 34s linear 4s infinite; }
-@keyframes ww-schlitten { 0% { transform: translate3d(0, 0, 0); } 45% { transform: translate3d(calc(-100vw - 300px), -60px, 0); } 100% { transform: translate3d(calc(-100vw - 300px), -60px, 0); } }
-@media (prefers-reduced-motion: reduce) { .winterwelt > * { animation: none !important; } .ww-schnuppe, .ww-schlitten { display: none; } }
+@media (prefers-reduced-motion: reduce) { .winterwelt > * { animation: none !important; } .ww-schnuppe { display: none; } }
 .winter-vorschau { position: relative; width: 240px; height: 150px; border-radius: 18px; overflow: hidden; box-shadow: 0 0 0 1px var(--linie-stark), 0 20px 40px -16px rgba(0,0,0,.8); animation: t-text .5s ease .1s both; display: grid; place-items: center; }
 .winter-vorschau.wq-gross .sk-probe { width: 92px; height: 120px; }
 
@@ -1689,7 +1687,10 @@ body.kartenmodus .winterwelt { display: none; }
 .besten-feld.lr-eis a { border-color: #BFE3F5; box-shadow: inset 0 0 0 1px rgba(191,227,245,.25), 0 0 20px -8px #9FD3F0; }
 .probe.ra-eis, .sk-probe.ra-eis { border: 2.5px solid #BFE3F5; box-shadow: 0 0 10px -3px #9FD3F0; }
 .e-schnee i { left: var(--x); top: -12px; width: var(--g); height: var(--g); border-radius: 50%; background: #F4FAFF; box-shadow: 0 0 6px rgba(255,255,255,.7); opacity: .9; animation: flocke-fall var(--t) linear var(--d) infinite; }
+.e-schnee i.kristall { width: calc(var(--g) * 3); height: calc(var(--g) * 3); border-radius: 0; background: none; box-shadow: none; color: #F4FAFF; filter: drop-shadow(0 0 3px rgba(255,255,255,.75)); animation-name: kristall-fall; }
+.e-schnee i.kristall svg { display: block; width: 100%; height: 100%; }
 @keyframes flocke-fall { to { transform: translate3d(var(--w), 460px, 0); } }
+@keyframes kristall-fall { to { transform: translate3d(var(--w), 460px, 0) rotate(300deg); } }
 
 /* Winterquest-Karte (rechte Spalte unter der Bestenliste) */
 .bude-rechts { display: grid; gap: 14px; align-content: start; }
@@ -1699,28 +1700,48 @@ body.kartenmodus .winterwelt { display: none; }
 .wq-kopf h2 { margin: 0; font-size: 1.15rem; color: #DDF1FB; }
 .wq-kopf small { color: #9FC6DA; font-weight: 700; font-size: .74rem; }
 .wq-text { position: relative; margin: 6px 0 12px; color: var(--text-2); font-size: .8rem; line-height: 1.45; }
-.wq-stufen { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
-.wq-stufe { display: grid; grid-template-columns: 30px minmax(0, 1fr) 46px; gap: 10px; align-items: center; padding: 8px 8px 8px 6px; border-radius: 14px; background: rgba(255,255,255,.03); border: 1px solid var(--linie); }
-.wq-stufe.dran { border-color: rgba(191,227,245,.4); background: rgba(191,227,245,.06); }
-.wq-stufe.fertig { border-color: rgba(127,209,160,.35); }
-.wq-symbol { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: rgba(191,227,245,.1); color: #BFE3F5; }
-.wq-stufe.fertig .wq-symbol { background: rgba(127,209,160,.16); color: #7FD1A0; }
-.wq-symbol svg { width: 17px; height: 17px; }
 .wq-mitte { display: grid; gap: 3px; min-width: 0; }
 .wq-mitte b { font-size: .86rem; }
 .wq-mitte small { color: var(--text-3); font-size: .7rem; }
 .wq-balken { height: 5px; border-radius: 99px; background: rgba(255,255,255,.08); overflow: hidden; }
 .wq-balken i { display: block; height: 100%; width: calc(var(--anteil) * 100%); background: linear-gradient(90deg, #8EC5FF, #DDF1FB); border-radius: inherit; }
-.wq-stufe.fertig .wq-balken i { background: #7FD1A0; }
-.wq-preis { display: grid; justify-items: center; gap: 2px; }
-.wq-preis .sk-probe { width: 34px; height: 44px; }
-.wq-preis small { font-size: .66rem; color: var(--text-3); font-weight: 700; }
 
-.wq-preis .effekt-probe, .winter-vorschau .effekt-probe { background: linear-gradient(180deg, #1E3E58, #0A1520); }
-.winter-vorschau .effekt-probe .effekt *, .wq-preis .effekt-probe .effekt * { animation-play-state: running; }
+.wq-marke .effekt-probe, .winter-vorschau .effekt-probe { background: linear-gradient(180deg, #1E3E58, #0A1520); }
+.winter-vorschau .effekt-probe .effekt *, .wq-marke .effekt-probe .effekt * { animation-play-state: running; }
 
 /* Mond über dem Nordlicht (sonst färbt es ihn grün) */
-.ww-mond { left: 20px; top: 18px; width: 96px; height: 96px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140' viewBox='0 0 140 140'%3E%3Cdefs%3E%3CradialGradient id='m' cx='.4' cy='.38' r='.7'%3E%3Cstop offset='0' stop-color='%23FFFDF4'/%3E%3Cstop offset='.7' stop-color='%23E9E6D8'/%3E%3Cstop offset='1' stop-color='%23CFCBBA'/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx='70' cy='70' r='34' fill='url(%23m) 0 0 / 96px 96px no-repeat; filter: drop-shadow(0 0 24px rgba(243,241,230,.35)); }
+.ww-mond { left: 20px; top: 18px; width: 96px; height: 96px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140' viewBox='0 0 140 140'%3E%3Cdefs%3E%3CradialGradient id='m' cx='.4' cy='.38' r='.7'%3E%3Cstop offset='0' stop-color='%23FFFDF4'/%3E%3Cstop offset='.7' stop-color='%23E9E6D8'/%3E%3Cstop offset='1' stop-color='%23CFCBBA'/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx='70' cy='70' r='34' fill='url(%23m)'/%3E%3Ccircle cx='58' cy='60' r='7' fill='%23C9C4B2' fill-opacity='.55'/%3E%3Ccircle cx='82' cy='78' r='9' fill='%23C9C4B2' fill-opacity='.45'/%3E%3Ccircle cx='74' cy='52' r='4' fill='%23C9C4B2' fill-opacity='.5'/%3E%3Ccircle cx='60' cy='84' r='4.5' fill='%23C9C4B2' fill-opacity='.4'/%3E%3Ccircle cx='88' cy='60' r='3' fill='%23C9C4B2' fill-opacity='.45'/%3E%3C/svg%3E") 0 0 / 96px 96px no-repeat; filter: drop-shadow(0 0 24px rgba(243,241,230,.35)); }
 .winterwelt.mini .ww-mond { display: none; }
 
-.wq-fuss { position: relative; margin: 10px 2px 0; color: var(--text-3); font-size: .68rem; line-height: 1.4; }
+
+/* Winterquest mit Tagesaufgaben */
+.wq-flocke { width: 14px; height: 14px; flex: none; color: #BFE3F5; }
+.wq-gesamt { position: relative; margin: 10px 0 4px; }
+.wq-zahl { display: flex; align-items: baseline; gap: 6px; }
+.wq-zahl .wq-flocke { width: 18px; height: 18px; align-self: center; }
+.wq-zahl b { font: 800 1.6rem/1 var(--display); color: #E6F4FB; }
+.wq-zahl small { color: var(--text-3); font-weight: 700; font-size: .74rem; }
+.wq-leiste { position: relative; height: 8px; margin: 16px 16px 66px; border-radius: 99px; background: rgba(255,255,255,.08); }
+.wq-leiste > i { position: absolute; left: 0; top: 0; bottom: 0; width: calc(var(--anteil) * 100%); border-radius: inherit; background: linear-gradient(90deg, #8EC5FF, #DDF1FB); box-shadow: 0 0 12px rgba(191,227,245,.5); }
+.wq-marke { position: absolute; left: var(--pos); top: -4px; transform: translateX(-50%); display: grid; justify-items: center; gap: 4px; }
+.wq-marke::before { content: ""; width: 3px; height: 16px; border-radius: 2px; background: rgba(255,255,255,.22); }
+.wq-marke.da::before { background: #E6F4FB; box-shadow: 0 0 8px rgba(191,227,245,.7); }
+.wq-marke .sk-probe { width: 30px; height: 38px; margin: 0; border-radius: 8px; opacity: .5; filter: grayscale(.7); transition: opacity .3s, filter .3s; }
+.wq-marke.da .sk-probe { opacity: 1; filter: none; box-shadow: 0 0 14px rgba(191,227,245,.5); }
+.wq-marke small { font-size: .62rem; color: var(--text-3); font-weight: 800; line-height: 1; }
+.wq-marke.da small { color: #DDF1FB; }
+.wq-heute { display: flex; align-items: baseline; justify-content: space-between; margin: 0 2px 8px; }
+.wq-heute span { font-weight: 800; font-size: .86rem; color: #DDF1FB; }
+.wq-heute small { color: var(--text-3); font-size: .7rem; font-weight: 700; }
+.wq-aufgaben { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.wq-aufgaben .leer { color: var(--text-3); font-size: .8rem; }
+.wq-aufgabe { display: grid; grid-template-columns: 20px minmax(0, 1fr) auto; gap: 9px; align-items: center; padding: 8px 9px; border-radius: 12px; background: rgba(255,255,255,.03); border: 1px solid var(--linie); }
+.wq-aufgabe.fertig { border-color: rgba(127,209,160,.35); background: rgba(127,209,160,.06); }
+.wq-haken { width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid rgba(191,227,245,.35); display: grid; place-items: center; color: #10251B; }
+.wq-aufgabe.fertig .wq-haken { background: #7FD1A0; border-color: #7FD1A0; }
+.wq-haken svg { width: 13px; height: 13px; }
+.wq-aufgabe .wq-mitte b { font-size: .78rem; line-height: 1.25; }
+.wq-aufgabe.fertig .wq-mitte b { color: var(--text-2); text-decoration: line-through; text-decoration-color: rgba(127,209,160,.6); }
+.wq-aufgabe.fertig .wq-balken i { background: #7FD1A0; }
+.wq-lohn { display: grid; grid-template-columns: auto auto; align-items: center; justify-items: end; column-gap: 2px; font: 800 .82rem var(--display); color: #DDF1FB; }
+.wq-lohn small { grid-column: 1 / -1; font: 700 .62rem var(--schrift); color: var(--text-3); }

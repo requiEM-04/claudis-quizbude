@@ -56,19 +56,18 @@ export function freiAb(art, rangId) {
 }
 
 // Sonder-Freischaltungen, die nicht am Ruhm hängen (Winter 2026). Ob jemand sie wirklich hat, prüft der Server beim Speichern.
-// quest: Stand der Winterquest { raumspiele, siege, treffer } im Dezember 2026.
-// Raumspiele und Siege zählen nur mit mind. zwei anderen Konten (älter als 7 Tage), die alle Punkte geholt haben; Siege ab 1.000 Punkten.
+// Winterquest: jeden Tag drei Aufgaben (Tabelle winter_aufgaben), jede bringt Schneeflocken (leicht 8, mittel 10, schwer 12).
+// Bei 100, 200 und 300 Schneeflocken wird je eine Belohnung frei. quest = { flocken, heute: [{ nr, stufe, typ, ziel, kategorie, flocken, wert }] }
 const WINTER_AB = new Date('2026-12-01T00:00:00+01:00'), WINTER_BIS = new Date('2027-01-01T00:00:00+01:00');
 export const WINTERQUEST = {
-  ab: WINTER_AB, bis: WINTER_BIS,
+  ab: WINTER_AB, bis: WINTER_BIS, proTag: 30,
   stufen: [
-    { id: 1, name: 'Erster Schnee', ziel: 10, was: 'Raumspiele mit mind. 3 Leuten', feld: 'raumspiele', art: 'rahmen', belohnung: 'eis' },
-    { id: 2, name: 'Schneegestöber', ziel: 250, was: 'Sprint-Treffer', feld: 'treffer', art: 'effekt', belohnung: 'schnee' },
-    { id: 3, name: 'Heilige Nacht', ziel: 3, was: 'Siege mit mind. 1.000 Punkten', feld: 'siege', art: 'hintergrund', belohnung: 'weihnacht' },
+    { id: 1, name: 'Erster Schnee', ziel: 100, art: 'rahmen', belohnung: 'eis' },
+    { id: 2, name: 'Schneegestöber', ziel: 200, art: 'effekt', belohnung: 'schnee' },
+    { id: 3, name: 'Heilige Nacht', ziel: 300, art: 'hintergrund', belohnung: 'weihnacht' },
   ],
 };
-// geschafft = wie viele Stufen nacheinander erreicht sind
-export const questGeschafft = q => { let n = 0; for (const s of WINTERQUEST.stufen) { if ((q?.[s.feld] || 0) >= s.ziel) n++; else break; } return n; };
+export const questGeschafft = q => WINTERQUEST.stufen.filter(s => (q?.flocken || 0) >= s.ziel).length;
 export const SONDER = {
   hintergrund: [
     { id: 'winter', hintergrund: 'Winterzauber', farbe: '#CFE3EE', hinweis: 'Ab 1. Dezember für alle, die bis Ende Dezember dabei sind',
@@ -185,16 +184,19 @@ export function effektHtml(rangId) {
   if (rangId === 'herz') innen = verteilt(7, (i, a, b) => `<i style="--x:${a * 92}%;--t:${(7 + b * 5).toFixed(2)}s;--d:${(-b * 10).toFixed(2)}s;--r:${(a * 80 - 40).toFixed(0)}deg">${symbolSvg(['herz', 'karo', 'pik', 'kreuz'][i % 4], i % 4 < 2 ? 'rot' : 'schwarz')}</i>`).join('');
   if (rangId === 'kreuz') innen = '<b class="strahlen"></b><b class="schein"></b>';
   if (rangId === 'pik') innen = '<b class="glanz"></b>' + verteilt(7, (i, a, b) => `<i style="--x:${6 + a * 88}%;--y:${8 + b * 84}%;--t:${(2 + b * 2).toFixed(2)}s;--d:${(-a * 3).toFixed(2)}s">${symbolSvg('stern')}</i>`).join('');
-  if (rangId === 'schnee') innen = verteilt(12, (i, a, b) => `<i style="--x:${a * 100}%;--t:${(5 + b * 5).toFixed(2)}s;--d:${(-b * 9).toFixed(2)}s;--g:${(3 + (i % 3) * 1.5).toFixed(1)}px;--w:${(a * 30 - 15).toFixed(0)}px"></i>`).join('');
+  if (rangId === 'schnee') innen = verteilt(12, (i, a, b) => `<i style="--x:${a * 100}%;--t:${(5 + b * 5).toFixed(2)}s;--d:${(-b * 9).toFixed(2)}s;--g:${(3 + (i % 3) * 1.5).toFixed(1)}px;--w:${(a * 30 - 15).toFixed(0)}px"${i % 3 === 0 ? ` class="kristall">${flockeSvg('', 2)}` : '>'}</i>`).join('');
   if (rangId === 'joker') innen = '<b class="holo"></b><b class="glanz"></b>' + verteilt(6, (i, a, b) => `<i style="--x:${a * 94}%;--y:${b * 90}%;--t:${(2.5 + b * 2).toFixed(2)}s;--d:${(-a * 3).toFixed(2)}s">${symbolSvg(['stern', 'herz', 'karo', 'pik', 'kreuz'][i % 5])}</i>`).join('');
   return `<div class="effekt e-${rangId}" aria-hidden="true">${innen}</div>`;
 }
+
+// Schneeflocke mit sechs verästelten Armen
+export const flockeSvg = (klasse = '', breite = 1.6) => `<svg class="${klasse}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${breite}" stroke-linecap="round" aria-hidden="true"><path d="M12 12L12 2M12 6.6L14.76 4.29M12 6.6L9.24 4.29M12 4L13.69 2.59M12 4L10.31 2.59M12 12L20.66 7M16.68 9.3L20.06 10.53M16.68 9.3L17.3 5.75M18.93 8L21 8.75M18.93 8L19.31 5.83M12 12L20.66 17M16.68 14.7L17.3 18.25M16.68 14.7L20.06 13.47M18.93 16L19.31 18.17M18.93 16L21 15.25M12 12L12 22M12 17.4L9.24 19.71M12 17.4L14.76 19.71M12 20L10.31 21.41M12 20L13.69 21.41M12 12L3.34 17M7.32 14.7L3.94 13.47M7.32 14.7L6.7 18.25M5.07 16L3 15.25M5.07 16L4.69 18.17M12 12L3.34 7M7.32 9.3L6.7 5.75M7.32 9.3L3.94 10.53M5.07 8L4.69 5.83M5.07 8L3 8.75"/></svg>`;
 
 // Verzierungen für den Kartenrahmen
 export function rahmenDeko(rangId) {
   if (rangId === 'herz') return `<div class="rahmen-deko" aria-hidden="true">${['lo', 'ro', 'lu', 'ru'].map(p => `<span class="${p}">${symbolSvg('herz')}</span>`).join('')}</div>`;
   if (rangId === 'pik') return `<div class="rahmen-deko" aria-hidden="true">${['lo', 'ro', 'lu', 'ru'].map(p => `<span class="${p}">${symbolSvg('pik')}</span>`).join('')}</div>`;
-  if (rangId === 'eis') return `<div class="rahmen-deko" aria-hidden="true">${['lo', 'ro', 'lu', 'ru'].map(p => `<span class="${p}"><svg class="kf-symbol" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 2v20M3.3 7l17.4 10M3.3 17 20.7 7M12 2l-2.5 2.5M12 2l2.5 2.5M12 22l-2.5-2.5M12 22l2.5-2.5"/></svg></span>`).join('')}</div>`;
+  if (rangId === 'eis') return `<div class="rahmen-deko" aria-hidden="true">${['lo', 'ro', 'lu', 'ru'].map(p => `<span class="${p}">${flockeSvg('kf-symbol', 1.5)}</span>`).join('')}</div>`;
   if (rangId === 'kreuz') return `<div class="rahmen-deko" aria-hidden="true"><span class="krone"><svg viewBox="0 0 30 16"><path d="M2 15 0 3l7.5 5L15 0l7.5 8L30 3l-2 12Z" fill="currentColor"/></svg></span></div>`;
   return '';
 }

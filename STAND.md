@@ -2,7 +2,7 @@
 
 ## Aktuell (25.11.2026)
 
-- **Version:** 0.10.2
+- **Version:** 0.10.3
 - **Live:** https://requiem-04.github.io/claudis-quizbude/ (Repo `requiEM-04/claudis-quizbude`, Branch `main`, GitHub Pages)
 - **Server:** Supabase-Projekt `quizbude` (Ref `jgvjjjiwfjxynbzjaxsg`, Frankfurt), E-Mail-Bestätigung aus, Realtime mit öffentlichen Kanälen.
 - **Inhalt:** Konten (Name + Passwort ab 4 Zeichen), Räume mit 4-Buchstaben-Code (live über Realtime), Flaggenraten (tippen oder 4 zur Auswahl), Flaggen-Sprint (60 s), Bestenliste (Siege, Punkte, Sprint), „Zuletzt gespielt".
@@ -136,13 +136,20 @@
 
 - **Neu in 0.10.1 (Winter):**
   - Winterzauber (Hintergrund „winter“, reiner Winter: Mond, Berge, verschneite Tannen; bewegt: funkelnde Sterne, Sternschnuppe, drei Schnee-Ebenen). Ab 1.12.2026 frei für alle Konten mit erstellt vor 1.1.2027, bleibt danach. Im Dezember einmal Hinweis mit Anlegen-Knopf (nie automatisch).
-  - Weihnachtsnacht: Dorf mit leuchtenden Fenstern, Kirche, geschmückter Baum, Mond; bewegt: blinkende Lichterkette, Schlitten vor dem Himmel, Sternschnuppe, Schnee.
+  - Weihnachtsnacht: Dorf mit leuchtenden Fenstern, Kirche, geschmückter Baum, Mond; bewegt: blinkende Lichterkette, Sternschnuppe, Schnee (Schlitten seit 0.10.3 raus).
   - Questkarte in der rechten Spalte unter der Bestenliste (vor Dezember als Vorschau „startet in … Tagen“), Feier-Fenster je geschaffter Stufe mit Anlegen-Knopf.
   - Bewegte Ebenen als #winterwelt (nur transform/opacity), im Kartenmodus aus.
 
 - **Neu in 0.10.2:**
   - Winterquest fest gegen Nebenkonten (Migration 007): Raumspiel zählt nur mit mind. zwei anderen Konten, die älter als 7 Tage sind, und alle anderen im Raum haben Punkte. Stufe 1 = 10 solche Raumspiele → Rahmen Eiskristall, Stufe 2 = 250 Sprint-Treffer im Dezember → Effekt Schneegestöber, Stufe 3 = 3 Siege in solchen Räumen mit mind. 1.000 Punkten → Hintergrund Weihnachtsnacht. Stufen nacheinander, nur Dezember 2026.
   - Winterzauber neu: Nordlicht (zwei Bänder, langsam bewegt), Mond mit Kratern oben links in der Ecke (nie hinter dem Logo), drei Bergketten mit Schnee, Schatten und Dunst, zwei Reihen verschneiter Wald, glitzernder Schnee, Sternschnuppe, drei Schnee-Ebenen.
+
+- **Neu in 0.10.3 (Winterquest mit Tagesaufgaben, ersetzt die Stufen aus 0.10.2):**
+  - Migration 008 (`winter_aufgaben`): für jeden Dezembertag drei feste Aufgaben (leicht 8, mittel 10, schwer 12 Schneeflocken, also 30 am Tag, 930 im Monat). Typen: Raumspiele, Raumpunkte, Raumsieg, Sprint-Treffer gesamt, bester Sprint, Sprint in einer Kategorie. Gezählt wird nur am Tag selbst (Europe/Berlin), Raumspiele nur mit mind. zwei Leuten. Verpasste Tage verfallen.
+  - Belohnungen bei 100 (Rahmen Eiskristall), 200 (Effekt Schneegestöber) und 300 Schneeflocken (Hintergrund Weihnachtsnacht). Wer alles schafft, hat nach 10 Tagen alles; Server prüft über `qb_sonder_frei`.
+  - Questkarte: Schneeflocken-Zähler, Balken mit den drei Belohnungen als Marken, darunter „Heute“ mit den drei Aufgaben (Fortschritt, Haken, Lohn) und Zeit bis zu den neuen Aufgaben. Meldung „Tagesaufgabe geschafft“, Feier-Fenster bei jeder Belohnung.
+  - Echte Schneeflocke (sechs verästelte Arme) als Symbol in Questkarte und Eiskristall-Rahmen; Schneegestöber mit drehenden Kristallen zwischen den Punkten.
+  - Schlitten raus, Sternschnuppe fliegt jetzt Kopf voraus nach links unten.
 
 ## Als Nächstes (mit Colin besprochen)
 - Reihenfolge jetzt: neue Profilbilder (eigene Figuren, Kreis-Hintergründe, Randfarben) → Freunde und Einladungen → neue Quizze Nachbarn und Buchstabensalat → vorgemerkt: Seitenverhältnisse (von Flaggen) raten. Kein Tagesrätsel nach Loldle-Art.
