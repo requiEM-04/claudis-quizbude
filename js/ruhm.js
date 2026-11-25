@@ -2,6 +2,8 @@
 // in jeder Farbe geht es von Bube über Dame und König bis zum Ass. Ganz oben steht der Joker.
 // Der Ruhm selbst wird auf dem Server aus der Statistik berechnet (siehe werkzeuge/schema.sql).
 
+import { FIGUREN, KREISE, RINGE, bildEintrag, bildFreiAb } from './figuren.js';
+
 export const SCHWELLEN = [0, 100, 250, 450, 700, 1000, 1350, 1750, 2200, 2700, 3250, 3850, 4500, 5200, 5950, 6750, 8000];
 
 export const RAENGE = [
@@ -83,9 +85,21 @@ export const istFrei = (art, rangId, ruhm) => stufeVon(ruhm) >= freiAb(art, rang
 
 // Was wird mit Stufe i neu frei?
 export function neuFrei(i) {
-  if (i >= JOKER) return ARTEN.map(a => ({ art: a.id, rang: 'joker' }));
+  const bild = [['ring', RINGE], ['kreis', KREISE], ['figur', FIGUREN]].flatMap(([art, liste]) => liste.filter(e => e.rang && bildFreiAb(art, e) === i).map(e => ({ art, rang: e.rang, id: e.id })));
+  if (i >= JOKER) return [...ARTEN.map(a => ({ art: a.id, rang: 'joker' })), ...bild];
   const rang = RAENGE[Math.floor(i / 4)].id;
-  return ARTEN.filter(a => a.ab === i % 4).map(a => ({ art: a.id, rang }));
+  return [...ARTEN.filter(a => a.ab === i % 4).map(a => ({ art: a.id, rang })), ...bild];
+}
+
+// Profilbild (Figur, bewegter Kreis, Rand). Ruhm-Stücke prüfen wir hier, Medaillen-Stücke prüft der Server beim Speichern.
+export const BILD_ARTEN = ['figur', 'kreis', 'ring'];
+export function bildVon(p) {
+  const st = p?.stil || {}, aus = {}, stufe = stufeVon(p?.ruhm || 0);
+  for (const art of BILD_ARTEN) {
+    const e = bildEintrag(art, st[art]);
+    if (e && (!e.rang || stufe >= bildFreiAb(art, e))) aus[art] = e.id;
+  }
+  return aus;
 }
 
 // Gewählter Stil eines Spielers; nur was wirklich freigeschaltet ist, zählt
@@ -109,7 +123,11 @@ export function bestesFrei(ruhm) {
   return aus;
 }
 
-export const belohnungName = (art, rangId) => {
+export const belohnungName = (art, rangId, id) => {
+  if (art === 'figur' || art === 'kreis' || art === 'ring') {
+    const e = bildEintrag(art, id) || [FIGUREN, KREISE, RINGE][['figur', 'kreis', 'ring'].indexOf(art)].find(x => x.rang === rangId);
+    return `${art === 'figur' ? 'Figur' : art === 'kreis' ? 'Bildhintergrund' : 'Bildrand'} ${e?.name || ''}`;
+  }
   const r = rangVonId(rangId);
   if (art === 'farbe') return `Namensfarbe ${r.name}`;  // z. B. „Namensfarbe Herz“
   if (art === 'titel') return `Titel „${r.titel}“`;

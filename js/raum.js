@@ -1,5 +1,5 @@
 import { sb, spielEintragen, spielLoggen } from './server.js?v=0.10.3';
-import { stilVon } from './ruhm.js?v=0.10.3';
+import { stilVon, bildVon } from './ruhm.js?v=0.10.3';
 import { letzteTippfehler } from './abgleich.js?v=0.10.3';
 import { auswerten } from './weltkarte.js?v=0.10.3';
 export const TIPPFEHLER_ABZUG = 10; // Punkte Abzug je Tippfehler bei einer richtigen Antwort
@@ -110,7 +110,7 @@ export class Raum {
     });
     const { id, name, avatar, farbe } = this.ich;
     // Ruhm und gewählter Stil reisen mit, damit alle Wappen und Namensfarbe sehen
-    const extra = this.ich.gast ? {} : { ruhm: this.ich.ruhm || 0, stil: stilVon(this.ich) };
+    const extra = this.ich.gast ? {} : { ruhm: this.ich.ruhm || 0, stil: { ...stilVon(this.ich), ...bildVon(this.ich) } };
     await this.kanal.track({ id, name, avatar, farbe, ...extra, seit: this.seit });
     if (alsHost) {
       this.hostId = id;
@@ -381,7 +381,7 @@ export class Raum {
     this.senden('ende', { liste });
     if (!this.ich.gast) spielLoggen({
       code: this.code, kategorie: this.einst.kategorie, runden: this.fragen.length, modus: this.einst.modus, auswahl: this.einst.auswahl,
-      spieler: liste.slice(0, 20).map(({ name, avatar, pkt }) => ({ name, avatar, pkt })),
+      spieler: liste.slice(0, 20).map(({ name, avatar, pkt, ruhm, stil }) => { const figur = typeof ruhm === 'number' ? bildVon({ ruhm, stil }).figur : null; return figur ? { name, avatar, pkt, figur } : { name, avatar, pkt }; }),
     });
   }
 

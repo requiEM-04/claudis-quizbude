@@ -151,8 +151,19 @@
   - Echte Schneeflocke (sechs verästelte Arme) als Symbol in Questkarte und Eiskristall-Rahmen; Schneegestöber mit drehenden Kristallen zwischen den Punkten.
   - Schlitten raus, Sternschnuppe fliegt jetzt Kopf voraus nach links unten.
 
+## In Arbeit: Profilbilder (Branch `profilbilder`, noch nicht live)
+- **Figuren** (`js/figuren.js`, alles eigene SVGs ohne IDs): 14 freie Tiere (Fuchs, Frosch, Panda, Eule, Krake, Pinguin, Katze, Igel, Schildkröte, Dino, Biene, Koala, Wal, Papagei), per Ruhm ab König der Farbe Quizbot (Karo), Herzdrache (Herz), Sternwolf (Pik), Phönix (Kreuz), Hofnarr ab Joker, Löwe für einen Saisonsieg. Alte Emoji-Avatare werden automatisch zur passenden Figur (🦁 und Nicht-Tiere bleiben Emoji, bis man wählt).
+- **Kreis-Hintergründe:** einfache Farbe (profile.farbe) oder bewegt ab Dame der Farbe: Kupferglut, Herzschlag, Sternennacht, Sonnenrad, Holo (Joker). Bewegung nur bei großen Avataren (Spielerkarte, Treppchen, Editor), sonst still.
+- **Ränder:** 6 Grundfarben frei, Kupfer/Rosé/Eisblau/Messing ab Bube der Farbe, Regenbogen ab Joker, Bronze/Silber/Gold für Platz 3/2/1 in einer Saison.
+- **Speichern:** in `profile.stil` als `figur`, `kreis`, `ring` (freie Figur nur im Emoji `avatar`). Prüfung auf dem Server in Migration 009 (`qb_bild_frei`).
+- **Anzeige:** überall über `avatarHtml` (Bestenliste, Raum, Chat, Treppchen, Spielerfenster, Dock, Admin), im Raum per Presence-Stil, im Spielverlauf mit `figur`.
+- **Editor** im Profil („Profilbild ändern“): große Vorschau, Figur, Hintergrund, Rand, Gesperrtes mit Schloss und Bedingung. Registrierung zeigt die freien Figuren auf der gewählten Farbe. Aufstiegsfenster und Ruhmesweg nennen die neuen Freischaltungen.
+- **Getestet (lokal, Test-Server):** Freischaltung nach Ruhm und Medaille, Speichern, Anzeige in Dock/Karte/Bestenliste/Raum/Chat/Treppchen, Admin, spieltest, gasttest, sprinttest (auf neuen Editor umgestellt).
+- **Wichtig, Fehler live seit 006:** `qb_profil_ruhm` lief ohne `security definer` und ruft `qb_sonder_frei` auf, das für Spieler gesperrt ist. Speichern eines Stils (Anlegen im Profil) bricht deshalb sehr wahrscheinlich mit einem Rechtefehler ab. 009 macht die Trigger-Funktion zu `security definer` und behebt das.
+- **Live schalten:** 1. `009_profilbilder.sql` im SQL-Editor einspielen (Kontrollzeile t, t, f, t, f, f). 2. Mit einem Testkonto prüfen, dass Anlegen im Profil wieder geht. 3. Branch in `main` übernehmen, `release.py 0.11.0`, pushen, live prüfen.
+
 ## Als Nächstes (mit Colin besprochen)
-- Reihenfolge jetzt: neue Profilbilder (eigene Figuren, Kreis-Hintergründe, Randfarben) → Freunde und Einladungen → neue Quizze Nachbarn und Buchstabensalat → vorgemerkt: Seitenverhältnisse (von Flaggen) raten. Kein Tagesrätsel nach Loldle-Art.
+- Reihenfolge jetzt: neue Profilbilder (gebaut, Branch `profilbilder`, wartet auf Migration 009) → Freunde und Einladungen → neue Quizze Nachbarn und Buchstabensalat → vorgemerkt: Seitenverhältnisse (von Flaggen) raten. Kein Tagesrätsel nach Loldle-Art.
 
 1. Eigene Profilbilder statt Emojis (mit Colin zusammen gestalten).
 2. (erledigt in 0.9.3) Admin-Bereich (eigenes Konto `requiem-admin`, Login mit Name „Admin“, Tabelle `admins`, `is_admin()` in jeder Funktion, eigene Seite `admin.html`): Spieler, Räume, Nachricht an alle, Server, Protokoll. Colin legt das Konto selbst in Supabase an.

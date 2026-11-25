@@ -129,10 +129,15 @@
       <!-- links: die Spielerkarte, so wie andere sie sehen (zugleich Vorschau beim Anpassen) -->
       <aside class="profil-seite">
         <div id="hochkarte"></div>
-        <button class="knopf zweit klein" id="profil-bearbeiten" hidden>Avatar ändern</button>
+        <button class="knopf zweit klein" id="profil-bearbeiten" hidden>Profilbild ändern</button>
         <div class="karte profil-editor" id="profil-editor" hidden>
-          <div class="avatar-wahl" id="profil-avatar-wahl"></div>
-          <div class="farb-wahl" id="profil-farb-wahl"></div>
+          <div class="pb-vorschau"><span id="pb-vorschau"></span><span class="pb-was" id="pb-was"></span></div>
+          <h3 class="pb-titel">Figur</h3>
+          <div class="pb-raster" id="pb-figuren"></div>
+          <h3 class="pb-titel">Hintergrund</h3>
+          <div class="pb-raster rund" id="pb-kreise"></div>
+          <h3 class="pb-titel">Rand</h3>
+          <div class="pb-raster rund" id="pb-ringe"></div>
           <div class="zeile">
             <button class="knopf haupt klein" id="profil-speichern">Speichern</button>
             <button class="knopf zweit klein" id="profil-abbrechen">Abbrechen</button>

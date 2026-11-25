@@ -124,8 +124,8 @@ async def main():
         print('Profil:', await pg.inner_text('#profil-name'), '|', (await pg.inner_text('#profil-werte')).replace('\n', ' '))
         print('Rekorde:', (await pg.inner_text('#profil-rekorde')).replace('\n', ' '))
         await pg.screenshot(path=f'{BILDER}/s_profil.png', full_page=True)
-        await pg.click('#profil-bearbeiten'); await pg.click('#profil-avatar-wahl [data-a="🦉"]'); await pg.click('#profil-speichern'); await pg.wait_for_timeout(300)
-        print('Avatar im Dock:', await pg.inner_text('.dock-ich .avatar'))
+        await pg.click('#profil-bearbeiten'); await pg.click('.pb-wahl[data-art=figur][data-id=eule]'); await pg.click('#profil-speichern'); await pg.wait_for_timeout(300)
+        print('Figur im Dock (Eule erwartet):', await pg.evaluate("!!document.querySelector('.dock-ich .avatar .figur') && JSON.parse(localStorage.getItem('fake.profile')).find(p => p.name === 'Colin')?.avatar"))
         await pg.go_back(); await pg.wait_for_timeout(400)
         print('Profil -> Zurück:', await pg.evaluate('location.hash'), 'Bude sichtbar:', not await pg.evaluate('document.getElementById("s-bude").hidden'))
 

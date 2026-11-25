@@ -19,13 +19,14 @@ import { karteBauen, karteLaden, auswerten } from './weltkarte.js?v=0.10.3';
 import { STUFEN, ERFOLGE, erfolgStand, emblem, wertungName, saisonName, saisonKurz, vitrineLesen } from './abzeichen.js?v=0.10.3';
 import {
   RAENGE, BILDER, ARTEN, JOKER, SONDER, sonderVon, sonderFrei, WINTERQUEST, questGeschafft, ruhmInfo, stufeVon, stufeInfo, wappen, effektHtml, rahmenDeko, stilVon, istFrei, freiAb, neuFrei,
-  belohnungName, rangVonId, symbol, symbolSvg, SCHWELLEN, flockeSvg } from './ruhm.js?v=0.10.3';
+  belohnungName, rangVonId, symbol, symbolSvg, SCHWELLEN, flockeSvg, bildVon, BILD_ARTEN } from './ruhm.js?v=0.10.3';
+import { FIGUREN, FREIE_FIGUREN, KREISE, RINGE, figurSvg, figurAusEmoji, figurVonId, bildFrei, bildFreiAb, bildEintrag } from './figuren.js?v=0.10.3';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const zufall = a => a[Math.floor(Math.random() * a.length)];
 
-const AVATARE = ['🦊', '🐸', '🐼', '🦉', '🐙', '🦖', '🐝', '🐧', '🐢', '🦁', '🐨', '🐳', '🦜', '🍕', '☕', '🥨', '🔧', '🚧'];
+const AVATARE = FREIE_FIGUREN.map(f => f.emoji);
 const FARBEN = ['#CDB68C', '#8FB3A2', '#9AAFC7', '#C79A9A', '#B3A3C9', '#C8A68A'];
 
 const SPRUCH = {
@@ -120,8 +121,15 @@ function toast(text) {
 }
 
 function farbe(f) { return /^#[0-9a-fA-F]{6}$/.test(f || '') ? f : FARBEN[0]; }
-function avatarHtml(p) {
-  return `<span class="avatar" style="background:${farbe(p?.farbe)}">${esc(p?.avatar || '🙂')}</span>`;
+// Kleines Bild vor Chatzeilen (bekannte Mitspieler mit ihrer Figur)
+const chatAvatar = (r, m) => { const p = m.id && r.bekannt?.get(m.id); return `<span class="chat-av">${avatarHtml(p ? { ...p, id: m.id } : { avatar: m.avatar, farbe: '#353B3F' })}</span>`; };
+
+// Profilbild: Figur (gewählt oder aus dem alten Emoji), Kreis (bewegt oder einfache Farbe), Rand
+function avatarHtml(p, { bewegt = false } = {}) {
+  const b = p && !p.gast && typeof p.ruhm === 'number' ? bildVon(p) : {};
+  const fig = b.figur || p?.figur || figurAusEmoji(p?.avatar);
+  const klassen = ['avatar', fig ? 'mit-figur' : '', b.kreis ? `kreis-${b.kreis}` : '', b.ring ? `ring-${b.ring}` : '', bewegt ? 'bewegt' : ''].filter(Boolean).join(' ');
+  return `<span class="${klassen}"${b.kreis ? '' : ` style="background:${farbe(p?.farbe)}"`}>${fig ? figurSvg(fig) : esc(p?.avatar || '🙂')}${b.kreis ? '<i class="kreis-ebene"></i>' : ''}</span>`;
 }
 
 // ---------- Ruhm im Alltag: Namensfarbe, Titel, Wappen am Avatar, Hintergrund ----------
@@ -333,9 +341,10 @@ const auswahl = { avatar: zufall(AVATARE), farbe: zufall(FARBEN) };
 
 // Avatar- und Farbwahl (beim Registrieren und im Profil)
 function wahlBauen(avatarEl, farbEl, zustand) {
-  avatarEl.innerHTML = AVATARE.map(a => `<button type="button" data-a="${a}" aria-label="Avatar ${a}">${a}</button>`).join('');
+  avatarEl.innerHTML = FREIE_FIGUREN.map(f => `<button type="button" data-a="${f.emoji}" aria-label="${f.name}" title="${f.name}">${figurSvg(f.id)}</button>`).join('');
   farbEl.innerHTML = FARBEN.map(f => `<button type="button" data-f="${f}" style="background:${f}" aria-label="Farbe ${f}"></button>`).join('');
   const markieren = () => {
+    avatarEl.style.setProperty('--wahl-farbe', zustand.farbe);
     avatarEl.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b.dataset.a === zustand.avatar));
     farbEl.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b.dataset.f === zustand.farbe));
   };
@@ -606,7 +615,7 @@ function treppeHtml(liste, ichId, mitKrone) {
       <div class="t-kopf">
         ${platz === 1 ? '<span class="t-strahlen" aria-hidden="true"></span>' : ''}
         ${krone ? `<span class="t-krone" aria-hidden="true">👑${FUNKEN.map(w => `<i class="funke" style="--w:${w}deg"></i>`).join('')}</span>` : ''}
-        ${avatarHtml(e)}
+        ${avatarHtml(e, { bewegt: true })}
         ${hatRuhm(e) ? `<span class="t-wappen">${wappen(e.ruhm, { groesse: platz === 1 ? 24 : 20 })}</span>` : ''}
       </div>
       <div class="t-name"><span class="${nameKlasse(e).trim()}">${esc(e.name)}</span>${e.id === ichId ? '<span class="du">du</span>' : ''}</div>
@@ -1085,7 +1094,7 @@ function hochkarteHtml(p, st, medaillen = null) {
     <span class="hk-ecke lo">${wappen(p.ruhm, { groesse: 30 })}</span>
     <span class="hk-ecke ru">${wappen(p.ruhm, { groesse: 30 })}</span>
     <div class="hk-inhalt">
-      <span class="hk-avatar">${avatarHtml(p)}</span>
+      <span class="hk-avatar">${avatarHtml(p, { bewegt: true })}</span>
       <b class="hk-name${st.farbe ? ` nf-${st.farbe}` : ''}">${esc(p.name)}</b>
       ${titel ? `<span class="hk-titel nf-${st.titel}">${esc(titel)}</span>` : '<span class="hk-titel leer">kein Titel</span>'}
       <span class="hk-rang"><b class="nf-${info.rang.id}">${info.name}</b>, ${zahl(info.ruhm)} Ruhm</span>
@@ -1144,7 +1153,7 @@ function anpassenZeichnen() {
   hochkarteZeichnen();
 }
 async function stilAnlegen(neu, meldung = 'Angelegt.') {
-  const stil = Object.fromEntries(Object.entries(neu).filter(([, v]) => v));
+  const stil = Object.fromEntries(Object.entries({ ...bildVon(ich), ...neu }).filter(([, v]) => v));
   try {
     await profilSpeichern(ich.id, { stil });
     ich = { ...ich, stil };
@@ -1155,18 +1164,19 @@ async function stilAnlegen(neu, meldung = 'Angelegt.') {
   } catch (e) { toast(e.message); }
 }
 // Ruhmesweg als Tabelle: Zeilen sind die Kartenfarben (Ränge), Spalten Bube bis Ass, jede Stufe schaltet eine Sache frei
-const FREI_NACH_STUFE = ['Namensfarbe', 'Titel', 'Karten-Effekt', 'Rahmen + Hintergrund'];
+const FREI_NACH_STUFE = ['Namensfarbe + Bildrand', 'Titel + Bildhintergrund', 'Karten-Effekt + Figur', 'Rahmen + Hintergrund'];
 function ruhmeswegZeichnen() {
   const jetzt = stufeVon(ich.ruhm || 0), zahl = n => n.toLocaleString('de-DE');
   const zustand = i => i < jetzt ? 'erreicht' : i === jetzt ? 'aktuell' : 'gesperrt';
-  const belohnung = (r, f) => [esc(r.name), `„${esc(r.titel)}“`, esc(r.effekt), `${esc(r.rahmen)}, ${esc(r.hintergrund)}`][f];
+  const bild = (liste, r) => esc(liste.find(e => e.rang === r.id)?.name || '');
+  const belohnung = (r, f) => [`${esc(r.name)}, Rand ${bild(RINGE, r)}`, `„${esc(r.titel)}“, ${bild(KREISE, r)}`, `${esc(r.effekt)}, ${bild(FIGUREN, r)}`, `${esc(r.rahmen)}, ${esc(r.hintergrund)}`][f];
   const kopf = `<div class="rw-ecke"></div>${BILDER.map((b, f) => `<div class="rw-kopf"><b>${b.name}</b><small>${FREI_NACH_STUFE[f]}</small></div>`).join('')}`;
   const zeilen = RAENGE.slice(0, 4).map((r, ri) => `<div class="rw-rang nf-${r.id}"><span class="rw-farbe ${r.rot ? 'rot' : ''}">${symbolSvg(r.id)}</span>${r.name}</div>${[0, 1, 2, 3].map(f => {
     const i = ri * 4 + f;
     return `<div class="rw-zelle ${zustand(i)}" style="--rang:${r.farbe}">${wappen(0, { stufe: i, groesse: 28 })}<span><b>${zahl(SCHWELLEN[i])}</b><small>${belohnung(r, f)}</small></span>${i === jetzt ? '<i class="rw-du">du</i>' : ''}</div>`;
   }).join('')}`).join('');
   const joker = RAENGE[4];
-  const jz = `<div class="rw-rang nf-joker">Joker</div><div class="rw-zelle rw-joker ${zustand(JOKER)}" style="--rang:${joker.farbe}">${wappen(0, { stufe: JOKER, groesse: 28 })}<span><b>${zahl(SCHWELLEN[JOKER])}</b><small>Alles im Joker-Stil: schillernder Name, „${esc(joker.titel)}“, Holo-Effekt, Regenbogenrahmen und Hintergrund</small></span>${jetzt === JOKER ? '<i class="rw-du">du</i>' : ''}</div>`;
+  const jz = `<div class="rw-rang nf-joker">Joker</div><div class="rw-zelle rw-joker ${zustand(JOKER)}" style="--rang:${joker.farbe}">${wappen(0, { stufe: JOKER, groesse: 28 })}<span><b>${zahl(SCHWELLEN[JOKER])}</b><small>Alles im Joker-Stil: schillernder Name, „${esc(joker.titel)}“, Holo-Effekt, Regenbogenrahmen und Hintergrund, dazu Figur Hofnarr mit Holo-Kreis und Regenbogenrand</small></span>${jetzt === JOKER ? '<i class="rw-du">du</i>' : ''}</div>`;
   $('ruhmesweg').innerHTML = kopf + zeilen + jz;
 }
 
@@ -1211,7 +1221,7 @@ function aufstiegZeigen(alt, neu, erstesMal) {
     <p class="ueber">${erstesMal ? 'Ruhm ist da. Alles Bisherige zählt mit.' : 'Aufstieg!'}</p>
     <h2 id="aufstieg-titel" class="nf-${s.rang.id}">${s.name}</h2>
     <p class="ruhm-zahl">${(ich.ruhm || 0).toLocaleString('de-DE')} Ruhm</p>
-    ${zeigen.length ? `<ul class="aufstieg-neu">${zeigen.map((n, i) => `<li style="--i:${i}"><span class="nf-${n.rang}">${esc(belohnungName(n.art, n.rang))}</span><small>neu</small></li>`).join('')}</ul>` : ''}
+    ${zeigen.length ? `<ul class="aufstieg-neu">${zeigen.map((n, i) => `<li style="--i:${i}"><span class="nf-${n.rang}">${esc(belohnungName(n.art, n.rang, n.id))}</span><small>neu</small></li>`).join('')}</ul>` : ''}
     ${neues.length > zeigen.length ? `<p class="unterzeile">und ${neues.length - zeigen.length} weitere im Profil</p>` : ''}
     <div class="zeile mitte">${neues.length ? '<button class="knopf haupt" id="aufstieg-ansehen">Im Profil ansehen</button>' : ''}<button class="knopf zweit" id="aufstieg-weiter">Weiter</button></div>`;
   dlg.showModal();
@@ -1220,15 +1230,45 @@ function aufstiegZeigen(alt, neu, erstesMal) {
   const ansehen = $('aufstieg-ansehen');
   if (ansehen) ansehen.onclick = () => {
     dlg.close();
-    anpassenArt = neues[neues.length - 1]?.art || 'farbe';
+    const karte = neues.filter(n => !BILD_ARTEN.includes(n.art));
+    anpassenArt = karte[karte.length - 1]?.art || 'farbe';
     navigieren('#/profil');
     setTimeout(() => $('anpassen')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 600);
   };
 }
 
 // ---------- Profil ----------
-const profilWahl = { avatar: '', farbe: '' };
-let profilMarkieren = null;
+const profilWahl = { avatar: '', farbe: '', figur: '', kreis: '', ring: '' };
+
+// ---------- Profilbild-Editor: Figur, Hintergrund (Farbe oder bewegt), Rand ----------
+const besterPlatz = () => { const p = (meineMedaillen || []).map(m => m.platz).filter(Boolean); return p.length ? Math.min(...p) : null; };
+function bildBedingung(art, e) {
+  if (e.medaille) return e.medaille === 1 ? 'nur für einen Saisonsieg' : `für Platz ${e.medaille} oder besser in einer Saison`;
+  return `frei ab ${stufeInfo(bildFreiAb(art, e)).name}`;
+}
+function bildEditorZeichnen() {
+  const stufe = stufeVon(ich.ruhm || 0), best = besterPlatz();
+  const kachel = (art, e, innen, gewaehlt) => {
+    const frei = bildFrei(art, e.id, stufe, best);
+    return `<button type="button" class="pb-wahl${frei ? '' : ' gesperrt'}" data-art="${art}" data-id="${e.id}" aria-pressed="${gewaehlt}" title="${esc(e.name)}${frei ? '' : `, ${esc(bildBedingung(art, e))}`}">${innen}${frei ? '' : '<span class="pb-schloss" aria-hidden="true">🔒</span>'}</button>`;
+  };
+  const grund = profilWahl.kreis ? '#3A4046' : profilWahl.farbe;
+  $('pb-figuren').innerHTML = FIGUREN.map(f => kachel('figur', f, `<span class="avatar mit-figur" style="background:${grund}">${figurSvg(f.id)}</span>`, profilWahl.figur === f.id)).join('');
+  $('pb-kreise').innerHTML = FARBEN.map(f => `<button type="button" class="pb-wahl" data-art="farbe" data-id="${f}" aria-pressed="${!profilWahl.kreis && profilWahl.farbe === f}" title="Einfarbig"><span class="avatar" style="background:${f}"></span></button>`).join('')
+    + KREISE.map(k => kachel('kreis', k, `<span class="avatar kreis-${k.id} bewegt"><i class="kreis-ebene"></i></span>`, profilWahl.kreis === k.id)).join('');
+  $('pb-ringe').innerHTML = `<button type="button" class="pb-wahl" data-art="ring" data-id="" aria-pressed="${!profilWahl.ring}" title="Kein Rand"><span class="avatar pb-keiner"></span></button>`
+    + RINGE.map(r => kachel('ring', r, `<span class="avatar ring-${r.id} bewegt" style="background:#30363B"></span>`, profilWahl.ring === r.id)).join('');
+  const fig = figurVonId(profilWahl.figur);
+  const vorschau = { ...ich, avatar: fig?.emoji || profilWahl.avatar, farbe: profilWahl.farbe, stil: { ...stilVon(ich), figur: profilWahl.figur, kreis: profilWahl.kreis, ring: profilWahl.ring } };
+  $('pb-vorschau').innerHTML = avatarHtml(vorschau, { bewegt: true });
+  $('pb-was').innerHTML = `<b>${esc(fig?.name || 'Altes Bild')}</b><small>${esc(profilWahl.kreis ? bildEintrag('kreis', profilWahl.kreis).name : 'Einfarbig')}, ${esc(profilWahl.ring ? `Rand ${bildEintrag('ring', profilWahl.ring).name}` : 'ohne Rand')}</small>`;
+}
+function bildWahl(t) {
+  const art = t.dataset.art, id = t.dataset.id;
+  if (t.classList.contains('gesperrt')) { const e = bildEintrag(art, id); toast(`${e.name}: ${bildBedingung(art, e)}.`); return; }
+  if (art === 'farbe') { profilWahl.farbe = id; profilWahl.kreis = ''; } else profilWahl[art] = id;
+  bildEditorZeichnen();
+}
 let profilAbruf = 0;
 
 function datum(iso) {
@@ -1237,12 +1277,13 @@ function datum(iso) {
 const prozent = (a, b) => (b ? Math.round((a / b) * 100) : 0);
 
 function profilAufbauen() {
-  profilMarkieren = wahlBauen($('profil-avatar-wahl'), $('profil-farb-wahl'), profilWahl);
   $('profil-bearbeiten').onclick = () => {
-    profilWahl.avatar = ich.avatar; profilWahl.farbe = farbe(ich.farbe);
-    profilMarkieren();
+    const b = bildVon(ich);
+    Object.assign(profilWahl, { avatar: ich.avatar, farbe: farbe(ich.farbe), figur: b.figur || figurAusEmoji(ich.avatar) || '', kreis: b.kreis || '', ring: b.ring || '' });
+    bildEditorZeichnen();
     $('profil-editor').hidden = false;
   };
+  for (const el of ['pb-figuren', 'pb-kreise', 'pb-ringe']) $(el).addEventListener('click', e => { const t = e.target.closest('[data-art]'); if (t) bildWahl(t); });
   $('profil-abbrechen').onclick = () => { $('profil-editor').hidden = true; };
   $('profil-reiter').onclick = e => { const b = e.target.closest('[data-tab]'); if (b) profilTab(b.dataset.tab); };
   for (const el of ['abz-raster', 'abz-medaillen', 'abz-vitrine']) $(el).addEventListener('click', e => {
@@ -1271,13 +1312,16 @@ function profilAufbauen() {
     stilAnlegen({ ...stilVon(ich), [anpassenArt]: b.dataset.rang }, 'Angelegt.');
   };
   $('profil-speichern').onclick = async () => {
+    // Freie Figuren stehen im Emoji (wirkt überall, auch in alten Listen), besondere zusätzlich geprüft im Stil
+    const fig = figurVonId(profilWahl.figur), avatar = fig ? fig.emoji : profilWahl.avatar;
+    const stil = Object.fromEntries(Object.entries({ ...stilVon(ich), figur: fig && (fig.rang || fig.medaille) ? fig.id : '', kreis: profilWahl.kreis, ring: profilWahl.ring }).filter(([, v]) => v));
     try {
-      await profilSpeichern(ich.id, { avatar: profilWahl.avatar, farbe: profilWahl.farbe });
-      ich = { ...ich, avatar: profilWahl.avatar, farbe: profilWahl.farbe };
+      await profilSpeichern(ich.id, { avatar, farbe: profilWahl.farbe, stil });
+      ich = { ...ich, avatar, farbe: profilWahl.farbe, stil };
       chipZeichnen();
       $('profil-editor').hidden = true;
       hochkarteZeichnen();
-      toast('Avatar gespeichert.');
+      toast('Profilbild gespeichert.');
     } catch (e) { toast(e.message); }
   };
 }
@@ -1743,7 +1787,7 @@ function raumZeichnen() {
     ? `<li class="system">${esc(m.text)}</li>`
     : m.daneben
       ? `<li class="daneben"><span class="daneben-x" aria-label="falsch">✗</span><b>${esc(m.name)}</b> <span class="daneben-text">${esc(m.text)}</span></li>`
-      : `<li><b>${esc(m.avatar || '')} ${esc(m.name)}:</b> ${esc(m.text)}</li>`).join('');
+      : `<li><b>${chatAvatar(r, m)} ${esc(m.name)}:</b> ${esc(m.text)}</li>`).join('');
   if (unten) cl.scrollTop = cl.scrollHeight;
 }
 

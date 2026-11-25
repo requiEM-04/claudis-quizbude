@@ -1,6 +1,7 @@
 import { VERSION } from './config.js?v=0.10.3';
 import { adminClient, adminAnmelden } from './server.js?v=0.10.3';
-import { ruhmInfo, wappen, stilVon } from './ruhm.js?v=0.10.3';
+import { ruhmInfo, wappen, stilVon, bildVon } from './ruhm.js?v=0.10.3';
+import { figurSvg, figurAusEmoji } from './figuren.js?v=0.10.3';
 
 // Admin-Bereich: eigenes Konto, eigene Sitzung (quizbude.admin), alles läuft über admin_*-Funktionen mit Protokoll
 const $ = id => document.getElementById(id);
@@ -49,7 +50,9 @@ const dauerhaft = p => p.gesperrt_bis && new Date(p.gesperrt_bis).getFullYear() 
 
 function avatar(p, gross = false) {
   const f = /^#[0-9a-fA-F]{6}$/.test(p.farbe || '') ? p.farbe : '#CDB68C';
-  return `<span class="avatar${gross ? ' gross' : ''}" style="background:${f}">${esc(p.avatar || '🙂')}</span>`;
+  const b = typeof p.ruhm === 'number' ? bildVon(p) : {}, fig = b.figur || figurAusEmoji(p.avatar);
+  const kl = ['avatar', gross ? 'gross' : '', b.kreis ? `kreis-${b.kreis}` : '', b.ring ? `ring-${b.ring}` : ''].filter(Boolean).join(' ');
+  return `<span class="${kl}"${b.kreis ? '' : ` style="background:${f}"`}>${fig ? figurSvg(fig) : esc(p.avatar || '🙂')}${b.kreis ? '<i class="kreis-ebene"></i>' : ''}</span>`;
 }
 
 function marken(p) {
