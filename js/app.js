@@ -1,25 +1,25 @@
-import { VERSION } from './config.js?v=0.9.7';
+import { VERSION } from './config.js?v=0.9.8';
 import {
   online, nameFehler, registrieren, anmelden, abmelden, sitzungHolen, profilLaden, profilSpeichern,
   bestenliste, spieleSeit, alleProfile, sprintEintragen, sprintBestenliste, rangVon, spielerAnzahl, spieleVon, sb,
   adminAnmelden, istAdminName, konfigLaden, adminEinrichten, einrichtungOffen,
-} from './server.js?v=0.9.7';
-import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.9.7';
-import { Raum, codeNeu, STANDARD, TIPPFEHLER_ABZUG } from './raum.js?v=0.9.7';
-import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.9.7';
+} from './server.js?v=0.9.8';
+import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.9.8';
+import { Raum, codeNeu, STANDARD, TIPPFEHLER_ABZUG } from './raum.js?v=0.9.8';
+import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.9.8';
 import {
   KATEGORIEN, KATEGORIE_REIHE, SPRINT_REIHE, kategorieVon, optionSchluessel, richtigeWahl, umrisseDa, umrisseLaden,
   sprintFrage, pruefeFrage, fragenVorladen, kanon,
-} from './kategorien.js?v=0.9.7';
-import { LAENDER } from './laender.js?v=0.9.7';
-import { auswahlfeld } from './auswahlfeld.js?v=0.9.7';
-import { KATEGORIE_SYMBOL } from './symbole.js?v=0.9.7';
-import { konfetti } from './konfetti.js?v=0.9.7';
-import { karteBauen, karteLaden, auswerten } from './weltkarte.js?v=0.9.7';
+} from './kategorien.js?v=0.9.8';
+import { LAENDER } from './laender.js?v=0.9.8';
+import { auswahlfeld } from './auswahlfeld.js?v=0.9.8';
+import { KATEGORIE_SYMBOL } from './symbole.js?v=0.9.8';
+import { konfetti } from './konfetti.js?v=0.9.8';
+import { karteBauen, karteLaden, auswerten } from './weltkarte.js?v=0.9.8';
 import {
   RAENGE, BILDER, ARTEN, JOKER, ruhmInfo, stufeVon, stufeInfo, wappen, effektHtml, rahmenDeko, stilVon, istFrei, freiAb, neuFrei,
   belohnungName, rangVonId, symbol, symbolSvg, SCHWELLEN,
-} from './ruhm.js?v=0.9.7';
+} from './ruhm.js?v=0.9.8';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -1774,6 +1774,7 @@ function ruhmAufschluesseln(box, vorher, posten, gesamt) {
   const alt = ruhmInfo(vorher), neu = ruhmInfo(vorher + gesamt), aufstieg = neu.i > alt.i;
   const text = i => i.bis ? `noch ${i.fehlt.toLocaleString('de-DE')} bis ${stufeInfo(i.i + 1).name}` : 'Joker erreicht';
   box.style.setProperty('--rang', alt.rang.farbe);
+  box.classList.remove('rp-hoch'); // vom letzten Spiel
   box.innerHTML = `
     <div class="rp-kopf">${wappen(vorher, { groesse: 26 })}<b class="rp-summe">+0</b><span>Ruhm</span></div>
     <ul class="rp-posten">${liste.map(([n, w], i) => `<li style="--i:${i}"><span>${esc(n)}</span><b>+${w}</b></li>`).join('')}</ul>
@@ -1791,7 +1792,7 @@ function ruhmAufschluesseln(box, vorher, posten, gesamt) {
       balken.style.transition = 'none'; balken.style.setProperty('--anteil', 0); void balken.offsetWidth; balken.style.transition = '';
       balken.style.setProperty('--anteil', neu.anteil.toFixed(3));
       box.querySelector('.rp-text').textContent = `Neu: ${neu.name}! ${text(neu)}`;
-      box.classList.add('aufstieg');
+      box.classList.add('rp-hoch');
     }, 950);
   }, verz);
 }

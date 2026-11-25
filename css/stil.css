@@ -1254,8 +1254,8 @@ body[data-hg="joker"]::before { inset: -20%; animation: polarlicht-zug 26s ease-
 .rp-leiste { display: grid; gap: 4px; margin-top: 2px; }
 .rp-leiste .ruhm-balken { height: 9px; }
 .rp-text { color: var(--text-3); font-size: .76rem; }
-.ruhm-plus.aufstieg { border-color: var(--rang); box-shadow: 0 0 24px -10px var(--rang); }
-.ruhm-plus.aufstieg .rp-text { color: var(--rang); font-weight: 800; }
+.ruhm-plus.rp-hoch { border-color: var(--rang); box-shadow: 0 0 24px -10px var(--rang); }
+.ruhm-plus.rp-hoch .rp-text { color: var(--rang); font-weight: 800; }
 
 /* ---------- Ruhm am Spielende ---------- */
 .ende-ruhm { display: flex; width: fit-content; max-width: 100%; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px; margin: 16px auto 0; padding: 8px 14px 8px 10px; border-radius: 99px; background: rgba(255,255,255,.04); border: 1px solid var(--linie); font-weight: 700; font-size: .9rem; animation: t-text .4s ease both; }

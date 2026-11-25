@@ -1,11 +1,11 @@
-import { sb, spielEintragen, spielLoggen } from './server.js?v=0.9.7';
-import { stilVon } from './ruhm.js?v=0.9.7';
-import { letzteTippfehler } from './abgleich.js?v=0.9.7';
-import { auswerten } from './weltkarte.js?v=0.9.7';
+import { sb, spielEintragen, spielLoggen } from './server.js?v=0.9.8';
+import { stilVon } from './ruhm.js?v=0.9.8';
+import { letzteTippfehler } from './abgleich.js?v=0.9.8';
+import { auswerten } from './weltkarte.js?v=0.9.8';
 export const TIPPFEHLER_ABZUG = 10; // Punkte Abzug je Tippfehler bei einer richtigen Antwort
-import { fragenBauen, pruefeFrage, richtigeWahl, fragenVorladen, KATEGORIEN, kategorieVon } from './kategorien.js?v=0.9.7';
-import { lobbyMelden, lobbyAbmelden } from './lobby.js?v=0.9.7';
-import { chatErlaubt, textPruefen } from './filter.js?v=0.9.7';
+import { fragenBauen, pruefeFrage, richtigeWahl, fragenVorladen, KATEGORIEN, kategorieVon } from './kategorien.js?v=0.9.8';
+import { lobbyMelden, lobbyAbmelden } from './lobby.js?v=0.9.8';
+import { chatErlaubt, textPruefen } from './filter.js?v=0.9.8';
 
 export const STANDARD = { kategorie: 'flaggen', runden: 10, zeit: 15, auswahl: 'alle', modus: 'tippen', chat: 'eingeschraenkt', sichtbar: 'offen', ziel: 'beides' };
 const COUNTDOWN = 3000;
@@ -189,7 +189,8 @@ export class Raum {
   // Falschantwort für die Spalte rechts: Name plus das, was getippt oder angeklickt wurde
   danebenZeile(id, text) {
     const t = String(text || '').trim().slice(0, 40);
-    if (!t || !chatErlaubt(t, this.einst.chat || 'eingeschraenkt')) return;
+    // falsche Antworten sind kein Chat: hier immer streng filtern, auch wenn der Chat offen ist
+    if (!t || !chatErlaubt(t, 'eingeschraenkt')) return;
     const wer = this.bekannt.get(id);
     this.chat.push({ daneben: true, id, name: wer?.name || 'Jemand', avatar: wer?.avatar, text: t });
     if (this.chat.length > 80) this.chat.shift();

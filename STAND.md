@@ -2,7 +2,7 @@
 
 ## Aktuell (25.11.2026)
 
-- **Version:** 0.9.7
+- **Version:** 0.9.8
 - **Live:** https://requiem-04.github.io/claudis-quizbude/ (Repo `requiEM-04/claudis-quizbude`, Branch `main`, GitHub Pages)
 - **Server:** Supabase-Projekt `quizbude` (Ref `jgvjjjiwfjxynbzjaxsg`, Frankfurt), E-Mail-Bestätigung aus, Realtime mit öffentlichen Kanälen.
 - **Inhalt:** Konten (Name + Passwort ab 4 Zeichen), Räume mit 4-Buchstaben-Code (live über Realtime), Flaggenraten (tippen oder 4 zur Auswahl), Flaggen-Sprint (60 s), Bestenliste (Siege, Punkte, Sprint), „Zuletzt gespielt".
@@ -122,6 +122,10 @@
   - Ladebildschirm (vier Asse werden ausgeteilt, Balken, Schritte): Schriften, Bilder und alle Effekte werden einmal unsichtbar vorgezeichnet. Mindestens 0,65 s, höchstens 2,5 s, Notaus per CSS nach 9 s.
   - Leistung: alle Weichzeichner (backdrop-filter) entfernt, Holo per transform statt background-position, weniger Partikel je Effekt, Effekt-Vorschauen im Anpassen laufen nur beim Drüberfahren, Effekte pausieren bei offenen Fenstern und im Kartenmodus.
   - Anmeldeseite: Überschrift „Quizzen in der Pause …“, Spielarten als Chips, darunter „Gerade vorne“ (Saison-Top 5, Klick öffnet das Spieler-Fenster).
+
+- **Neu in 0.9.8:**
+  - Ruhm-Box im Endstand: Klasse „aufstieg“ kollidierte mit dem Aufstiegs-Fenster (Rand und Innenabstand weg), heißt jetzt rp-hoch und wird beim nächsten Spiel zurückgesetzt.
+  - Falsche Antworten in der Chat-Spalte werden immer streng gefiltert, auch bei offenem Chat.
 
 ## Als Nächstes (mit Colin besprochen)
 
