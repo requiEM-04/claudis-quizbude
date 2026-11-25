@@ -1,26 +1,26 @@
-import { VERSION } from './config.js?v=0.11.0';
+import { VERSION } from './config.js?v=0.11.1';
 import {
   online, nameFehler, registrieren, anmelden, abmelden, sitzungHolen, profilLaden, profilSpeichern,
   bestenliste, spieleSeit, alleProfile, sprintEintragen, sprintBestenliste, rangVon, spielerAnzahl, spieleVon, sb,
   adminAnmelden, istAdminName, konfigLaden, adminEinrichten, einrichtungOffen, abzeichenVon, saisonAbschliessen, winterquestStand,
-} from './server.js?v=0.11.0';
-import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.11.0';
-import { Raum, codeNeu, STANDARD, TIPPFEHLER_ABZUG } from './raum.js?v=0.11.0';
-import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.11.0';
+} from './server.js?v=0.11.1';
+import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.11.1';
+import { Raum, codeNeu, STANDARD, TIPPFEHLER_ABZUG } from './raum.js?v=0.11.1';
+import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.11.1';
 import {
   KATEGORIEN, KATEGORIE_REIHE, SPRINT_REIHE, kategorieVon, optionSchluessel, richtigeWahl, umrisseDa, umrisseLaden,
   sprintFrage, pruefeFrage, fragenVorladen, kanon,
-} from './kategorien.js?v=0.11.0';
-import { LAENDER } from './laender.js?v=0.11.0';
-import { auswahlfeld } from './auswahlfeld.js?v=0.11.0';
-import { KATEGORIE_SYMBOL } from './symbole.js?v=0.11.0';
-import { konfetti } from './konfetti.js?v=0.11.0';
-import { karteBauen, karteLaden, auswerten } from './weltkarte.js?v=0.11.0';
-import { STUFEN, ERFOLGE, erfolgStand, emblem, wertungName, saisonName, saisonKurz, vitrineLesen } from './abzeichen.js?v=0.11.0';
+} from './kategorien.js?v=0.11.1';
+import { LAENDER } from './laender.js?v=0.11.1';
+import { auswahlfeld } from './auswahlfeld.js?v=0.11.1';
+import { KATEGORIE_SYMBOL } from './symbole.js?v=0.11.1';
+import { konfetti } from './konfetti.js?v=0.11.1';
+import { karteBauen, karteLaden, auswerten } from './weltkarte.js?v=0.11.1';
+import { STUFEN, ERFOLGE, erfolgStand, emblem, wertungName, saisonName, saisonKurz, vitrineLesen } from './abzeichen.js?v=0.11.1';
 import {
   RAENGE, BILDER, ARTEN, JOKER, SONDER, sonderVon, sonderFrei, WINTERQUEST, questGeschafft, ruhmInfo, stufeVon, stufeInfo, wappen, effektHtml, rahmenDeko, stilVon, istFrei, freiAb, neuFrei,
-  belohnungName, rangVonId, symbol, symbolSvg, SCHWELLEN, flockeSvg, bildVon, BILD_ARTEN } from './ruhm.js?v=0.11.0';
-import { FIGUREN, FREIE_FIGUREN, KREISE, RINGE, figurSvg, figurAusEmoji, figurVonId, bildFrei, bildFreiAb, bildEintrag } from './figuren.js?v=0.11.0';
+  belohnungName, rangVonId, symbol, symbolSvg, SCHWELLEN, flockeSvg, bildVon, BILD_ARTEN } from './ruhm.js?v=0.11.1';
+import { FIGUREN, FREIE_FIGUREN, KREISE, RINGE, figurSvg, figurAusEmoji, figurVonId, bildFrei, bildFreiAb, bildEintrag } from './figuren.js?v=0.11.1';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));

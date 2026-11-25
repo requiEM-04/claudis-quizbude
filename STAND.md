@@ -2,7 +2,7 @@
 
 ## Aktuell (25.11.2026)
 
-- **Version:** 0.11.0
+- **Version:** 0.11.1
 - **Live:** https://requiem-04.github.io/claudis-quizbude/ (Repo `requiEM-04/claudis-quizbude`, Branch `main`, GitHub Pages)
 - **Server:** Supabase-Projekt `quizbude` (Ref `jgvjjjiwfjxynbzjaxsg`, Frankfurt), E-Mail-Bestätigung aus, Realtime mit öffentlichen Kanälen.
 - **Inhalt:** Konten (Name + Passwort ab 4 Zeichen), Räume mit 4-Buchstaben-Code (live über Realtime), Flaggenraten (tippen oder 4 zur Auswahl), Flaggen-Sprint (60 s), Bestenliste (Siege, Punkte, Sprint), „Zuletzt gespielt".
@@ -161,6 +161,8 @@
 - **Getestet (lokal, Test-Server):** Freischaltung nach Ruhm und Medaille, Speichern, Anzeige in Dock/Karte/Bestenliste/Raum/Chat/Treppchen, Admin, spieltest, gasttest, sprinttest (auf neuen Editor umgestellt).
 - **Behoben mit 009:** Seit 006 brach das Anlegen im Profil mit „permission denied for function qb_sonder_frei“ ab (Trigger ohne `security definer`). Vorher/nachher in der Datenbank geprüft: jetzt geht Anlegen, freie Bildteile werden gespeichert, Löwe ohne Medaille und Kupferglut ohne Ruhm werden abgelehnt.
 - Echte Konten am 25.11.: 🐙, 🐸, 🦉 werden automatisch Krake, Frosch, Eule; 🚧 bleibt Emoji, bis gewählt wird.
+
+- **Neu in 0.11.1:** Abzeichen-Stufen Bronze, Silber, Gold, Platin, Diamant (statt gewöhnlich bis mythisch, kein Grün mehr). Emblem als Metall-Medaillon: Bronze mit Band, Silber mit Lorbeer, Gold mit Kranz, Krone und Funkeln, Platin mit drehendem Strahlenkranz, Diamant mit Regenbogen-Strahlen und Edelsteinen. Glanzstreifen über jedem erreichten Abzeichen, schneller je höher die Stufe.
 
 ## Als Nächstes (mit Colin besprochen)
 - Reihenfolge jetzt: neue Profilbilder (live in 0.11.0) → Freunde und Einladungen → neue Quizze Nachbarn und Buchstabensalat → vorgemerkt: Seitenverhältnisse (von Flaggen) raten. Kein Tagesrätsel nach Loldle-Art.

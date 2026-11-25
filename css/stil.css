@@ -1568,9 +1568,20 @@ body.kartenmodus main .effekt * { animation-play-state: paused; }
 
 /* ---------- Abzeichen ---------- */
 .emblem { display: block; flex: none; }
-.emblem.aus { opacity: .5; }
-.emblem.st-legendaer { filter: drop-shadow(0 0 5px rgba(194, 155, 255, .35)); }
-.emblem.st-mythisch { filter: drop-shadow(0 0 7px rgba(242, 195, 91, .5)); }
+.emblem.aus { opacity: .55; }
+/* Bewegung je Stufe: Glanz über das Medaillon, Funkeln ab Gold, Strahlenkranz dreht ab Platin */
+.emblem .em-glanz { transform: translateX(-34px); animation: em-glanz 6s ease-in-out infinite; }
+.emblem.st-silber .em-glanz { animation-duration: 5.2s; }
+.emblem.st-gold .em-glanz { animation-duration: 4.4s; }
+.emblem.st-platin .em-glanz { animation-duration: 3.8s; }
+.emblem.st-diamant .em-glanz { animation-duration: 3.2s; }
+@keyframes em-glanz { 0%, 58% { transform: translateX(-34px); } 86%, 100% { transform: translateX(34px); } }
+.emblem .em-funke { transform-box: fill-box; transform-origin: center; opacity: 0; animation: em-funkeln 2.6s ease-in-out infinite; }
+@keyframes em-funkeln { 0%, 100% { opacity: 0; transform: scale(.2) rotate(0deg); } 40% { opacity: 1; transform: scale(1) rotate(45deg); } 70% { opacity: 0; transform: scale(.5) rotate(90deg); } }
+.emblem .em-strahlen { transform-box: view-box; transform-origin: 30px 30px; animation: em-drehen 28s linear infinite; }
+.emblem .em-strahlen-b { animation-duration: 40s; animation-direction: reverse; opacity: .9; }
+@keyframes em-drehen { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .emblem .em-glanz, .emblem .em-funke, .emblem .em-strahlen { animation: none; } }
 /* Vitrine auf der Spielerkarte statt Spiele/Siege/Sprint */
 .hk-vitrine { align-items: end; }
 .hk-abz { display: grid; justify-items: center; gap: 3px; min-width: 0; }

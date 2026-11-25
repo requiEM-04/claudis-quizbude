@@ -1,12 +1,12 @@
-// Abzeichen: Erfolge mit fünf Seltenheitsstufen. Jede Stufe hat eine eigene Farbe, das Emblem zeigt das Thema.
+// Abzeichen: Erfolge in fünf Stufen von Bronze bis Diamant. Je höher, desto mehr Schmuck und Bewegung am Emblem.
 // Bis zu drei Abzeichen (auch Saison-Medaillen) liegen auf der Spielerkarte statt Spiele, Siege, Sprint.
 
 export const STUFEN = [
-  { id: 'gewoehnlich', name: 'Gewöhnlich', farbe: '#A7B0B5', hell: '#E3E8EA', tief: '#59636A' },
-  { id: 'selten', name: 'Selten', farbe: '#6FCB93', hell: '#C9F2D8', tief: '#2C6E48' },
-  { id: 'episch', name: 'Episch', farbe: '#7FAEFF', hell: '#D2E3FF', tief: '#2F4E8F' },
-  { id: 'legendaer', name: 'Legendär', farbe: '#C29BFF', hell: '#EADBFF', tief: '#5B3C99' },
-  { id: 'mythisch', name: 'Mythisch', farbe: '#F2C35B', hell: '#FFF0C2', tief: '#8E6512' },
+  { id: 'bronze', name: 'Bronze', farbe: '#C8834F', hell: '#F6C9A0', tief: '#6B3A1A', band: '#8E3B32' },
+  { id: 'silber', name: 'Silber', farbe: '#BCC6CE', hell: '#FFFFFF', tief: '#5F6B74', band: '#3F5C8C' },
+  { id: 'gold', name: 'Gold', farbe: '#E9B83A', hell: '#FFF1B0', tief: '#8A5D0E' },
+  { id: 'platin', name: 'Platin', farbe: '#9FDDE4', hell: '#F2FEFF', tief: '#3C7A87' },
+  { id: 'diamant', name: 'Diamant', farbe: '#B4A4FF', hell: '#FFFFFF', tief: '#4A3EA6' },
 ];
 
 const rekord = k => p => k === 'flaggen' ? Math.max(p.sprint_rekord || 0, p.rekorde?.flaggen || 0) : (p.rekorde?.[k] || 0);
@@ -30,7 +30,7 @@ const SYM = {
   gemischt: '<rect x="4" y="4" width="16" height="16" rx="3.5"/><path d="M8.5 8.5h.01M15.5 8.5h.01M12 12h.01M8.5 15.5h.01M15.5 15.5h.01"/>',
 };
 
-// was: worauf es sich bezieht (für „16 / 20 Flaggen-Rekord“), stufen: Grenzen für Gewöhnlich … Mythisch
+// was: worauf es sich bezieht (für „16 / 20 Flaggen-Rekord“), stufen: Grenzen für Bronze … Diamant
 export const ERFOLGE = [
   { id: 'spiele', name: 'Stammgast', was: 'Raumspiele', sym: 'tuer', wert: p => p.spiele || 0, stufen: [5, 25, 75, 200, 500] },
   { id: 'siege', name: 'Siegertyp', was: 'Siege', sym: 'krone', wert: p => p.siege || 0, stufen: [1, 10, 30, 100, 250] },
@@ -50,7 +50,7 @@ export const ERFOLGE = [
 ];
 export const erfolgVon = id => ERFOLGE.find(e => e.id === id);
 
-// Stand eines Erfolgs: stufe 0 = noch nichts, 1 = Gewöhnlich … 5 = Mythisch
+// Stand eines Erfolgs: stufe 0 = noch nichts, 1 = Bronze … 5 = Diamant
 export function erfolgStand(e, p, extra) {
   const wert = e.wert(p || {}, extra);
   const stufe = e.stufen.filter(g => wert >= g).length;
@@ -59,19 +59,64 @@ export function erfolgStand(e, p, extra) {
   return { wert, stufe, naechste, anteil: naechste ? Math.min(1, (wert - vorher) / (naechste - vorher)) : 1 };
 }
 
-// Emblem: sechseckiges Schild in der Stufenfarbe, Symbol in der Mitte, Punkte unten zeigen die Stufe
+// Emblem: Metall-Medaillon mit Symbol. Ab Silber Lorbeer, ab Gold Krone und Funkeln, ab Platin Strahlenkranz,
+// Diamant mit Regenbogen und Edelsteinen. Bewegung nur über transform/opacity (Glanz, Funkeln, Strahlen).
 let emblemNr = 0;
+const z = n => Math.round(n * 100) / 100;
+function lorbeer(n, fuell, rand) {
+  let aus = '';
+  for (let i = 0; i < n; i++) {
+    const w = 108 + i * (64 / Math.max(1, n - 1)), r = w * Math.PI / 180;
+    const x = 30 + 21.5 * Math.cos(r), y = 30 + 21.5 * Math.sin(r), dreh = w + 90 + 28;
+    const blatt = (bx, dr) => `<ellipse cx="${z(bx)}" cy="${z(y)}" rx="4.6" ry="2" transform="rotate(${z(dr)} ${z(bx)} ${z(y)})" fill="${fuell}" stroke="${rand}" stroke-width=".7"/>`;
+    aus += blatt(x, dreh) + blatt(60 - x, 180 - dreh);
+  }
+  return aus;
+}
+const funke = (x, y, g, verz) => `<path class="em-funke" style="animation-delay:${verz}s" d="M${x} ${y - g}Q${x} ${y} ${x + g} ${y}Q${x} ${y} ${x} ${y + g}Q${x} ${y} ${x - g} ${y}Q${x} ${y} ${x} ${y - g}Z" fill="#fff"/>`;
+function strahlen(spitzen, aussen, innen, fuell, klasse, versatz = 0) {
+  const p = [];
+  for (let i = 0; i < spitzen * 2; i++) {
+    const w = (versatz + i * 180 / spitzen - 90) * Math.PI / 180, r = i % 2 ? innen : aussen;
+    p.push(`${z(30 + r * Math.cos(w))} ${z(30 + r * Math.sin(w))}`);
+  }
+  return `<path class="${klasse}" d="M${p.join(' L')}Z" fill="${fuell}"/>`;
+}
 export function emblem(e, stufe, groesse = 44) {
-  const s = STUFEN[Math.max(0, stufe - 1)];
-  const aus = !stufe;
-  const g = `abz-${aus ? 'aus' : s.id}-${++emblemNr}`; // eigene ID je Emblem (ausgeblendete Kopien würden sonst greifen)
-  const punkte = [0, 1, 2, 3, 4].map(i => `<circle cx="${14 + i * 5}" cy="45.5" r="1.6" fill="${!aus && i < stufe ? s.hell : 'rgba(255,255,255,.18)'}"/>`).join('');
-  return `<svg class="emblem${aus ? ' aus' : ` st-${s.id}`}" width="${groesse}" height="${Math.round(groesse * 52 / 48)}" viewBox="0 0 48 52" aria-hidden="true">
-    <defs><linearGradient id="${g}" x1="0" y1="0" x2=".4" y2="1"><stop offset="0" stop-color="${aus ? '#5A6166' : s.hell}"/><stop offset=".55" stop-color="${aus ? '#3E4448' : s.farbe}"/><stop offset="1" stop-color="${aus ? '#2C3135' : s.tief}"/></linearGradient></defs>
-    <path d="M24 1.5 45 12.5v20.5L24 50.5 3 33V12.5Z" fill="url(#${g})"/>
-    <path d="M24 6.5 40.2 15v16.2L24 44.6 7.8 31.2V15Z" fill="#1C2024"/>
-    <g transform="translate(14 11.5) scale(.83)" fill="none" stroke="${aus ? '#6F777A' : s.hell}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${SYM[e.sym] || ''}</g>
-    ${punkte}
+  const aus = !stufe, t = Math.min(5, stufe || 0), s = STUFEN[Math.max(0, t - 1)];
+  const n = ++emblemNr, id = k => `em${n}${k}`; // eigene IDs je Emblem (ausgeblendete Kopien würden sonst greifen)
+  const sym = `<g transform="translate(21.4 21.4) scale(.72)" fill="none" stroke="${aus ? '#6F777A' : s.hell}" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">${SYM[e.sym] || ''}</g>`;
+  if (aus) {
+    return `<svg class="emblem aus" width="${groesse}" height="${groesse}" viewBox="0 0 60 60" aria-hidden="true">
+      <circle cx="30" cy="30" r="17" fill="#3A4045"/><circle cx="30" cy="30" r="13.8" fill="#1E2226"/>${sym}</svg>`;
+  }
+  const metall = `url(#${id('m')})`, regenbogen = `url(#${id('r')})`;
+  let hinten = '', vorne = '';
+  if (t >= 5) hinten += strahlen(16, 29.5, 23, regenbogen, 'em-strahlen em-strahlen-b', 11.25);
+  if (t >= 4) hinten += strahlen(t >= 5 ? 8 : 12, t >= 5 ? 26.5 : 28.5, t >= 5 ? 19 : 21.5, metall, 'em-strahlen');
+  if (t <= 2) hinten += `<path d="M22.5 40 L16.5 56 L21 53 L24 57.5 L28.5 44Z" fill="${s.band}"/><path d="M37.5 40 L43.5 56 L39 53 L36 57.5 L31.5 44Z" fill="${s.band}"/>`;
+  if (t >= 2) hinten += lorbeer(t === 2 ? 3 : t === 3 ? 4 : 5, metall, s.tief);
+  if (t >= 3) hinten += `<path d="M20.5 16 L21.8 5.5 L26.2 10 L30 3 L33.8 10 L38.2 5.5 L39.5 16Z" fill="${metall}" stroke="${s.tief}" stroke-width=".8" stroke-linejoin="round"/>`
+    + (t >= 5 ? `<path d="M30 6.2 L32 9 L30 11.8 L28 9Z" fill="${regenbogen}" stroke="#fff" stroke-width=".5"/>` : '');
+  if (t >= 5) vorne += `<path d="M30 47.5 L33.5 51.5 L30 56.5 L26.5 51.5Z" fill="${regenbogen}" stroke="#fff" stroke-width=".6"/>`;
+  if (t >= 3) vorne += [[45, 17, 2.6, 0], [15.5, 43, 2.2, .9], [46, 43, 1.9, 1.7], [14, 16.5, 2, 2.4]].slice(0, t - 1).map(([x, y, g, v]) => funke(x, y, g, v)).join('');
+  return `<svg class="emblem st-${s.id}" width="${groesse}" height="${groesse}" viewBox="0 0 60 60" aria-hidden="true">
+    <defs>
+      <linearGradient id="${id('m')}" gradientUnits="userSpaceOnUse" x1="8" y1="6" x2="52" y2="54"><stop offset="0" stop-color="${s.hell}"/><stop offset=".32" stop-color="${s.farbe}"/><stop offset=".56" stop-color="${s.tief}"/><stop offset=".8" stop-color="${s.farbe}"/><stop offset="1" stop-color="${s.hell}"/></linearGradient>
+      <radialGradient id="${id('f')}" cx=".42" cy=".36" r=".7"><stop offset="0" stop-color="#323A41"/><stop offset="1" stop-color="#14181B"/></radialGradient>
+      <linearGradient id="${id('g')}" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".75"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+      ${t >= 5 ? `<linearGradient id="${id('r')}" gradientUnits="userSpaceOnUse" x1="4" y1="4" x2="56" y2="56"><stop offset="0" stop-color="#FF9BD2"/><stop offset=".25" stop-color="#FFD98A"/><stop offset=".5" stop-color="#9BF2C0"/><stop offset=".75" stop-color="#8FD3FF"/><stop offset="1" stop-color="#C6A8FF"/></linearGradient>` : ''}
+      ${t >= 3 ? `<radialGradient id="${id('s')}"><stop offset=".45" stop-color="${s.farbe}" stop-opacity=".5"/><stop offset="1" stop-color="${s.farbe}" stop-opacity="0"/></radialGradient>` : ''}
+      <clipPath id="${id('c')}"><circle cx="30" cy="30" r="17"/></clipPath>
+    </defs>
+    ${t >= 3 ? `<circle cx="30" cy="30" r="29.5" fill="url(#${id('s')})"/>` : ''}
+    ${hinten}
+    <circle cx="30" cy="30" r="17" fill="${metall}" stroke="${s.tief}" stroke-width="1"/>
+    <circle cx="30" cy="30" r="15.3" fill="none" stroke="${s.hell}" stroke-opacity=".5" stroke-width=".8"/>
+    <circle cx="30" cy="30" r="13.8" fill="url(#${id('f')})"/>
+    ${sym}
+    <g clip-path="url(#${id('c')})"><g transform="rotate(25 30 30)"><rect class="em-glanz" x="25.5" y="2" width="9" height="56" fill="url(#${id('g')})"/></g></g>
+    ${vorne}
   </svg>`;
 }
 
