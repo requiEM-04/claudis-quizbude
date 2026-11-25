@@ -2,7 +2,7 @@
 
 ## Aktuell (25.11.2026)
 
-- **Version:** 0.9.0
+- **Version:** 0.9.1
 - **Live:** https://requiem-04.github.io/claudis-quizbude/ (Repo `requiEM-04/claudis-quizbude`, Branch `main`, GitHub Pages)
 - **Server:** Supabase-Projekt `quizbude` (Ref `jgvjjjiwfjxynbzjaxsg`, Frankfurt), E-Mail-Bestätigung aus, Realtime mit öffentlichen Kanälen.
 - **Inhalt:** Konten (Name + Passwort ab 4 Zeichen), Räume mit 4-Buchstaben-Code (live über Realtime), Flaggenraten (tippen oder 4 zur Auswahl), Flaggen-Sprint (60 s), Bestenliste (Siege, Punkte, Sprint), „Zuletzt gespielt".
@@ -84,11 +84,15 @@
   - **Hintergründe** füllen die ganze Seite statt eines Schimmers oben.
   - Mehr Abstand zwischen Schriftzug und Begrüßung.
 
+- **Neu in 0.9.1:**
+  - Hintergründe mit richtigen Mustern: Spieltisch (Filz unter Lampenlicht, Karo-Prägung), Roter Samt (Glanzbahnen, Herzen), Mitternacht (Sternenhimmel, Pik), Goldbrokat (Ornament), Schillernde Nacht (Sterne, wanderndes Polarlicht).
+  - Das Polarlicht bewegt sich per transform, damit beim Scrollen nichts neu gezeichnet wird.
+  - Der große Schriftzug wirkt auf farbigem Hintergrund durchscheinend.
+
 ## Als Nächstes (mit Colin besprochen)
 
 1. Eigene Profilbilder statt Emojis (mit Colin zusammen gestalten).
 2. Admin-Bereich wie in Pokélings (eigenes Konto `requiem-admin`, Login mit Name „Admin“, Tabelle `admins`, `is_admin()` in jeder Funktion, eigene Seite `admin.html`): Spieler, Räume, Nachricht an alle, Server, Protokoll. Colin legt das Konto selbst in Supabase an.
-2b. Hintergründe schöner (richtige Muster).
 3. Colin bewertet den Ruhm (Namen, Optik, Tempo). Danach Feinschliff.
 4. Saison-Abzeichen zum Monatsende vergeben (siehe `PLAN.md`, Abschnitt 4). Die erste Saison endet am 30.11.2026.
 5. Währung, Shop und Saisonblatt nach `PLAN.md`, sobald die offenen Fragen geklärt sind.
