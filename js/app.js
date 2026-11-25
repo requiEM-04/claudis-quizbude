@@ -1,23 +1,24 @@
-import { VERSION } from './config.js?v=0.8.2';
+import { VERSION } from './config.js?v=0.9.0';
 import {
   online, nameFehler, registrieren, anmelden, abmelden, sitzungHolen, profilLaden, profilSpeichern,
   bestenliste, spieleSeit, alleProfile, sprintEintragen, sprintBestenliste, rangVon, spielerAnzahl, spieleVon, sb,
-} from './server.js?v=0.8.2';
-import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.8.2';
-import { Raum, codeNeu, STANDARD, TIPPFEHLER_ABZUG } from './raum.js?v=0.8.2';
-import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.8.2';
+} from './server.js?v=0.9.0';
+import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.9.0';
+import { Raum, codeNeu, STANDARD, TIPPFEHLER_ABZUG } from './raum.js?v=0.9.0';
+import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.9.0';
 import {
   KATEGORIEN, KATEGORIE_REIHE, SPRINT_REIHE, kategorieVon, optionSchluessel, richtigeWahl, umrisseDa, umrisseLaden,
   sprintFrage, pruefeFrage, fragenVorladen, kanon,
-} from './kategorien.js?v=0.8.2';
-import { LAENDER } from './laender.js?v=0.8.2';
-import { auswahlfeld } from './auswahlfeld.js?v=0.8.2';
-import { KATEGORIE_SYMBOL } from './symbole.js?v=0.8.2';
-import { konfetti } from './konfetti.js?v=0.8.2';
+} from './kategorien.js?v=0.9.0';
+import { LAENDER } from './laender.js?v=0.9.0';
+import { auswahlfeld } from './auswahlfeld.js?v=0.9.0';
+import { KATEGORIE_SYMBOL } from './symbole.js?v=0.9.0';
+import { konfetti } from './konfetti.js?v=0.9.0';
+import { karteBauen, karteLaden, auswerten } from './weltkarte.js?v=0.9.0';
 import {
   RAENGE, BILDER, ARTEN, JOKER, ruhmInfo, stufeVon, stufeInfo, wappen, effektHtml, rahmenDeko, stilVon, istFrei, freiAb, neuFrei,
   belohnungName, rangVonId, symbol, symbolSvg, SCHWELLEN,
-} from './ruhm.js?v=0.8.2';
+} from './ruhm.js?v=0.9.0';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -50,6 +51,7 @@ let lobbyAus = null;
 let aktuellerScreen = null;
 function zeige(name) {
   document.querySelectorAll('.screen').forEach(s => { s.hidden = s.id !== 's-' + name; });
+  if (name !== 'raum' && name !== 'sprint') document.body.classList.remove('kartenmodus');
   if (aktuellerScreen !== name) { aktuellerScreen = name; scrollTo(0, 0); } // neue Seite beginnt oben
   ruhmMiniZeichnen();
 }
@@ -602,10 +604,21 @@ async function sprintSaisonLaden() {
   }).join('');
 }
 
+// ---------- Weltkarte: je eine Karte für Raum und Sprint, einmal gebaut ----------
+const KARTEN = {};
+const kartenPin = {};
+function weltkarte(id) {
+  if (!KARTEN[id]) KARTEN[id] = karteBauen($(id), (lon, lat) => kartenPin[id]?.(lon, lat));
+  return KARTEN[id];
+}
+const kartenmodus = an => document.body.classList.toggle('kartenmodus', !!an);
+const kmText = a => a.km === 0 ? 'Getroffen!' : `${a.km.toLocaleString('de-DE')} km daneben`;
+
 function kachelBild(k) {
   const f = c => `<img src="${flaggeUrl(c)}" alt="">`;
   switch (k) {
     case 'flaggen': return `<span class="kb-faecher">${f('JP')}${f('BR')}${f('SE')}</span>`;
+    case 'karte': return '<img class="kb-karte" src="bilder/weltkarte-vorschau.svg" alt="">';
     case 'umrisse': return '<img class="kb-umriss" src="bilder/umriss-vorschau.svg" alt="">';
     case 'hauptstaedte': return '<span class="kb-text">Wien?</span>';
     case 'groesser': return `<span class="kb-duell">${f('CA')}<b>oder</b>${f('BR')}</span>`;
@@ -740,15 +753,7 @@ const stilGleich = (a, b) => ARTEN.every(x => (a[x.id] || '') === (b[x.id] || ''
 const stilAllesFrei = st => ARTEN.every(x => !st[x.id] || istFrei(x.id, st[x.id], ich.ruhm || 0));
 function hochkarteZeichnen() {
   if (!ich || !$('hochkarte')) return;
-  const jetzt = stilVon(ich), auswahl = auswahlStil || jetzt;
-  $('hochkarte').innerHTML = hochkarteHtml(ich, vorschauStil || auswahl);
-  const geaendert = !!auswahlStil && !stilGleich(auswahlStil, jetzt), frei = stilAllesFrei(auswahl);
-  $('anpassen-knoepfe').hidden = !geaendert;
-  $('stil-anlegen').disabled = !frei;
-  $('anpassen-unter').textContent = vorschauStil && !stilGleich(vorschauStil, auswahl) ? 'Vorschau.'
-    : geaendert ? (frei ? 'Noch nicht angelegt.' : 'Probe: Etwas davon ist noch gesperrt.')
-    : 'So sehen dich die anderen. Fahr über etwas, um es auszuprobieren.';
-  $('anpassen-unter').classList.toggle('vorschau', !!vorschauStil || geaendert);
+  $('hochkarte').innerHTML = hochkarteHtml(ich, vorschauStil || stilVon(ich));
 }
 
 const ART_NAME = { farbe: 'Namensfarbe', titel: 'Titel', effekt: 'Effekt', rahmen: 'Rahmen', hintergrund: 'Hintergrund' };
@@ -766,7 +771,7 @@ function kachelName(art, r) {
   return esc(r[art === 'effekt' ? 'effekt' : art === 'rahmen' ? 'rahmen' : 'hintergrund']);
 }
 function anpassenZeichnen() {
-  const st = stilVon(ich), wahl = auswahlStil || st, ruhm = ich.ruhm || 0, zahl = n => n.toLocaleString('de-DE');
+  const st = stilVon(ich), wahl = st, ruhm = ich.ruhm || 0, zahl = n => n.toLocaleString('de-DE');
   $('anpassen-reiter').innerHTML = ARTEN.map(a => {
     const anzahl = RAENGE.filter(r => istFrei(a.id, r.id, ruhm)).length;
     return `<button role="tab" class="umschalter-knopf${a.id === anpassenArt ? ' aktiv' : ''}" aria-selected="${a.id === anpassenArt}" data-art="${a.id}">${ART_NAME[a.id]} <small>${anzahl}/5</small></button>`;
@@ -888,23 +893,18 @@ function profilAufbauen() {
     anpassenArt = b.dataset.art; vorschauStil = null;
     anpassenZeichnen();
   };
-  const probieren = b => { vorschauStil = { ...(auswahlStil || stilVon(ich)), [anpassenArt]: b.dataset.rang || undefined }; hochkarteZeichnen(); };
+  const probieren = b => { vorschauStil = { ...stilVon(ich), [anpassenArt]: b.dataset.rang || undefined }; hochkarteZeichnen(); };
   $('stil-kacheln').addEventListener('mouseover', e => { const b = e.target.closest('.stil-kachel'); if (b) probieren(b); });
   $('stil-kacheln').addEventListener('mouseleave', () => { vorschauStil = null; hochkarteZeichnen(); });
-  // Antippen wählt nur aus (Vorschau auf der Karte), angelegt wird erst mit „Anlegen“
+  // Klick legt Freigeschaltetes sofort an; Gesperrtes bleibt eine Probe auf der Karte
   $('stil-kacheln').onclick = e => {
     const b = e.target.closest('.stil-kachel');
     if (!b) return;
-    auswahlStil = { ...(auswahlStil || stilVon(ich)), [anpassenArt]: b.dataset.rang || undefined };
+    if (b.classList.contains('gesperrt')) { probieren(b); toast(`Frei ab ${stufeInfo(freiAb(anpassenArt, b.dataset.rang)).name}.`); return; }
+    if (b.getAttribute('aria-pressed') === 'true') return;
     vorschauStil = null;
-    anpassenZeichnen();
+    stilAnlegen({ ...stilVon(ich), [anpassenArt]: b.dataset.rang }, 'Angelegt.');
   };
-  $('stil-anlegen').onclick = () => {
-    if (!auswahlStil || !stilAllesFrei(auswahlStil)) return;
-    const neu = auswahlStil; auswahlStil = null;
-    stilAnlegen(neu);
-  };
-  $('stil-verwerfen').onclick = () => { auswahlStil = null; vorschauStil = null; anpassenZeichnen(); };
   $('profil-speichern').onclick = async () => {
     try {
       await profilSpeichern(ich.id, { avatar: profilWahl.avatar, farbe: profilWahl.farbe });
@@ -1114,6 +1114,8 @@ function raumZeichnen() {
     const stadtKat = ['hauptstaedte', 'stadtland'].includes(r.einst.kategorie);
     if (r.einst.kategorie === 'stadtland') $('einst-kategorie').value = 'hauptstaedte';
     document.querySelector('.einst-richtung').hidden = !stadtKat;
+    document.querySelector('.einst-ziel').hidden = r.einst.kategorie !== 'karte';
+    document.querySelector('.einst-modus').hidden = r.einst.kategorie === 'karte';
     $('einst-richtung').value = r.einst.kategorie === 'stadtland' ? 'stadt' : 'land';
     if (!kat.tippen) { $('einst-modus').value = 'auswahl'; $('einst-modus').disabled = true; }
     einstFelder.forEach(f => f.aktualisieren());
@@ -1138,6 +1140,20 @@ function raumZeichnen() {
       $('frage-bild').dataset.art = f.k;
       gezeichnet.umriss = umrisseDa();
     }
+    const istKarte = f.k === 'karte';
+    kartenmodus(istKarte);
+    $('raum-weltkarte').hidden = !istKarte;
+    if (istKarte && gezeichnet.idx !== r.idx) {
+      const idx = r.idx;
+      kartenPin['raum-weltkarte'] = (lon, lat) => {
+        const a = raum?.pinSetzen(lon, lat);
+        if (!a) return;
+        weltkarte('raum-weltkarte').pin(lon, lat); weltkarte('raum-weltkarte').sperren();
+        $('rueckmeldung').className = 'rueckmeldung ' + (a.treffer ? 'gut' : '');
+        $('rueckmeldung').textContent = `${kmText(a)} +${a.pkt}. Warte auf die anderen …`;
+      };
+      karteLaden().then(() => { if (raum && raum.idx === idx) weltkarte('raum-weltkarte').neu(raum.einst.auswahl); });
+    }
     if (gezeichnet.idx !== r.idx) {
       eingabe.value = ''; eingabe.disabled = false; eingabe.classList.remove('richtig');
       eingabe.placeholder = f.k === 'hauptstaedte' ? 'Welche Stadt?' : 'Welches Land?';
@@ -1150,7 +1166,11 @@ function raumZeichnen() {
         if (!f.o) setTimeout(() => eingabe.focus(), 30);
       }
     }
-    if (r.meinStatus === 'geloest') {
+    if (r.meinStatus === 'geloest' && istKarte && r.phase === 'frage') {
+      const mein = r.geloest.get(r.ich.id);
+      $('rueckmeldung').className = 'rueckmeldung' + (mein?.treffer ? ' gut' : '');
+      $('rueckmeldung').textContent = `${kmText(mein || { km: 0 })} +${mein?.pkt ?? 0}. Warte auf die anderen …`;
+    } else if (r.meinStatus === 'geloest' && !istKarte) {
       const mein = r.geloest.get(r.ich.id);
       eingabe.disabled = true; eingabe.classList.add('richtig');
       $('rueckmeldung').className = 'rueckmeldung gut';
@@ -1162,21 +1182,30 @@ function raumZeichnen() {
       eingabe.disabled = true;
       $('aufgeloest').textContent = kat.loesung(f);
       $('frage-info').innerHTML = (kat.nachher ? kat.nachher(f) : '') + esc(kat.info ? kat.info(f) : '');
+      if (istKarte) {
+        const pins = [...r.geloest].filter(([, g]) => g.lon != null).map(([id, g]) => {
+          const p = r.spieler.get(id) || r.bekannt.get(id) || {};
+          return { lon: g.lon, lat: g.lat, name: id === r.ich.id ? 'Du' : p.name, farbe: id === r.ich.id ? 'var(--sand)' : farbe(p.farbe) };
+        });
+        karteLaden().then(() => weltkarte('raum-weltkarte').loesung(f.c, f.t, pins));
+      }
       if (f.k === 'groesser') duellAufdecken($('optionen'), f, null);
       else document.querySelectorAll('#optionen button').forEach(b => {
         b.disabled = true;
         if (richtigeWahl(f, b.dataset.c)) b.classList.add('richtig');
       });
-      const finder = [...r.geloest].sort((a, b) => a[1].rang - b[1].rang)
-        .map(([id, g]) => `${r.bekannt.get(id)?.name || '?'} (+${g.pkt})`);
+      const finder = istKarte
+        ? [...r.geloest].sort((a, b) => b[1].pkt - a[1].pkt).map(([id, g]) => `${r.bekannt.get(id)?.name || '?'} ${g.km ? `${g.km.toLocaleString('de-DE')} km` : 'drin'} (+${g.pkt})`)
+        : [...r.geloest].sort((a, b) => a[1].rang - b[1].rang).map(([id, g]) => `${r.bekannt.get(id)?.name || '?'} (+${g.pkt})`);
       $('rueckmeldung').className = 'rueckmeldung';
-      $('rueckmeldung').textContent = finder.length ? `Gefunden: ${finder.join(', ')}` : 'Keiner hatte es.';
+      $('rueckmeldung').textContent = finder.length ? `${istKarte ? 'Pins' : 'Gefunden'}: ${finder.join(', ')}` : istKarte ? 'Keiner hat einen Pin gesetzt.' : 'Keiner hatte es.';
       gezeichnet.phase = 'aufloesung-' + r.idx;
     }
     if (r.phase === 'frage') $('aufgeloest').textContent = '';
-    $('rate-form').hidden = !!f.o || r.phase === 'aufloesung';
+    $('rate-form').hidden = !!f.o || istKarte || r.phase === 'aufloesung';
     gezeichnet.idx = r.idx;
   } else {
+    kartenmodus(false); $('raum-weltkarte').hidden = true;
     gezeichnet.idx = -2;
   }
 
@@ -1356,7 +1385,7 @@ async function sprintStart(kategorie = 'flaggen') {
   $('sprint-hinweis').textContent = `${KATEGORIEN[kategorie].name}${region ? ` (${REGIONEN_SPRINT[region]}, Übung)` : ''}: gleich geht's los`;
   $('sprint-bild').innerHTML = `<p class="countdown" id="sprint-countdown">${SPRINT_COUNTDOWN}</p>`;
   // Während des Countdowns schon Umrisse und die ersten Bilder laden
-  const laden = kategorie === 'umrisse' || kategorie === 'gemischt' ? umrisseLaden() : Promise.resolve();
+  const laden = kategorie === 'umrisse' || kategorie === 'gemischt' ? umrisseLaden() : kategorie === 'karte' ? karteLaden() : Promise.resolve();
   laden.then(() => { if (sprint === s) while (s.vorrat.length < 2) sprintZiehen(); });
   for (let i = SPRINT_COUNTDOWN; i >= 1; i--) {
     if (sprint !== s) return;
@@ -1389,13 +1418,37 @@ function sprintNaechste() {
   const kat = kategorieVon(f);
   $('sprint-hinweis').textContent = kat.hinweis(f);
   $('sprint-bild').innerHTML = kat.bild(f); // jedes Mal neue Elemente, nie ein altes Bild
+  const istKarte = f.k === 'karte';
+  kartenmodus(istKarte);
+  $('sprint-weltkarte').hidden = !istKarte;
+  if (istKarte) {
+    kartenPin['sprint-weltkarte'] = (lon, lat) => sprintPin(lon, lat);
+    weltkarte('sprint-weltkarte').neu(s.region);
+  }
   const eingabe = $('sprint-eingabe');
-  $('sprint-form').hidden = !!f.o;
+  $('sprint-form').hidden = !!f.o || istKarte;
   $('sprint-optionen').className = 'optionen' + (kat.optionKlasse ? ' ' + kat.optionKlasse : '');
   $('sprint-optionen').innerHTML = f.o ? optionSchluessel(f).map(k => `<button type="button" data-c="${esc(k)}">${kat.option(k, f)}</button>`).join('') : '';
   eingabe.value = '';
   eingabe.placeholder = f.k === 'hauptstaedte' ? 'Welche Stadt?' : 'Welches Land?';
-  if (!f.o) setTimeout(() => eingabe.focus(), 20);
+  if (!f.o && !istKarte) setTimeout(() => eingabe.focus(), 20);
+}
+
+// Weltkarte im Sprint: Treffer = im Land bzw. Hauptstadt höchstens 150 km daneben; Auflösung kurz zeigen, Uhr steht so lange
+function sprintPin(lon, lat) {
+  const s = sprint;
+  if (!s?.laeuft || s.frage?.k !== 'karte' || s.pauseSeit) return;
+  const f = s.frage, a = auswerten(f.c, f.t, lon, lat), k = weltkarte('sprint-weltkarte');
+  s.pauseSeit = performance.now();
+  k.loesung(f.c, f.t, [{ lon, lat, name: 'Du', farbe: 'var(--sand)' }]);
+  const rm = $('sprint-rueck');
+  if (a.treffer) { trefferMerken(s); s.punkte++; punktePop(); rm.className = 'rueckmeldung gut'; rm.textContent = a.km ? `${kmText(a)}, zählt!` : 'Getroffen!'; }
+  else { s.verpasst.push(f); s.serie = 0; rm.className = 'rueckmeldung schlecht'; rm.textContent = `${kmText(a)}. Das war ${kategorieVon(f).loesung(f)}.`; }
+  setTimeout(() => {
+    if (sprint !== s || !s.laeuft) return;
+    s.ende += performance.now() - s.pauseSeit; s.pauseSeit = null;
+    if (s.frage === f) sprintNaechste();
+  }, a.treffer ? 1200 : 2200);
 }
 
 function punktePop() {
@@ -1432,6 +1485,7 @@ async function sprintEnde() {
   if (s.frage && !s.verpasst.includes(s.frage) && (s.versucht || (!s.frage.o && $('sprint-eingabe').value.trim()))) s.verpasst.push(s.frage);
   const kat = KATEGORIEN[s.kategorie];
   $('sp-laeuft').hidden = true; $('sp-ende').hidden = false;
+  kartenmodus(false); $('sprint-weltkarte').hidden = true;
   $('sprint-kat').textContent = `${kat.name}${s.region ? `, ${REGIONEN_SPRINT[s.region]} (Übung)` : ''}`;
   hochzaehlen($('sprint-ergebnis'), s.punkte, n => n);
   // Listen: richtig und ausgelassen
@@ -1517,7 +1571,7 @@ function ruhmAufschluesseln(box, vorher, posten, gesamt) {
 }
 
 // Region für Sprints in Flaggen, Umrisse, Hauptstädte (Übung)
-const REGION_KATEGORIEN = ['flaggen', 'umrisse', 'hauptstaedte', 'stadtland'];
+const REGION_KATEGORIEN = ['flaggen', 'karte', 'umrisse', 'hauptstaedte', 'stadtland'];
 let sprintRichtung = (() => { try { return localStorage.getItem('quizbude.sprintRichtung') === 'stadt' ? 'stadt' : 'land'; } catch { return 'land'; } })();
 const sprintKat = k => (k === 'hauptstaedte' && sprintRichtung === 'stadt' ? 'stadtland' : k);
 const REGIONEN_SPRINT = { alle: 'Alle', europa: 'Europa', afrika: 'Afrika', asien: 'Asien', amerika: 'Amerika', ozeanien: 'Ozeanien' };

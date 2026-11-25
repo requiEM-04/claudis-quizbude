@@ -7,7 +7,7 @@
 <meta name="description" content="Flaggen raten in der Pause, allein oder zusammen im Raum.">
 <meta name="theme-color" content="#1B1E21">
 <link rel="icon" href="bilder/icon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="css/stil.css?v=0.8.2">
+<link rel="stylesheet" href="css/stil.css?v=0.9.0">
 </head>
 <body>
 <main>
@@ -128,16 +128,11 @@
       <div class="anpassen-raster">
         <div class="anpassen-links">
           <div id="hochkarte"></div>
-          <p class="anpassen-unter" id="anpassen-unter">So sehen dich die anderen. Fahr über etwas, um es auszuprobieren.</p>
-          <div class="zeile mitte anpassen-knoepfe" id="anpassen-knoepfe" hidden>
-            <button class="knopf haupt klein" id="stil-anlegen">Anlegen</button>
-            <button class="knopf zweit klein" id="stil-verwerfen">Verwerfen</button>
-          </div>
         </div>
         <div class="anpassen-rechts">
           <h2>Anpassen</h2>
           <div class="umschalter klein voll" role="tablist" id="anpassen-reiter"></div>
-          <p class="anpassen-info">Antippen zeigt es auf deiner Karte, mit „Anlegen“ übernimmst du es. Gesperrtes kannst du schon ausprobieren.</p>
+          <p class="anpassen-info">Klick legt es direkt an. Fahr über Gesperrtes, um es auf deiner Karte auszuprobieren.</p>
           <div class="stil-kacheln" id="stil-kacheln"></div>
         </div>
       </div>
@@ -207,7 +202,8 @@
               <label class="breit">Kategorie <select data-e="kategorie" id="einst-kategorie"></select></label>
               <label class="einst-richtung" hidden>Richtung <select data-e="richtung" id="einst-richtung"><option value="land">Land gegeben, Hauptstadt raten</option><option value="stadt">Hauptstadt gegeben, Land raten</option></select></label>
               <label>Auswahl <select data-e="auswahl" id="einst-auswahl"></select></label>
-              <label>Antworten <select data-e="modus" id="einst-modus"><option value="tippen">Selbst tippen</option><option value="auswahl">Zur Auswahl</option></select></label>
+              <label class="einst-ziel" hidden>Gesucht <select data-e="ziel" id="einst-ziel"><option value="beides">Länder und Hauptstädte</option><option value="land">Nur Länder</option><option value="stadt">Nur Hauptstädte</option></select></label>
+              <label class="einst-modus">Antworten <select data-e="modus" id="einst-modus"><option value="tippen">Selbst tippen</option><option value="auswahl">Zur Auswahl</option></select></label>
               <label>Runden <select data-e="runden"><option>5</option><option>10</option><option>15</option><option>20</option><option>30</option></select></label>
               <label>Zeit pro Frage <select data-e="zeit"><option value="10">10 s</option><option value="15">15 s</option><option value="20">20 s</option><option value="30">30 s</option></select></label>
               <label>Raum <select data-e="sichtbar"><option value="offen">Offen, in der Bude sichtbar</option><option value="geschlossen">Geschlossen, nur mit Code</option></select></label>
@@ -222,6 +218,7 @@
           <div class="phase" id="p-frage">
             <p class="frage-hinweis" id="frage-hinweis"></p>
             <div class="frage-bild" id="frage-bild"></div>
+            <div class="weltkarte" id="raum-weltkarte" hidden></div>
             <p class="aufgeloest" id="aufgeloest" aria-live="polite"></p>
             <p class="frage-info" id="frage-info"></p>
             <form class="rate-form" id="rate-form" autocomplete="off">
@@ -266,7 +263,7 @@
       <div class="umschalter klein" role="radiogroup" id="sprint-region" aria-label="Region für Flaggen, Umrisse und Hauptstädte"></div>
       <span class="sr-titel sr-zweit">Hauptstädte</span>
       <div class="umschalter klein" role="radiogroup" id="sprint-richtung" aria-label="Richtung bei Hauptstädte"></div>
-      <small id="sprint-region-hinweis">Gilt für Flaggen, Umrisse und Hauptstädte. Mit Region ist der Sprint eine Übung, Rekorde zählen nur bei „Alle“.</small>
+      <small id="sprint-region-hinweis">Gilt für Flaggen, Weltkarte, Umrisse und Hauptstädte. Mit Region ist der Sprint eine Übung, Rekorde zählen nur bei „Alle“.</small>
     </div>
     <div class="kachel-raster" id="sprint-kacheln"></div>
     <section class="sprint-saison">
@@ -288,6 +285,7 @@
         <div class="phase" id="sp-laeuft">
           <p class="frage-hinweis" id="sprint-hinweis"></p>
           <div class="frage-bild" id="sprint-bild"></div>
+          <div class="weltkarte" id="sprint-weltkarte" hidden></div>
           <form class="rate-form" id="sprint-form" autocomplete="off">
             <input id="sprint-eingabe" placeholder="Welches Land?" spellcheck="false" autocapitalize="off">
           </form>
@@ -312,7 +310,7 @@
     </div>
   </section>
 
-  <footer class="fuss">Version <span id="version"></span>. Flaggen von svg-country-flags (gemeinfrei), Länderdaten und Umrisse von world-countries (ODbL).</footer>
+  <footer class="fuss">Version <span id="version"></span>. Flaggen von svg-country-flags (gemeinfrei), Länderdaten, Umrisse und Weltkarte von world-countries (ODbL), Hauptstädte von Natural Earth (gemeinfrei).</footer>
 </main>
 
 <!-- Tastenliste -->
@@ -341,7 +339,7 @@
 </nav>
 <div class="toast" id="toast" role="status" hidden></div>
 
-<script src="vendor/supabase.js?v=0.8.2"></script>
-<script type="module" src="js/app.js?v=0.8.2"></script>
+<script src="vendor/supabase.js?v=0.9.0"></script>
+<script type="module" src="js/app.js?v=0.9.0"></script>
 </body>
 </html>

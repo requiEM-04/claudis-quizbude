@@ -1,12 +1,13 @@
-import { sb, spielEintragen, spielLoggen } from './server.js?v=0.8.2';
-import { stilVon } from './ruhm.js?v=0.8.2';
-import { letzteTippfehler } from './abgleich.js?v=0.8.2';
+import { sb, spielEintragen, spielLoggen } from './server.js?v=0.9.0';
+import { stilVon } from './ruhm.js?v=0.9.0';
+import { letzteTippfehler } from './abgleich.js?v=0.9.0';
+import { auswerten } from './weltkarte.js?v=0.9.0';
 export const TIPPFEHLER_ABZUG = 10; // Punkte Abzug je Tippfehler bei einer richtigen Antwort
-import { fragenBauen, pruefeFrage, richtigeWahl, fragenVorladen, KATEGORIEN, kategorieVon } from './kategorien.js?v=0.8.2';
-import { lobbyMelden, lobbyAbmelden } from './lobby.js?v=0.8.2';
-import { chatErlaubt, textPruefen } from './filter.js?v=0.8.2';
+import { fragenBauen, pruefeFrage, richtigeWahl, fragenVorladen, KATEGORIEN, kategorieVon } from './kategorien.js?v=0.9.0';
+import { lobbyMelden, lobbyAbmelden } from './lobby.js?v=0.9.0';
+import { chatErlaubt, textPruefen } from './filter.js?v=0.9.0';
 
-export const STANDARD = { kategorie: 'flaggen', runden: 10, zeit: 15, auswahl: 'alle', modus: 'tippen', chat: 'eingeschraenkt', sichtbar: 'offen' };
+export const STANDARD = { kategorie: 'flaggen', runden: 10, zeit: 15, auswahl: 'alle', modus: 'tippen', chat: 'eingeschraenkt', sichtbar: 'offen', ziel: 'beides' };
 const COUNTDOWN = 3000;
 const AUFLOESUNG = 3500;
 
@@ -252,7 +253,7 @@ export class Raum {
         if (this.binHost) this.lobbyAktualisieren();
         break;
       case 'frage':
-        Object.assign(this, { idx: p.i, dauer: p.dauer, phase: 'frage', geloest: new Map(), gesperrt: new Set(), meinStatus: null });
+        Object.assign(this, { idx: p.i, dauer: p.dauer, phase: 'frage', geloest: new Map(), gesperrt: new Set(), meinStatus: null, meinPin: null });
         this.start = performance.now();
         break;
       case 'treffer':
@@ -265,6 +266,11 @@ export class Raum {
           this.senden('geloest', { i: p.i, id: p.von, pkt: Math.max(1, punkteFuer(p.ms, this.dauer, rang) - abzug), rang, abzug });
         }
         break;
+      case 'pin': // Weltkarte: Wertung nach Entfernung, rechnet der Spieler selbst aus (gleiche Daten bei allen)
+        if (!this.binHost || this.phase !== 'frage' || p.i !== this.idx || this.vergeben.has(p.von)) break;
+        this.vergeben.add(p.von);
+        this.senden('geloest', { i: p.i, id: p.von, pkt: Math.max(0, Math.min(150, Math.round(Number(p.pkt) || 0))), rang: this.vergeben.size, km: Math.max(0, Math.round(Number(p.km) || 0)), lon: +p.lon, lat: +p.lat, treffer: !!p.treffer, karte: true });
+        break;
       case 'fehl':
         if (!this.binHost || this.phase !== 'frage' || p.i !== this.idx || this.vergeben.has(p.von)) break;
         this.vergeben.add(p.von);
@@ -276,10 +282,11 @@ export class Raum {
         break;
       case 'geloest':
         if (p.i !== this.idx || this.geloest.has(p.id)) break;
-        this.geloest.set(p.id, { pkt: p.pkt, rang: p.rang, abzug: p.abzug || 0 });
+        this.geloest.set(p.id, { pkt: p.pkt, rang: p.rang, abzug: p.abzug || 0, ...(p.karte && { km: p.km, lon: p.lon, lat: p.lat, treffer: p.treffer }) });
         this.punkte.set(p.id, (this.punkte.get(p.id) || 0) + p.pkt);
-        if (p.id === this.ich.id) { this.meinStatus = 'geloest'; this.meineTreffer++; }
-        this.systemZeile(`${this.bekannt.get(p.id)?.name || 'Jemand'} hat's! +${p.pkt}${p.abzug ? ` (−${p.abzug} für Tippfehler)` : ''}`);
+        if (p.id === this.ich.id) { this.meinStatus = 'geloest'; if (p.treffer !== false) this.meineTreffer++; }
+        if (p.karte) this.systemZeile(`${this.bekannt.get(p.id)?.name || 'Jemand'} hat den Pin gesetzt.`);
+        else this.systemZeile(`${this.bekannt.get(p.id)?.name || 'Jemand'} hat's! +${p.pkt}${p.abzug ? ` (−${p.abzug} für Tippfehler)` : ''}`);
         if (this.binHost) this.allePruefen();
         break;
       case 'gesperrt':
@@ -359,7 +366,7 @@ export class Raum {
     const i = this.hostSchritt.i;
     this.senden('aufloesung', { i });
     clearTimeout(this.timer);
-    this.timer = setTimeout(() => this.weiter(i), AUFLOESUNG);
+    this.timer = setTimeout(() => this.weiter(i), this.frage?.k === 'karte' ? AUFLOESUNG + 2500 : AUFLOESUNG); // Karte: Pins in Ruhe ansehen
   }
 
   weiter(i) {
@@ -408,6 +415,16 @@ export class Raum {
       this.senden('daneben', { i: this.idx, text: t }); // kommt über den Kanal auch bei mir selbst an
     }
     return ergebnis;
+  }
+
+  // Weltkarte: Pin setzen (geht nur einmal pro Frage)
+  pinSetzen(lon, lat) {
+    if (this.phase !== 'frage' || this.meinStatus || this.frage?.k !== 'karte') return null;
+    const a = auswerten(this.frage.c, this.frage.t, lon, lat);
+    this.meinStatus = 'wartet';
+    this.meinPin = { lon, lat, ...a };
+    this.senden('pin', { i: this.idx, lon, lat, km: a.km, pkt: a.pkt, treffer: a.treffer, ms: performance.now() - this.start });
+    return a;
   }
 
   waehlen(code) {

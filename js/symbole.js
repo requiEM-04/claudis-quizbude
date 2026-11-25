@@ -5,6 +5,7 @@ export const KATEGORIE_SYMBOL = {
   flaggen: svg('<path d="M5 21V4"/><path d="M5 4h12l-2.5 4L17 12H5"/>'),
   umrisse: '<img src="bilder/umriss-vorschau.svg" width="22" height="22" alt="" aria-hidden="true">',
   hauptstaedte: svg('<path d="M3 21h18"/><path d="M5 21V9l4-3v15"/><path d="M9 21V4l6 3v14"/><path d="M15 21V11l4 2v8"/>'),
+  karte: svg('<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18"/><path d="M12 3a14 14 0 0 0 0 18"/>'),
   stadtland: svg('<path d="M3 21h18"/><path d="M5 21V9l4-3v15"/><path d="M9 21V4l6 3v14"/><path d="M15 21V11l4 2v8"/>'),
   groesser: svg('<rect x="4" y="12" width="6" height="8" rx="1.2"/><rect x="14" y="4" width="6" height="16" rx="1.2"/>'),
   wissen: svg('<circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 0 1 4.8 1c0 1.7-2.4 2.2-2.4 3.7"/><path d="M12 17.2h.01"/>'),

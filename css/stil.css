@@ -293,7 +293,7 @@ legend { font-weight: 600; font-size: .86rem; color: var(--text-2); margin-botto
 .farb-wahl button[aria-pressed="true"] { box-shadow: 0 0 0 3px var(--flaeche), 0 0 0 5px var(--text); }
 
 /* ---------- Bude ---------- */
-.held { position: relative; margin-top: 8px; }
+.held { position: relative; margin-top: 34px; }
 .held h1 { font-size: clamp(1.7rem, 3.4vw, 2.6rem); max-width: 24ch; }
 .aktionen { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: 22px; }
 .code-feld {
@@ -956,13 +956,27 @@ body::after {
   background: radial-gradient(1000px 560px at 88% -8%, rgba(205,182,140,.075), transparent 62%), radial-gradient(800px 600px at -6% 34%, rgba(143,179,162,.06), transparent 60%);
 }
 body[data-hg]::before { opacity: 1; }
-body[data-hg="karo"]::before, .hgf-karo { background: radial-gradient(1100px 700px at 50% 0%, rgba(46,120,84,.32), transparent 65%), radial-gradient(900px 500px at 50% 110%, rgba(26,84,60,.38), transparent 60%), repeating-radial-gradient(circle at 30% 30%, rgba(255,255,255,.012) 0 1px, transparent 1px 3px); }
-body[data-hg="herz"]::before, .hgf-herz { background: radial-gradient(900px 620px at 15% -5%, rgba(150,28,64,.34), transparent 60%), radial-gradient(900px 600px at 95% 105%, rgba(120,20,52,.32), transparent 60%), repeating-linear-gradient(90deg, rgba(255,255,255,.014) 0 2px, transparent 2px 9px); }
-body[data-hg="kreuz"]::before, .hgf-kreuz { background: radial-gradient(1000px 520px at 50% -10%, rgba(235,198,96,.2), transparent 65%), radial-gradient(circle at 0 0, rgba(235,198,96,.06) 0 14px, transparent 15px) 0 0 / 64px 64px, radial-gradient(circle at 32px 32px, rgba(235,198,96,.045) 0 9px, transparent 10px) 0 0 / 64px 64px; }
-body[data-hg="pik"]::before, .hgf-pik {
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cg fill='%23CFE6F3' fill-opacity='.035'%3E%3Cpath d='M30 14c-3 5-11 9-11 15a5.5 5.5 0 0 0 9.4 3.8L27 38h6l-1.4-5.2A5.5 5.5 0 0 0 41 29c0-6-8-10-11-15Z'/%3E%3Cpath d='M90 74c-3 5-11 9-11 15a5.5 5.5 0 0 0 9.4 3.8L87 98h6l-1.4-5.2A5.5 5.5 0 0 0 101 89c0-6-8-10-11-15Z'/%3E%3C/g%3E%3C/svg%3E"), radial-gradient(1200px 700px at 50% -10%, rgba(40,70,120,.4), transparent 65%), linear-gradient(180deg, rgba(8,12,24,.55), rgba(8,12,24,.2));
+body[data-hg="karo"]::before, .hgf-karo {
+  /* Spieltisch: grüner Filz */
+  background: repeating-radial-gradient(circle at 30% 30%, rgba(255,255,255,.018) 0 1px, transparent 1px 3px), radial-gradient(ellipse 90% 70% at 50% 35%, #22654A 0%, #174632 50%, #0E2A1E 100%);
 }
-body[data-hg="joker"]::before, .hgf-joker { background: radial-gradient(700px 420px at 15% 10%, rgba(255,120,170,.2), transparent 60%), radial-gradient(800px 480px at 85% 20%, rgba(120,200,255,.18), transparent 60%), radial-gradient(900px 520px at 50% 105%, rgba(150,110,255,.22), transparent 60%); background-size: 160% 160%; animation: polarlicht 22s ease-in-out infinite alternate; }
+body[data-hg="herz"]::before, .hgf-herz {
+  /* Roter Samt */
+  background: repeating-linear-gradient(90deg, rgba(255,255,255,.03) 0 2px, transparent 2px 7px), radial-gradient(ellipse 90% 70% at 30% 20%, #6A1C30 0%, #45111F 50%, #250A11 100%);
+}
+body[data-hg="pik"]::before, .hgf-pik {
+  /* Mitternacht mit Pik-Muster */
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cg fill='%23CFE6F3' fill-opacity='.07'%3E%3Cpath d='M30 14c-3 5-11 9-11 15a5.5 5.5 0 0 0 9.4 3.8L27 38h6l-1.4-5.2A5.5 5.5 0 0 0 41 29c0-6-8-10-11-15Z'/%3E%3Cpath d='M90 74c-3 5-11 9-11 15a5.5 5.5 0 0 0 9.4 3.8L87 98h6l-1.4-5.2A5.5 5.5 0 0 0 101 89c0-6-8-10-11-15Z'/%3E%3C/g%3E%3C/svg%3E"), radial-gradient(ellipse 90% 70% at 50% 0%, #223B66 0%, #142340 50%, #0A1224 100%);
+}
+body[data-hg="kreuz"]::before, .hgf-kreuz {
+  /* Goldbrokat */
+  background: radial-gradient(circle at 0 0, rgba(235,198,96,.11) 0 12px, transparent 13px) 0 0 / 56px 56px, radial-gradient(circle at 28px 28px, rgba(235,198,96,.07) 0 7px, transparent 8px) 0 0 / 56px 56px, radial-gradient(ellipse 90% 70% at 50% 10%, #57441A 0%, #33280F 50%, #1B150A 100%);
+}
+body[data-hg="joker"]::before, .hgf-joker {
+  /* Schillernde Nacht: Polarlicht in Bewegung */
+  background: radial-gradient(800px 500px at 15% 15%, rgba(255,110,170,.38), transparent 60%), radial-gradient(900px 560px at 85% 25%, rgba(110,200,255,.34), transparent 60%), radial-gradient(1000px 600px at 50% 105%, rgba(150,110,255,.4), transparent 60%), #120F22;
+  background-size: 170% 170%; animation: polarlicht 22s ease-in-out infinite alternate;
+}
 @keyframes polarlicht { 0% { background-position: 0% 0%; } 100% { background-position: 100% 60%; } }
 
 /* ---------- Spielerkarte (Profil) ---------- */
@@ -1262,6 +1276,51 @@ body[data-hg="joker"]::before, .hgf-joker { background: radial-gradient(700px 42
   .dock-link { padding: .6em .75em; }
   .dock-icon { width: 22px; height: 22px; }
 }
+/* =====================================================================
+   Weltkarte
+   ===================================================================== */
+.kb-karte { width: 96px; height: auto; filter: drop-shadow(0 6px 10px rgba(0,0,0,.5)); }
+#kachel-raster .kb-karte { width: 74px; }
+.sprint-karte .kb-karte { width: 128px; }
+.weltkarte { position: relative; width: 100%; height: min(64vh, 640px); min-height: 340px; border-radius: 18px; overflow: hidden; background: #141C24; border: 1px solid var(--linie-stark); box-shadow: inset 0 0 60px rgba(0,0,0,.45); }
+.weltkarte[hidden] { display: none; }
+.wk-svg { display: block; width: 100%; height: 100%; touch-action: none; cursor: crosshair; user-select: none; -webkit-user-select: none; }
+.weltkarte.zieht .wk-svg { cursor: grabbing; }
+.wk-meer { fill: #16212B; }
+.wk-gitter { fill: none; stroke: rgba(255,255,255,.045); stroke-width: 1px; vector-effect: non-scaling-stroke; }
+.wk-laender path { fill: #3B434A; stroke: #1A2026; stroke-width: .8px; vector-effect: non-scaling-stroke; stroke-linejoin: round; fill-rule: evenodd; transition: fill .12s; }
+.wk-laender path:hover { fill: #4A545C; }
+.wk-laender path.ziel { fill: var(--sand); stroke: #FFF1CF; stroke-width: 1.5px; animation: wk-ziel 1s ease-in-out infinite alternate; }
+@keyframes wk-ziel { from { fill: #CDB68C; } to { fill: #F2D9A2; } }
+.wk-linie { stroke: var(--f, var(--sand)); stroke-width: 2px; stroke-dasharray: 6 5; vector-effect: non-scaling-stroke; opacity: .9; animation: wk-strich 1.2s linear infinite; }
+@keyframes wk-strich { to { stroke-dashoffset: -22; } }
+.wk-pin-form { fill: var(--f, var(--sand)); stroke: #111417; stroke-width: 1.5; }
+.wk-pin-punkt { fill: #111417; }
+.wk-pin { animation: wk-pin-rein .35s cubic-bezier(.2, 1.6, .4, 1) both; }
+@keyframes wk-pin-rein { from { opacity: 0; } to { opacity: 1; } }
+.wk-name { font: 800 12px var(--schrift); fill: #fff; text-anchor: middle; paint-order: stroke; stroke: rgba(10,12,14,.85); stroke-width: 3.5px; stroke-linejoin: round; }
+.wk-stadt { fill: #FFF1CF; stroke: #111417; stroke-width: 2; }
+.wk-stadt-ring { fill: none; stroke: var(--sand); stroke-width: 2.5; animation: wk-ring 1.2s ease-out infinite; transform-origin: center; transform-box: fill-box; }
+@keyframes wk-ring { from { transform: scale(.5); opacity: 1; } to { transform: scale(1.6); opacity: 0; } }
+.wk-knoepfe { position: absolute; right: 12px; bottom: 12px; display: grid; gap: 6px; }
+.wk-knoepfe button { width: 40px; height: 40px; border-radius: 12px; border: 1px solid var(--linie-stark); background: rgba(30,34,38,.92); color: var(--text); font: 800 1.2rem var(--schrift); cursor: pointer; }
+.wk-knoepfe button:hover { background: var(--flaeche-aktiv); }
+.wk-hilfe { position: absolute; left: 14px; bottom: 12px; margin: 0; padding: 6px 12px; border-radius: 99px; background: rgba(20,24,28,.82); color: var(--text-2); font-size: .78rem; pointer-events: none; }
+.wk-frage { display: flex; align-items: center; justify-content: center; gap: 16px; flex-wrap: wrap; }
+.wk-flagge { height: 58px; width: auto; border-radius: 5px; box-shadow: 0 10px 20px -8px rgba(0,0,0,.7); }
+.wk-gross { font: 800 clamp(1.8rem, 3.6vw, 2.8rem)/1.05 var(--display); letter-spacing: -.02em; }
+.wk-frage .wk-klein { display: flex; align-items: center; gap: 8px; color: var(--text-2); font-weight: 700; }
+.wk-frage .wk-klein img { height: 22px; border-radius: 3px; }
+.frage-bild[data-art="karte"], #sprint-bild:has(.wk-frage) { min-height: 0 !important; }
+/* Kartenmodus: die Karte füllt den Bildschirm */
+body.kartenmodus main { max-width: none; padding-bottom: 24px; }
+body.kartenmodus .sprint { max-width: none; }
+body.kartenmodus .buehne { min-height: 0; }
+body.kartenmodus .phase { gap: 12px; }
+body.kartenmodus .weltkarte { height: calc(100vh - 270px); }
+@media (min-width: 900px) { body.spielt { padding-left: 0; } }
+@media (max-width: 700px) { .weltkarte, body.kartenmodus .weltkarte { height: calc(100vh - 300px); min-height: 300px; } .wk-hilfe { display: none; } .wk-flagge { height: 40px; } }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; }
 }

@@ -1,8 +1,9 @@
-import { LAENDER } from './laender.js?v=0.8.2';
-import { WISSEN, WISSEN_THEMEN } from './wissen.js?v=0.8.2';
-import { EMOJI, EMOJI_THEMEN } from './emoji.js?v=0.8.2';
-import { kanon } from './kanon.js?v=0.8.2';
-import { LAND, AUSWAHL, pruefe, mischen, flaggeUrl, abgleichen } from './abgleich.js?v=0.8.2';
+import { LAENDER } from './laender.js?v=0.9.0';
+import { WISSEN, WISSEN_THEMEN } from './wissen.js?v=0.9.0';
+import { EMOJI, EMOJI_THEMEN } from './emoji.js?v=0.9.0';
+import { kanon } from './kanon.js?v=0.9.0';
+import { LAND, AUSWAHL, pruefe, mischen, flaggeUrl, abgleichen } from './abgleich.js?v=0.9.0';
+import { karteLaden } from './weltkarte.js?v=0.9.0';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const zahl = n => n.toLocaleString('de-DE');
@@ -12,7 +13,7 @@ let UMRISSE = null;
 let umrisseLaeuft = null;
 export function umrisseLaden() {
   if (UMRISSE) return Promise.resolve(UMRISSE);
-  umrisseLaeuft ||= import('./umrisse.js?v=0.8.2').then(m => { UMRISSE = m.UMRISSE; return UMRISSE; });
+  umrisseLaeuft ||= import('./umrisse.js?v=0.9.0').then(m => { UMRISSE = m.UMRISSE; return UMRISSE; });
   return umrisseLaeuft;
 }
 export const umrisseDa = () => !!UMRISSE;
@@ -35,6 +36,27 @@ function stadtPruefen(text, l) {
 }
 
 export const KATEGORIEN = {
+  // Weltkarte: Land (Flagge + Name oben) oder Hauptstadt auf der Karte finden, Doppelklick setzt den Pin
+  karte: {
+    name: 'Weltkarte', text: 'Länder und Hauptstädte auf der Karte finden', tippen: false, karte: true, zeit: 20, land: true,
+    auswahlen: LAENDER_AUSWAHL, standard: 'bekannt',
+    pool: a => laenderPool(a),
+    // ziel: 'land' | 'stadt' | 'beides' (Raum-Einstellung), im Sprint gemischt
+    frage: (l, _mitOptionen, ziel = 'beides') => {
+      const stadt = l.stadt && (ziel === 'stadt' || (ziel !== 'land' && Math.random() < .45));
+      return { k: 'karte', c: l.code, t: stadt ? 'stadt' : 'land' };
+    },
+    hinweis: f => f.t === 'stadt' ? 'Wo liegt diese Hauptstadt? Doppelklick setzt deinen Pin.' : 'Wo liegt dieses Land? Doppelklick setzt deinen Pin.',
+    bild: f => f.t === 'stadt'
+      ? `<div class="wk-frage"><span class="wk-gross">${esc(LAND[f.c].stadt)}</span><span class="wk-klein"><img src="${flaggeUrl(f.c)}" alt="">Hauptstadt von ${esc(LAND[f.c].name)}</span></div>`
+      : `<div class="wk-frage"><img class="wk-flagge" src="${flaggeUrl(f.c)}" alt=""><span class="wk-gross">${esc(LAND[f.c].name)}</span></div>`,
+    option: () => '',
+    pruefe: () => 'falsch',
+    richtig: () => false,
+    loesung: f => f.t === 'stadt' ? `${LAND[f.c].stadt} (${LAND[f.c].name})` : LAND[f.c].name,
+    kurz: f => `<img src="${flaggeUrl(f.c)}" alt=""><span>${f.t === 'stadt' ? `<b>${esc(LAND[f.c].stadt)}</b>` : esc(LAND[f.c].name)}</span>`,
+  },
+
   flaggen: {
     name: 'Flaggen', text: 'Land an der Flagge erkennen', tippen: true, zeit: 15, land: true,
     auswahlen: LAENDER_AUSWAHL, standard: 'alle',
@@ -168,10 +190,11 @@ export const KATEGORIEN = {
 
 const groesseres = f => (LAND[f.c].flaeche >= LAND[f.d].flaeche ? f.c : f.d);
 
-export const KATEGORIE_REIHE = ['flaggen', 'umrisse', 'hauptstaedte', 'groesser', 'wissen', 'emoji', 'gemischt'];
-export const ARTEN = ['flaggen', 'umrisse', 'hauptstaedte', 'stadtland', 'groesser', 'wissen', 'emoji'];
+// Emoji-Rätsel ist vorerst raus (wird inhaltlich überarbeitet), die Weltkarte steht direkt nach Flaggen
+export const KATEGORIE_REIHE = ['flaggen', 'karte', 'umrisse', 'hauptstaedte', 'groesser', 'wissen', 'gemischt'];
+export const ARTEN = ['flaggen', 'umrisse', 'hauptstaedte', 'stadtland', 'groesser', 'wissen'];
 // Kategorien mit Sprint-Rekord und eigener Sprint-Bestenliste (Hauptstädte gibt es in zwei Richtungen)
-export const SPRINT_REIHE = ['flaggen', 'umrisse', 'hauptstaedte', 'stadtland', 'groesser', 'wissen', 'emoji', 'gemischt'];
+export const SPRINT_REIHE = ['flaggen', 'karte', 'umrisse', 'hauptstaedte', 'stadtland', 'groesser', 'wissen', 'gemischt'];
 
 // Eine einzelne Frage für den Sprint. Länder-Kategorien fangen leicht an und werden mit jedem Treffer schwerer.
 export function sprintFrage(kategorie, stand, benutzt, region = null) {
@@ -189,10 +212,10 @@ export function sprintFrage(kategorie, stand, benutzt, region = null) {
   return kat.frage(x, !kat.tippen || kategorie === 'gemischt');
 }
 
-export function fragenBauen({ kategorie = 'flaggen', auswahl, runden, modus }) {
+export function fragenBauen({ kategorie = 'flaggen', auswahl, runden, modus, ziel }) {
   if (kategorie === 'gemischt') {
-    const arten = ['flaggen', 'umrisse', 'hauptstaedte', 'groesser', 'wissen', 'emoji'];
-    const vorrat = Object.fromEntries(arten.map(k => [k, mischen(KATEGORIEN[k].pool(k === 'wissen' || k === 'emoji' ? 'alle' : auswahl))]));
+    const arten = ['flaggen', 'umrisse', 'hauptstaedte', 'groesser', 'wissen'];
+    const vorrat = Object.fromEntries(arten.map(k => [k, mischen(KATEGORIEN[k].pool(k === 'wissen' ? 'alle' : auswahl))]));
     const fragen = [];
     let letzte = '';
     for (let i = 0; i < runden; i++) {
@@ -207,7 +230,7 @@ export function fragenBauen({ kategorie = 'flaggen', auswahl, runden, modus }) {
   const kat = KATEGORIEN[kategorie];
   const pool = mischen(kat.pool(auswahl in kat.auswahlen ? auswahl : kat.standard));
   const mitOptionen = !kat.tippen || modus === 'auswahl';
-  return pool.slice(0, Math.min(runden, pool.length)).map(x => kat.frage(x, mitOptionen));
+  return pool.slice(0, Math.min(runden, pool.length)).map(x => kat.frage(x, mitOptionen, ziel));
 }
 
 export const kategorieVon = f => KATEGORIEN[f.k];
@@ -219,12 +242,12 @@ export function fragenVorladen(fragen) {
   const bilder = new Set();
   let umrisse = false;
   for (const f of fragen) {
-    if (['flaggen', 'umrisse', 'hauptstaedte'].includes(f.k)) bilder.add(f.c);
+    if (['flaggen', 'umrisse', 'hauptstaedte', 'karte', 'stadtland'].includes(f.k)) bilder.add(f.c);
     if (f.k === 'groesser') { bilder.add(f.c); bilder.add(f.d); }
     if (f.k === 'umrisse') umrisse = true;
   }
   for (const c of bilder) { const img = new Image(); img.src = flaggeUrl(c); }
-  return umrisse ? umrisseLaden() : Promise.resolve();
+  return Promise.all([umrisse ? umrisseLaden() : null, fragen.some(f => f.k === 'karte') ? karteLaden() : null]);
 }
 
 export { kanon };

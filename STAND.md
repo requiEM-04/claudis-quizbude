@@ -2,7 +2,7 @@
 
 ## Aktuell (25.11.2026)
 
-- **Version:** 0.8.2
+- **Version:** 0.9.0
 - **Live:** https://requiem-04.github.io/claudis-quizbude/ (Repo `requiEM-04/claudis-quizbude`, Branch `main`, GitHub Pages)
 - **Server:** Supabase-Projekt `quizbude` (Ref `jgvjjjiwfjxynbzjaxsg`, Frankfurt), E-Mail-Bestätigung aus, Realtime mit öffentlichen Kanälen.
 - **Inhalt:** Konten (Name + Passwort ab 4 Zeichen), Räume mit 4-Buchstaben-Code (live über Realtime), Flaggenraten (tippen oder 4 zur Auswahl), Flaggen-Sprint (60 s), Bestenliste (Siege, Punkte, Sprint), „Zuletzt gespielt".
@@ -70,10 +70,25 @@
 
 - **Neu in 0.8.2:** Neue Titel (Karo Flaggenflüsterer, Herz Grenzgänger, Pik Lebendes Lexikon, Kreuz Wandelnder Atlas, Joker Quizgott). Zusatzzeilen wie „2 Siege in 5“ in der Bestenliste entfernt. Ruhm-Fortschritt als senkrechte Säule in der Leiste links, füllt sich von unten nach oben; am Handy als dünne Linie über der unteren Leiste.
 
+- **Neu in 0.9.0:**
+  - **Kategorie Weltkarte** (direkt nach Flaggen).
+    - Die Karte füllt beim Spielen den Bildschirm. Ziehen verschiebt, Mausrad, Pinch oder +/− zoomen, Doppelklick bzw. Doppeltipp setzt den Pin.
+    - Fragen: Land (Flagge und Name oben, im Land = voll) oder Hauptstadt (Name, Entfernung zählt).
+    - Punkte im Raum bis 150 nach Entfernung. Bei der Auflösung sehen alle alle Pins mit Linie zum Ziel.
+    - Im Sprint zählt als Treffer: im Land bzw. Hauptstadt höchstens 150 km daneben.
+    - Raum-Einstellung „Gesucht“: Länder und Hauptstädte, nur Länder oder nur Hauptstädte. Mit Region startet die Karte im Ausschnitt der Region.
+    - Daten in `js/weltkarte-daten.js`, gebaut mit `werkzeuge/karte_bauen.mjs`: world-countries vereinfacht, Hauptstädte aus Natural Earth. Werden erst bei Bedarf geladen.
+    - Datenbank: `sprint_eintragen` kennt `karte` (eingespielt am 25.11.).
+  - **Emoji-Rätsel** aus der Kategorie-Liste genommen (bis zur inhaltlichen Überarbeitung). Alte Daten bleiben lesbar.
+  - **Anpassen:** Klick legt sofort an, ohne Knopf. Gesperrtes per Mausüber auf der Karte ausprobieren. Den Hinweis unter der Karte gibt es nicht mehr.
+  - **Hintergründe** füllen die ganze Seite statt eines Schimmers oben.
+  - Mehr Abstand zwischen Schriftzug und Begrüßung.
+
 ## Als Nächstes (mit Colin besprochen)
 
 1. Eigene Profilbilder statt Emojis (mit Colin zusammen gestalten).
-2. Neue Kategorie mit Weltkarte: Die Karte füllt den ganzen Bildschirm, man kann verschieben und zoomen. Doppelklick setzt den Pin und bestätigt. Oben stehen Flagge und Name. Punkte nach Entfernung, bei Ländern zählt ein Klick ins Land voll.
+2. Admin-Bereich wie in Pokélings (eigenes Konto `requiem-admin`, Login mit Name „Admin“, Tabelle `admins`, `is_admin()` in jeder Funktion, eigene Seite `admin.html`): Spieler, Räume, Nachricht an alle, Server, Protokoll. Colin legt das Konto selbst in Supabase an.
+2b. Hintergründe schöner (richtige Muster).
 3. Colin bewertet den Ruhm (Namen, Optik, Tempo). Danach Feinschliff.
 4. Saison-Abzeichen zum Monatsende vergeben (siehe `PLAN.md`, Abschnitt 4). Die erste Saison endet am 30.11.2026.
 5. Währung, Shop und Saisonblatt nach `PLAN.md`, sobald die offenen Fragen geklärt sind.

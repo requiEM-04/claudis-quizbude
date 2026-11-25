@@ -80,7 +80,7 @@ declare
   r int;
 begin
   if auth.uid() is null then raise exception 'Nicht angemeldet'; end if;
-  if k not in ('flaggen', 'umrisse', 'hauptstaedte', 'stadtland', 'groesser', 'wissen', 'emoji', 'gemischt') then
+  if k not in ('flaggen', 'karte', 'umrisse', 'hauptstaedte', 'stadtland', 'groesser', 'wissen', 'emoji', 'gemischt') then
     raise exception 'Unbekannte Kategorie';
   end if;
   insert into public.sprint_laeufe (von, kategorie, wert) values (auth.uid(), k, w);
