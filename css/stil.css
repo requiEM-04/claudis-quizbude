@@ -154,6 +154,28 @@ label { display: grid; gap: 6px; font-weight: 600; font-size: .86rem; color: var
 .fehler:empty { display: none; }
 .hinweis { color: var(--text-2); font-size: .92rem; }
 
+/* ---------- Als Gast ---------- */
+.oder { display: flex; align-items: center; gap: 12px; margin: 18px 0 14px; color: var(--text-3); font-size: .85rem; font-weight: 600; }
+.oder::before, .oder::after { content: ""; flex: 1; height: 1px; background: var(--linie); }
+.gast-hinweis { margin-top: 10px; color: var(--text-3); font-size: .86rem; }
+.dock-gast { display: inline-flex; align-items: center; gap: 8px; color: var(--text-2); font-weight: 700; padding: 0 4px; }
+.dock-gast .avatar { background: var(--flaeche-aktiv); }
+
+/* ---------- Spiele (Snake) ---------- */
+.spiel-kopf { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px 26px; margin-bottom: 14px; font-weight: 700; }
+.spiel-kopf .wer { display: inline-flex; align-items: center; gap: 8px; }
+.spiel-kopf .punkt { width: 12px; height: 12px; border-radius: 4px; background: var(--f); }
+.spiel-kopf .wer.raus { opacity: .45; text-decoration: line-through; }
+.spiel-kopf small { color: var(--text-2); font-weight: 600; }
+.spiel-buehne { position: relative; width: 100%; }
+.spiel-feld { display: block; width: 100%; border-radius: 16px; background: var(--tief); border: 1px solid var(--linie); touch-action: none; }
+.spiel-countdown {
+  position: absolute; inset: 0; display: grid; place-items: center; margin: 0;
+  font: 800 clamp(5rem, 14vw, 8rem)/1 var(--display); color: var(--sand); text-shadow: 0 10px 30px rgba(0,0,0,.6);
+}
+.spiel-countdown small { display: block; font: 700 1rem/1.4 var(--schrift); color: var(--text); text-shadow: none; margin-top: 10px; text-align: center; }
+.kb-snake { width: 92px; height: 60px; }
+
 /* ---------- Eigene Klappliste ---------- */
 select.nativ { display: none !important; }
 .feld { position: relative; }
@@ -299,6 +321,8 @@ kbd {
 /* ab Laptop-Breite alle 7 Kategorien in einer Reihe, damit man nicht scrollen muss */
 @media (min-width: 1100px) {
   .kachel-raster { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 10px; }
+  #kachel-raster { grid-template-columns: repeat(8, minmax(0, 1fr)); }
+  #kachel-raster .kb-emoji { font-size: 2.1rem; }
   .kachel { padding: 14px 13px 15px; }
   .kachel-name { font-size: .93rem; }
   .kb-duell { gap: 4px; }
@@ -329,7 +353,7 @@ kbd {
 .kb-duell img { height: 24px; width: auto; max-width: 42%; object-fit: contain; }
 .kb-duell img:first-child { height: 38px; }
 .kb-duell b { font-size: .72rem; color: var(--text-3); font-weight: 700; }
-.kb-emoji { font-size: 2.5rem; line-height: 1; }
+.kb-emoji { font-size: 2.5rem; line-height: 1; white-space: nowrap; }
 
 .kategorien-kopf { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-bottom: 8px; }
 .kategorien-kopf h2 { margin: 0; }

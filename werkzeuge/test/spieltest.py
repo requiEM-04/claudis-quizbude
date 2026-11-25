@@ -63,7 +63,7 @@ async def main():
         liste = await Bp.inner_text('#raum-liste')
         print('Lobby bei B:', ' | '.join(liste.split('\n')[:3]))
         await Bp.screenshot(path='/tmp/t_lobby.png')
-        await Bp.click('#raum-liste a')
+        await Bp.goto(BASIS + '?sitzung=2#/raum/' + code)   # Räume sind erst geschlossen: Beitritt per Code-Link
         await warte_phase(Bp, 'p-warten')
         await waehle(A, '#einst [data-e=runden]', '5')
         await waehle(A, '#einst [data-e=zeit]', '10')

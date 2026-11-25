@@ -8,5 +8,6 @@ export const KATEGORIE_SYMBOL = {
   groesser: svg('<rect x="4" y="12" width="6" height="8" rx="1.2"/><rect x="14" y="4" width="6" height="16" rx="1.2"/>'),
   wissen: svg('<circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 0 1 4.8 1c0 1.7-2.4 2.2-2.4 3.7"/><path d="M12 17.2h.01"/>'),
   emoji: svg('<circle cx="12" cy="12" r="9"/><path d="M8.5 14.5c.9 1.3 2.1 2 3.5 2s2.6-.7 3.5-2"/><path d="M9 9.5h.01M15 9.5h.01"/>'),
+  spiele: svg('<path d="M4 17h7V9h9"/><path d="M20 9v4"/><circle cx="20" cy="16.5" r=".6"/>'),
   gemischt: svg('<rect x="4" y="4" width="16" height="16" rx="3.5"/><path d="M8.5 8.5h.01M15.5 8.5h.01M12 12h.01M8.5 15.5h.01M15.5 15.5h.01"/>'),
 };

@@ -17,4 +17,6 @@ s = re.sub(r'(href="css/stil\.css)(\?v=[^"]*)?"', rf'\1?v={v}"', s)
 s = re.sub(r'(src="js/app\.js)(\?v=[^"]*)?"', rf'\1?v={v}"', s)
 s = re.sub(r'(src="vendor/supabase\.js)(\?v=[^"]*)?"', rf'\1?v={v}"', s)
 idx.write_text(s)
+# Die Seite fragt diese Datei regelmäßig ab und lädt bei einer neuen Version von selbst neu
+(root / 'version.json').write_text('{"version": "%s"}\n' % v)
 print('Version', v)

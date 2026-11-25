@@ -1,7 +1,8 @@
-import { sb, spielEintragen, spielLoggen } from './server.js?v=0.4.5';
-import { fragenBauen, pruefeFrage, richtigeWahl, fragenVorladen, KATEGORIEN, kategorieVon } from './kategorien.js?v=0.4.5';
-import { lobbyMelden, lobbyAbmelden } from './lobby.js?v=0.4.5';
-import { chatErlaubt, textPruefen } from './filter.js?v=0.4.5';
+import { sb, spielEintragen, spielLoggen } from './server.js?v=0.5.0';
+import { fragenBauen, pruefeFrage, richtigeWahl, fragenVorladen, KATEGORIEN, kategorieVon } from './kategorien.js?v=0.5.0';
+import { lobbyMelden, lobbyAbmelden } from './lobby.js?v=0.5.0';
+import { chatErlaubt, textPruefen } from './filter.js?v=0.5.0';
+import { snakeNeu, snakeSchritt, snakeErgebnis, snakeTakt, SNAKE_DAUER } from './snake.js?v=0.5.0';
 
 export const STANDARD = { kategorie: 'flaggen', runden: 10, zeit: 15, auswahl: 'alle', modus: 'tippen', chat: 'eingeschraenkt', sichtbar: 'geschlossen' };
 const COUNTDOWN = 3000;
@@ -27,9 +28,17 @@ export function punkteFuer(ms, dauer, rang) {
   return 30 + Math.round(70 * rest) + (rang === 1 ? 20 : 0);
 }
 
+// Raum-Zustand pro Tab merken, damit ein Neuladen (z. B. bei neuer Version) nichts kaputt macht
+const MERK = code => 'quizbude.raum.' + code;
+function gemerktLesen(code) {
+  try { return JSON.parse(sessionStorage.getItem(MERK(code)) || 'null'); } catch { return null; }
+}
+
 export class Raum {
-  constructor(code, ich, aenderung) {
+  constructor(code, ich, aenderung, neu = false) {
     this.code = code;
+    this.gemerkt = neu ? null : gemerktLesen(code);
+    this.syncDa = false;
     this.ich = ich;
     this.aenderung = aenderung;
     this.spieler = new Map();   // anwesend: id -> {id,name,avatar,farbe,seit}
@@ -47,18 +56,45 @@ export class Raum {
     this.gesperrt = new Set();
     this.meinStatus = null;     // null | 'geloest' | 'gesperrt'
     this.meineTreffer = 0;
-    this.chat = [];
+    this.chat = this.gemerkt?.chat || [];
     this.ergebnis = null;
     this.spielId = null;
     this.eingetragen = null;
-    this.seit = Date.now();
+    this.seit = this.gemerkt?.seit || Date.now(); // wer zurückkommt, behält seinen Platz in der Reihenfolge
     this.timer = null;
     this.hostSchritt = null;    // nur beim Gastgeber: welche Runde gerade läuft
     this.vergeben = new Set();
     this.weg = false;
+    // Spiele (Snake): Stand kommt vom Gastgeber, Lenkbefehle sammelt nur er
+    this.snake = null;
+    this.snakeRest = 0;
+    this.eingaben = new Map();
+    this.unentschieden = false;
+    this.spielBild = null;      // wird von der Oberfläche gesetzt, zeichnet nur das Spielfeld neu
   }
 
+  get istSpiel() { return !!KATEGORIEN[this.einst.kategorie]?.spiel; }
+  get spielerNoetig() { return this.istSpiel ? (KATEGORIEN.spiele.spielerZahl[this.einst.auswahl] || 2) : 2; }
+  get startBereit() { return this.istSpiel ? this.spieler.size === this.spielerNoetig : this.spieler.size >= 2; }
+
   get binHost() { return this.hostId === this.ich.id; }
+
+  merken() {
+    try {
+      sessionStorage.setItem(MERK(this.code), JSON.stringify({
+        seit: this.seit, einst: this.einst, chat: this.chat.slice(-40), warHost: this.binHost && this.phase === 'warten',
+      }));
+    } catch { /* egal */ }
+  }
+
+  // Nach dem Neuladen: wer vorher Gastgeber im Warteraum war, übernimmt wieder
+  hostZurueckholen() {
+    if (!this.gemerkt?.warHost || this.phase !== 'warten' || this.weg) return;
+    this.gemerkt.warHost = false;
+    if (this.binHost) return;
+    this.hostId = this.ich.id;
+    this.uebernehmen();
+  }
   get frage() { return this.fragen[this.idx]; }
   meldung() { if (!this.weg) this.aenderung(this); }
 
@@ -82,7 +118,7 @@ export class Raum {
       this.meldung();
     } else {
       this.senden('hallo', {});
-      setTimeout(() => { if (!this.hostId && !this.weg) this.hostWaehlen(); }, 2500);
+      setTimeout(() => { if (!this.hostId && !this.weg) this.hostWaehlen(); this.hostZurueckholen(); }, 2500);
     }
   }
 
@@ -129,6 +165,17 @@ export class Raum {
     this.senden('host', { id: this.ich.id });
     this.lobbyAktualisieren();
     clearTimeout(this.timer);
+    // allein zurückgekommen: die gemerkten Einstellungen wieder einsetzen
+    if (this.phase === 'warten' && !this.syncDa && this.gemerkt?.einst) {
+      this.senden('einst', { einst: { ...this.einst, ...this.gemerkt.einst } });
+      this.gemerkt.einst = null;
+    }
+    if (this.istSpiel && (this.phase === 'countdown' || this.phase === 'spiel')) {
+      // Der bisherige Gastgeber ist mitten im Spiel gegangen: wer noch da ist, gewinnt
+      if (this.snake) for (const s of this.snake.schlangen) if (!this.spieler.has(s.id)) s.lebt = false;
+      if (this.snake) this.snakeBeenden();
+      return;
+    }
     if (this.phase === 'countdown') this.timer = setTimeout(() => this.frageSenden(0), 1500);
     else if (this.phase === 'frage') { this.hostSchritt = { i: this.idx, fertig: false }; this.aufloesen(); }
     else if (this.phase === 'aufloesung') this.timer = setTimeout(() => this.weiter(this.idx), 1500);
@@ -155,6 +202,8 @@ export class Raum {
   }
 
   systemZeile(text) {
+    const letzte = this.chat[this.chat.length - 1];
+    if (letzte?.system && letzte.text === text) return; // nicht doppelt
     this.chat.push({ system: true, text });
     if (this.chat.length > 80) this.chat.shift();
   }
@@ -185,11 +234,16 @@ export class Raum {
         this.start = performance.now() - (p.dauer - p.rest);
         if (this.phase === 'countdown') this.countdownEnde = performance.now() + 1500;
         this.vorladen();
+        this.syncDa = true;
         if (this.hostId && !this.spieler.has(this.hostId) && this.spieler.size) this.hostWaehlen();
+        this.hostZurueckholen();
         break;
-      case 'host':
+      case 'host': {
+        const warIch = this.binHost;
         this.hostId = p.id;
+        if (warIch && !this.binHost) lobbyAbmelden(); // jemand anderes hat übernommen
         break;
+      }
       case 'einst':
         this.einst = p.einst;
         if (this.binHost) this.lobbyAktualisieren();
@@ -198,6 +252,7 @@ export class Raum {
         Object.assign(this, {
           einst: p.einst, fragen: p.fragen, spielId: p.spielId, idx: -1, phase: 'countdown',
           punkte: new Map(), geloest: new Map(), gesperrt: new Set(), ergebnis: null, meineTreffer: 0,
+          snake: p.snake || null, snakeRest: SNAKE_DAUER, eingaben: new Map(), unentschieden: false,
         });
         this.countdownEnde = performance.now() + COUNTDOWN;
         this.vorladen();
@@ -242,9 +297,23 @@ export class Raum {
       case 'aufloesung':
         this.phase = 'aufloesung';
         break;
+      case 'sn':
+        if (!this.binHost) {
+          if (this.snake && p.s.t <= this.snake.t && this.phase === 'spiel') return;
+          this.snake = p.s;
+        }
+        this.snakeRest = p.rest;
+        if (this.phase === 'countdown') { this.phase = 'spiel'; break; }
+        if (!this.binHost) this.spielBild?.(this);
+        return; // kein komplettes Neuzeichnen, nur das Spielfeld
+      case 'lenk':
+        if (!this.binHost || p.von === this.ich.id) return;
+        this.lenkenMerken(p.von, p.r);
+        return;
       case 'ende':
         this.phase = 'ende';
         this.ergebnis = p.liste;
+        this.unentschieden = !!p.unentschieden;
         this.eintragen();
         if (this.binHost) this.lobbyAktualisieren();
         break;
@@ -274,8 +343,9 @@ export class Raum {
   }
 
   starten() {
-    if (!this.binHost || this.spieler.size < 2) return; // gespielt wird ab 2 Leuten
+    if (!this.binHost || !this.startBereit) return; // Quiz ab 2 Leuten, Snake genau zu zweit
     clearTimeout(this.timer);
+    if (this.istSpiel) return this.spielStarten();
     const fragen = fragenBauen(this.einst);
     this.senden('start', { einst: this.einst, fragen, spielId: crypto.randomUUID() });
     this.timer = setTimeout(() => this.frageSenden(0), COUNTDOWN);
@@ -328,12 +398,68 @@ export class Raum {
     });
   }
 
-  // Gleiche Einstellungen, neue Fragen, alle bleiben drin. Allein geht's zurück in den Warteraum.
+  // Gleiche Einstellungen, neue Fragen, alle bleiben drin. Passt die Zahl nicht, geht's zurück in den Warteraum.
   nochmal() {
     if (!this.binHost) return;
     clearTimeout(this.timer);
-    if (this.spieler.size >= 2) this.starten();
+    if (this.startBereit) this.starten();
     else this.senden('warten', {});
+  }
+
+  // ---------- Snake ----------
+  spielStarten() {
+    // Gastgeber ist Schlange 1 (sand), der andere Schlange 2 (salbei)
+    const ids = [...this.spieler.keys()].sort((a, b) => (a === this.hostId ? -1 : b === this.hostId ? 1 : 0));
+    this.senden('start', { einst: this.einst, fragen: [], spielId: crypto.randomUUID(), snake: snakeNeu(ids) });
+    this.timer = setTimeout(() => this.snakeLos(), COUNTDOWN);
+  }
+
+  snakeLos() {
+    if (!this.binHost || this.weg || !this.snake) return;
+    this.snakeEnde = performance.now() + SNAKE_DAUER;
+    this.eingaben = new Map();
+    this.snakeWeiter();
+  }
+
+  snakeWeiter() {
+    if (!this.binHost || this.weg || !this.snake || this.phase === 'ende') return;
+    const st = this.snake;
+    for (const s of st.schlangen) if (s.lebt && !this.spieler.has(s.id)) s.lebt = false; // wer geht, verliert
+    let vorbei = snakeSchritt(st, this.eingaben);
+    const rest = Math.max(0, this.snakeEnde - performance.now());
+    if (rest <= 0) vorbei = true;
+    this.snakeRest = rest;
+    this.senden('sn', { s: st, rest });
+    if (this.phase === 'spiel') this.spielBild?.(this);
+    this.timer = vorbei ? setTimeout(() => this.snakeBeenden(), 1400) : setTimeout(() => this.snakeWeiter(), snakeTakt(st));
+  }
+
+  snakeBeenden() {
+    if (!this.binHost || this.weg || !this.snake) return;
+    clearTimeout(this.timer);
+    const st = this.snake;
+    const { sieger, unentschieden } = snakeErgebnis(st);
+    const liste = st.schlangen.map(s => ({ id: s.id, pkt: s.pkt * 10 + (s.id === sieger ? 50 : 0), ...(this.bekannt.get(s.id) || { name: '?' }) }));
+    liste.sort((a, b) => (b.id === sieger) - (a.id === sieger) || b.pkt - a.pkt);
+    this.senden('ende', { liste, unentschieden });
+    spielLoggen({
+      code: this.code, kategorie: 'spiele', runden: null, modus: this.einst.auswahl, auswahl: this.einst.auswahl,
+      spieler: liste.map(({ name, avatar, pkt }) => ({ name, avatar, pkt })),
+    });
+  }
+
+  lenkenMerken(id, r) {
+    if (!['o', 'u', 'l', 'r'].includes(r)) return;
+    const liste = this.eingaben.get(id) || [];
+    if (liste.length < 3 && liste[liste.length - 1] !== r) liste.push(r);
+    this.eingaben.set(id, liste);
+  }
+
+  // Pfeiltaste gedrückt: der Gastgeber merkt sich das direkt, alle anderen schicken es an ihn
+  lenken(r) {
+    if (this.phase !== 'spiel' && this.phase !== 'countdown') return;
+    if (this.binHost) this.lenkenMerken(this.ich.id, r);
+    else this.senden('lenk', { r });
   }
 
   // Alle zusammen zurück in den Warteraum, dort sucht der Gastgeber eine neue Kategorie aus
@@ -382,7 +508,7 @@ export class Raum {
     this.eingetragen = this.spielId;
     const ich = this.ergebnis.find(e => e.id === this.ich.id);
     if (!ich) return;
-    const sieg = this.ergebnis.length >= 2 && this.ergebnis[0].id === this.ich.id && ich.pkt > 0;
+    const sieg = !this.unentschieden && this.ergebnis.length >= 2 && this.ergebnis[0].id === this.ich.id && ich.pkt > 0;
     spielEintragen(ich.pkt, this.meineTreffer, sieg);
   }
 }

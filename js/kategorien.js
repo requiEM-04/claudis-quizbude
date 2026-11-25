@@ -1,8 +1,8 @@
-import { LAENDER } from './laender.js?v=0.4.5';
-import { WISSEN, WISSEN_THEMEN } from './wissen.js?v=0.4.5';
-import { EMOJI, EMOJI_THEMEN } from './emoji.js?v=0.4.5';
-import { kanon } from './kanon.js?v=0.4.5';
-import { LAND, AUSWAHL, pruefe, mischen, flaggeUrl, abgleichen } from './abgleich.js?v=0.4.5';
+import { LAENDER } from './laender.js?v=0.5.0';
+import { WISSEN, WISSEN_THEMEN } from './wissen.js?v=0.5.0';
+import { EMOJI, EMOJI_THEMEN } from './emoji.js?v=0.5.0';
+import { kanon } from './kanon.js?v=0.5.0';
+import { LAND, AUSWAHL, pruefe, mischen, flaggeUrl, abgleichen } from './abgleich.js?v=0.5.0';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const zahl = n => n.toLocaleString('de-DE');
@@ -12,7 +12,7 @@ let UMRISSE = null;
 let umrisseLaeuft = null;
 export function umrisseLaden() {
   if (UMRISSE) return Promise.resolve(UMRISSE);
-  umrisseLaeuft ||= import('./umrisse.js?v=0.4.5').then(m => { UMRISSE = m.UMRISSE; return UMRISSE; });
+  umrisseLaeuft ||= import('./umrisse.js?v=0.5.0').then(m => { UMRISSE = m.UMRISSE; return UMRISSE; });
   return umrisseLaeuft;
 }
 export const umrisseDa = () => !!UMRISSE;
@@ -139,11 +139,20 @@ export const KATEGORIEN = {
     name: 'Gemischt', text: 'Von allem etwas', tippen: false, zeit: 20,
     auswahlen: { bekannt: 'Leicht', alle: 'Schwer' }, standard: 'bekannt',
   },
+
+  // Keine Quizfragen, sondern kleine Spiele gegeneinander. Hier kommen nach und nach weitere dazu.
+  spiele: {
+    name: 'Spiele', text: 'Snake und mehr, zu zweit', spiel: true, tippen: false, zeit: 15,
+    auswahlen: { snake: 'Snake (2 Spieler)' }, standard: 'snake', spielerZahl: { snake: 2 },
+  },
 };
 
 const groesseres = f => (LAND[f.c].flaeche >= LAND[f.d].flaeche ? f.c : f.d);
 
 export const KATEGORIE_REIHE = ['flaggen', 'umrisse', 'hauptstaedte', 'groesser', 'wissen', 'emoji', 'gemischt'];
+// Für Räume: Quiz-Kategorien plus Spiele (Sprint und Bestenliste bleiben beim Quiz)
+export const RAUM_REIHE = [...KATEGORIE_REIHE, 'spiele'];
+export const SPIEL_NAME = { snake: 'Snake' };
 export const ARTEN = ['flaggen', 'umrisse', 'hauptstaedte', 'groesser', 'wissen', 'emoji'];
 
 // Eine einzelne Frage für den Sprint. Länder-Kategorien fangen leicht an und werden mit jedem Treffer schwerer.

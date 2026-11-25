@@ -1,18 +1,19 @@
-import { VERSION } from './config.js?v=0.4.5';
+import { VERSION } from './config.js?v=0.5.0';
 import {
   online, nameFehler, registrieren, anmelden, abmelden, sitzungHolen, profilLaden, profilSpeichern,
   bestenliste, letzteSpiele, sprintEintragen, sprintBestenliste, rangVon, spielerAnzahl, spieleVon, sb,
-} from './server.js?v=0.4.5';
-import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.4.5';
-import { Raum, codeNeu, STANDARD } from './raum.js?v=0.4.5';
-import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.4.5';
+} from './server.js?v=0.5.0';
+import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.5.0';
+import { Raum, codeNeu, STANDARD } from './raum.js?v=0.5.0';
+import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.5.0';
 import {
-  KATEGORIEN, KATEGORIE_REIHE, kategorieVon, optionSchluessel, richtigeWahl, umrisseDa, umrisseLaden,
+  KATEGORIEN, KATEGORIE_REIHE, RAUM_REIHE, SPIEL_NAME, kategorieVon, optionSchluessel, richtigeWahl, umrisseDa, umrisseLaden,
   sprintFrage, pruefeFrage, fragenVorladen, kanon,
-} from './kategorien.js?v=0.4.5';
-import { LAENDER } from './laender.js?v=0.4.5';
-import { auswahlfeld } from './auswahlfeld.js?v=0.4.5';
-import { KATEGORIE_SYMBOL } from './symbole.js?v=0.4.5';
+} from './kategorien.js?v=0.5.0';
+import { LAENDER } from './laender.js?v=0.5.0';
+import { auswahlfeld } from './auswahlfeld.js?v=0.5.0';
+import { KATEGORIE_SYMBOL } from './symbole.js?v=0.5.0';
+import { snakeZeichnen, SCHLANGEN_FARBEN, SNAKE_DAUER } from './snake.js?v=0.5.0';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -159,6 +160,8 @@ function anmeldenAufbauen() {
         : await anmelden(name, passwort);
       await profilHolen(user);
       f.passwort.value = '';
+      gast = false;
+      try { localStorage.removeItem(GAST); } catch { /* egal */ }
       route(true);
     } catch (err) {
       fehler.textContent = err.message;
@@ -167,7 +170,11 @@ function anmeldenAufbauen() {
     }
   };
 
-  $('gast-sprint').onclick = () => navigieren('#/sprint');
+  $('gast-los').onclick = () => {
+    gast = true;
+    try { localStorage.setItem(GAST, '1'); } catch { /* egal */ }
+    navigieren('#/sprint');
+  };
 }
 
 // Drei Flaggen als Fächer, bei jedem Besuch andere
@@ -189,7 +196,6 @@ function anmeldenZeigen() {
   $('anmelde-form').hidden = ohneServer;
   document.querySelector('#s-anmelden .umschalter').hidden = ohneServer;
   $('offline-hinweis').hidden = !ohneServer;
-  $('gast-sprint').hidden = !ohneServer;
 }
 
 async function profilHolen(user) {
@@ -202,10 +208,18 @@ async function profilHolen(user) {
 
 const AUS_ICON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>';
 
+// Als Gast: ohne Konto, nur Sprint und Lernen, Rekorde auf dem Gerät
+const GAST = 'quizbude.gast';
+let gast = (() => { try { return localStorage.getItem(GAST) === '1'; } catch { return false; } })();
+
 function chipZeichnen() {
   const chip = $('profil-chip');
-  $('dock').hidden = !ich;
-  if (!ich) { chip.innerHTML = ''; return; }
+  $('dock').hidden = !ich && !gast;
+  document.querySelector('.dock-link[data-nav=bude]').hidden = !ich;
+  if (!ich) {
+    chip.innerHTML = gast ? `<span class="dock-gast">${avatarHtml({ avatar: '👤', farbe: '#353B3F' })}Gast</span><a class="knopf zweit klein" href="#/">Anmelden</a>` : '';
+    return;
+  }
   const aufProfil = (location.hash || '#/') === '#/profil';
   chip.innerHTML = `<a class="dock-ich${aufProfil ? ' aktiv' : ''}" href="#/profil" title="Mein Profil">${avatarHtml(ich)}<span class="dock-name">${esc(ich.name)}</span></a><button class="dock-aus" id="abmelden" title="Abmelden" aria-label="Abmelden">${AUS_ICON}</button>`;
   $('abmelden').onclick = async () => {
@@ -273,7 +287,7 @@ async function letzteLaden() {
       const sp = s.spieler || [];
       const erster = sp[0];
       if (!erster) return '';
-      const kat = KATEGORIEN[s.kategorie]?.name;
+      const kat = s.kategorie === 'spiele' ? SPIEL_NAME[s.auswahl] || 'Spiele' : KATEGORIEN[s.kategorie]?.name;
       const wo = kat ? ` bei ${esc(kat)}` : '';
       const text = sp.length > 1
         ? `${esc(erster.avatar)} ${esc(erster.name)} gewinnt${wo} mit ${erster.pkt} Punkten gegen ${sp.length - 1 === 1 ? '1 andere Person' : `${sp.length - 1} andere`}`
@@ -305,7 +319,7 @@ function budeAufbauen() {
     navigieren('#/raum/' + c);
   };
   $('besten-kategorie').innerHTML = KATEGORIE_REIHE.map(k => `<option value="${k}">${esc(KATEGORIEN[k].name)}</option>`).join('');
-  auswahlfeld($('besten-kategorie'), { symbol: v => KATEGORIE_SYMBOL[v] });
+  bestenFeld = auswahlfeld($('besten-kategorie'), { symbol: v => KATEGORIE_SYMBOL[v] });
   $('besten-kategorie').onchange = () => bestenLaden();
   document.querySelectorAll('#besten-reiter .umschalter-knopf').forEach(b => {
     b.onclick = () => {
@@ -324,7 +338,7 @@ function sprintRekord(k) {
 }
 
 function kachelnHtml(mitRekord) {
-  return KATEGORIE_REIHE.map(k => {
+  return (mitRekord ? KATEGORIE_REIHE : RAUM_REIHE).map(k => {
     const rekord = mitRekord ? sprintRekord(k) : 0;
     return `
     <button class="kachel${mitRekord ? ' sprint-karte' : ''}" data-k="${k}">
@@ -354,6 +368,7 @@ function kachelBild(k) {
     case 'groesser': return `<span class="kb-duell">${f('CA')}<b>oder</b>${f('BR')}</span>`;
     case 'wissen': return '<span class="kb-text kb-gross">?</span>';
     case 'emoji': return '<span class="kb-emoji">🦁👑</span>';
+    case 'spiele': return '<svg class="kb-snake" viewBox="0 0 92 60" aria-hidden="true"><path d="M8 48H40V20H70V30" fill="none" stroke="#CDB68C" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/><circle cx="66.5" cy="22" r="1.8" fill="#16191B"/><circle cx="73.5" cy="22" r="1.8" fill="#16191B"/><circle cx="70" cy="48" r="6" fill="#CF8E8E"/></svg>';
     default: return '<span class="kb-emoji">🎲</span>';
   }
 }
@@ -538,6 +553,8 @@ async function profilZeigen(id) {
 // ---------- Raum ----------
 let gezeichnet = { idx: -2, phase: '' };
 let einstFelder = [];
+let bestenFeld = null;
+let spielFokus = null;
 
 async function raumBetreten(code) {
   if (raum && raum.code === code) { raumZeichnen(); return; }
@@ -546,7 +563,8 @@ async function raumBetreten(code) {
   $('chat-liste').innerHTML = '';
   $('spieler-liste').innerHTML = '';
   const alsHost = neuErstellt?.code === code;
-  raum = new Raum(code, ich, () => raumZeichnen());
+  raum = new Raum(code, ich, () => raumZeichnen(), alsHost);
+  raum.spielBild = r => { if (r === raum) spielZeichnen(r); };
   if (alsHost) raum.einst = neuErstellt.einst;
   neuErstellt = null;
   raumZeichnen();
@@ -559,7 +577,7 @@ async function raumBetreten(code) {
 }
 
 function raumAufbauen() {
-  $('einst-kategorie').innerHTML = KATEGORIE_REIHE.map(k => `<option value="${k}">${esc(KATEGORIEN[k].name)}</option>`).join('');
+  $('einst-kategorie').innerHTML = RAUM_REIHE.map(k => `<option value="${k}">${esc(KATEGORIEN[k].name)}</option>`).join('');
   einstFelder = [...document.querySelectorAll('#einst select')]
     .map(sel => auswahlfeld(sel, sel.dataset.e === 'kategorie' ? { symbol: v => KATEGORIE_SYMBOL[v] } : {}));
   document.querySelectorAll('#einst select').forEach(s => {
@@ -630,11 +648,16 @@ function raumZeichnen() {
   $('raum-code').textContent = r.code;
   const n = r.fragen.length;
   $('raum-runde').textContent = r.phase === 'frage' || r.phase === 'aufloesung' ? `Frage ${r.idx + 1} von ${n}`
-    : r.phase === 'ende' ? 'Fertig' : r.phase === 'countdown' ? 'Gleich geht\'s los' : 'Warteraum';
+    : r.phase === 'ende' ? 'Fertig' : r.phase === 'countdown' ? 'Gleich geht\'s los' : r.phase === 'spiel' ? (SPIEL_NAME[r.einst.auswahl] || 'Spiel') : 'Warteraum';
 
-  const sichtbar = { warten: 'p-warten', countdown: 'p-countdown', frage: 'p-frage', aufloesung: 'p-frage', ende: 'p-ende' }[r.phase];
-  for (const id of ['p-warten', 'p-countdown', 'p-frage', 'p-ende']) $(id).hidden = id !== sichtbar;
-  $('zeitleiste').hidden = !(r.phase === 'frage' || r.phase === 'aufloesung');
+  const spielfeld = r.istSpiel && (r.phase === 'countdown' || r.phase === 'spiel');
+  const sichtbar = spielfeld ? 'p-spiel' : { warten: 'p-warten', countdown: 'p-countdown', frage: 'p-frage', aufloesung: 'p-frage', ende: 'p-ende' }[r.phase];
+  for (const id of ['p-warten', 'p-countdown', 'p-frage', 'p-spiel', 'p-ende']) $(id).hidden = id !== sichtbar;
+  $('zeitleiste').hidden = !(r.phase === 'frage' || r.phase === 'aufloesung' || r.phase === 'spiel');
+  if (spielfeld) {
+    if (spielFokus !== r.spielId) { spielFokus = r.spielId; document.activeElement?.blur?.(); } // Pfeiltasten sollen lenken, nicht im Chat landen
+    spielZeichnen(r);
+  }
 
   const hostName = r.spieler.get(r.hostId)?.name || r.bekannt.get(r.hostId)?.name;
 
@@ -647,13 +670,19 @@ function raumZeichnen() {
     if ($('einst-auswahl').dataset.fuer !== r.einst.kategorie) { $('einst-auswahl').innerHTML = auswahlHtml; $('einst-auswahl').dataset.fuer = r.einst.kategorie; }
     document.querySelectorAll('#einst select').forEach(s => { s.value = String(r.einst[s.dataset.e] ?? STANDARD[s.dataset.e] ?? ''); s.disabled = !r.binHost; });
     if (!kat.tippen) { $('einst-modus').value = 'auswahl'; $('einst-modus').disabled = true; }
+    // Bei Spielen gibt es keine Fragen: Antworten, Runden und Zeit ausblenden
+    for (const e of ['modus', 'runden', 'zeit']) document.querySelector(`#einst [data-e=${e}]`).closest('label').hidden = !!kat.spiel;
+    $('einst-auswahl-titel').textContent = kat.spiel ? 'Spiel' : 'Auswahl';
     einstFelder.forEach(f => f.aktualisieren());
     $('los').hidden = !r.binHost;
-    const genug = r.spieler.size >= 2;
+    const genug = r.startBereit;
     $('los').disabled = !genug;
-    $('los-hinweis').textContent = genug ? '' : r.binHost
-      ? 'Starten geht ab 2 Leuten. Klick oben auf den Code und schick den Link rum.'
-      : 'Es geht los, sobald genug Leute da sind.';
+    const wieviele = r.spieler.size === 1 ? 'bist nur du' : `seid ihr ${r.spieler.size}`;
+    $('los-hinweis').textContent = genug ? '' : kat.spiel
+      ? `${SPIEL_NAME[r.einst.auswahl] || 'Das Spiel'} spielt ihr genau zu ${r.spielerNoetig === 2 ? 'zweit' : r.spielerNoetig}. Gerade ${wieviele} im Raum.`
+      : r.binHost
+        ? 'Starten geht ab 2 Leuten. Klick oben auf den Code und schick den Link rum.'
+        : 'Es geht los, sobald genug Leute da sind.';
     $('warten-text').textContent = !r.hostId ? 'Verbinde mit dem Raum …'
       : r.binHost ? 'Stell ein und leg los, sobald alle da sind. Klick auf den Code oben, dann ist der Einladungslink kopiert.'
         : `${hostName || 'Der Gastgeber'} stellt ein und startet gleich.`;
@@ -712,6 +741,7 @@ function raumZeichnen() {
 
   if (r.phase === 'ende') {
     const liste = r.ergebnis || [];
+    $('ende-titel').textContent = !r.istSpiel ? 'Endstand' : r.unentschieden ? 'Unentschieden' : `${liste[0]?.name || '?'} gewinnt`;
     $('podest').innerHTML = liste.map((e, i) => `<li><span class="platz">${i + 1}.</span>${avatarHtml(e)}<span>${esc(e.name)}</span><span class="wert">${e.pkt}</span></li>`).join('');
     $('nochmal').hidden = !r.binHost;
     $('andere-kategorie').hidden = !r.binHost;
@@ -740,10 +770,132 @@ function raumZeichnen() {
   if (unten) cl.scrollTop = cl.scrollHeight;
 }
 
+// ---------- Spielfeld ----------
+function spielZeichnen(r) {
+  if (!r.snake) return;
+  snakeZeichnen($('spiel-feld'), r.snake, r.ich.id);
+  $('spiel-info').innerHTML = r.snake.schlangen.map((s, i) => {
+    const wer = r.bekannt.get(s.id);
+    return `<span class="wer${s.lebt ? '' : ' raus'}" style="--f:${SCHLANGEN_FARBEN[i]}"><span class="punkt"></span>${esc(wer?.name || '?')}${s.id === r.ich.id ? ' (du)' : ''} <small>${s.pkt} gefressen</small></span>`;
+  }).join('');
+  if (r.phase === 'spiel') {
+    const sek = Math.ceil(r.snakeRest / 1000);
+    $('raum-runde').textContent = `${SPIEL_NAME[r.einst.auswahl] || 'Spiel'} · ${Math.floor(sek / 60)}:${String(sek % 60).padStart(2, '0')}`;
+    const fl = $('zeitleiste-fuellung');
+    fl.style.transition = 'none'; fl.style.width = `${(r.snakeRest / SNAKE_DAUER) * 100}%`;
+  }
+}
+
+// Wischen auf dem Spielfeld (Handy)
+{
+  let start = null;
+  const feld = () => $('spiel-feld');
+  document.addEventListener('pointerdown', e => { if (e.target === feld()) start = [e.clientX, e.clientY]; });
+  document.addEventListener('pointerup', e => {
+    if (!start || !raum) return;
+    const dx = e.clientX - start[0], dy = e.clientY - start[1];
+    start = null;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) < 18) return;
+    raum.lenken(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'r' : 'l') : (dy > 0 ? 'u' : 'o'));
+  });
+}
+
+// ---------- Neue Version: von selbst neu laden, aber nur in einem ruhigen Moment ----------
+// Ruhig heißt: kein Sprint und kein laufendes Spiel, nichts halb Getipptes, kein offenes Fenster.
+// Vorher merken wir uns, wo man war (Adresse, Raum, Chat, Filter, Scrollstand).
+let neueVersion = null;
+const ZURUECK = 'quizbude.zurueck';
+const VERSUCH = 'quizbude.update';
+
+async function versionPruefen() {
+  if (!neueVersion) {
+    try {
+      const antwort = await fetch(`version.json?t=${Date.now()}`, { cache: 'no-store' });
+      if (antwort.ok) {
+        const { version } = await antwort.json();
+        if (version && version !== VERSION) neueVersion = version;
+      }
+    } catch { /* offline, dann eben beim nächsten Mal */ }
+  }
+  updateWennRuhig();
+}
+
+function ruhigGenug() {
+  if (sprint) return false;
+  if (raum && raum.phase !== 'warten') return false;
+  if ($('lernen-detail').open || !$('profil-editor').hidden) return false;
+  const a = document.activeElement;
+  if (a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA') && a.value.trim() && a.id !== 'lernen-suche') return false;
+  if (!$('s-anmelden').hidden && [...document.querySelectorAll('#anmelde-form input')].some(i => i.value)) return false;
+  return true;
+}
+
+function zustandMerken() {
+  raum?.merken();
+  try {
+    sessionStorage.setItem(ZURUECK, JSON.stringify({
+      scroll: Math.round(scrollY), hash: location.hash || '#/',
+      lernen: { art: lernenArt, region: lernenRegion, suche: $('lernen-suche').value },
+      besten: { spalte: besteSpalte, kategorie: $('besten-kategorie').value },
+    }));
+  } catch { /* egal */ }
+}
+
+function updateWennRuhig() {
+  if (!neueVersion || !ruhigGenug()) return;
+  let versuch = null;
+  try { versuch = JSON.parse(sessionStorage.getItem(VERSUCH) || 'null'); } catch { /* egal */ }
+  const zahl = versuch?.ziel === neueVersion ? versuch.zahl : 0;
+  if (zahl >= 2) return; // zweimal versucht und immer noch alt: lieber in Ruhe lassen als ständig neu laden
+  try { sessionStorage.setItem(VERSUCH, JSON.stringify({ ziel: neueVersion, zahl: zahl + 1 })); } catch { /* egal */ }
+  zustandMerken();
+  neueVersion = null;
+  toast('Neue Version da, lade kurz neu …');
+  setTimeout(() => {
+    if (zahl === 0) { location.reload(); return; }
+    // Beim zweiten Versuch am Zwischenspeicher vorbei
+    const u = new URL(location.href); u.searchParams.set('neu', versuch.ziel);
+    location.replace(u.toString());
+  }, 700);
+}
+
+function zustandWiederherstellen() {
+  const u = new URL(location.href);
+  if (u.searchParams.has('neu')) { u.searchParams.delete('neu'); history.replaceState(history.state, '', u.toString()); }
+  let z = null;
+  try { z = JSON.parse(sessionStorage.getItem(ZURUECK) || 'null'); sessionStorage.removeItem(ZURUECK); } catch { /* egal */ }
+  if (!z) return;
+  if (z.lernen) {
+    lernenArt = z.lernen.art === 'umrisse' ? 'umrisse' : 'flaggen';
+    lernenRegion = z.lernen.region in REGIONEN ? z.lernen.region : 'alle';
+    $('lernen-suche').value = z.lernen.suche || '';
+    document.querySelectorAll('#lernen-art .umschalter-knopf').forEach(x => { x.classList.toggle('aktiv', x.dataset.art === lernenArt); x.setAttribute('aria-selected', x.dataset.art === lernenArt); });
+    document.querySelectorAll('#lernen-region .chip').forEach(x => x.setAttribute('aria-pressed', x.dataset.r === lernenRegion));
+  }
+  if (z.besten) {
+    besteSpalte = ['siege', 'punkte', 'sprint'].includes(z.besten.spalte) ? z.besten.spalte : 'siege';
+    document.querySelectorAll('#besten-reiter .umschalter-knopf').forEach(x => { x.classList.toggle('aktiv', x.dataset.spalte === besteSpalte); x.setAttribute('aria-selected', x.dataset.spalte === besteSpalte); });
+    if (z.besten.kategorie && KATEGORIEN[z.besten.kategorie]) { $('besten-kategorie').value = z.besten.kategorie; bestenFeld?.aktualisieren(); }
+  }
+  if (z.hash === (location.hash || '#/') && z.scroll) setTimeout(() => scrollTo(0, z.scroll), 400);
+}
+
+window.addEventListener('pagehide', () => zustandMerken());
+document.addEventListener('visibilitychange', () => { if (!document.hidden) versionPruefen(); });
+setInterval(versionPruefen, 60000);
+setInterval(updateWennRuhig, 3000); // falls die neue Version schon bekannt ist und es gerade ruhig wird
+
 // Countdown und knapp werdende Zeit
 setInterval(() => {
   if (raum && raum.phase === 'countdown') {
     $('countdown').textContent = Math.max(1, Math.ceil((raum.countdownEnde - performance.now()) / 1000));
+  }
+  const spielCountdown = raum && raum.istSpiel && raum.phase === 'countdown';
+  $('spiel-countdown').hidden = !spielCountdown;
+  if (spielCountdown) {
+    const i = raum.snake?.schlangen.findIndex(s => s.id === raum.ich.id) ?? -1;
+    const zahl = Math.max(1, Math.ceil((raum.countdownEnde - performance.now()) / 1000));
+    $('spiel-countdown').innerHTML = `<span>${zahl}<small>${i === 0 ? 'Du bist die sandfarbene Schlange links.' : i === 1 ? 'Du bist die grüne Schlange rechts.' : 'Du schaust zu.'}</small></span>`;
   }
   if (raum && raum.phase === 'frage') {
     const rest = raum.dauer - (performance.now() - raum.start);
@@ -894,6 +1046,17 @@ function sprintUeberspringen() {
 }
 
 // Tastenkürzel: Pfeil rechts oder Alt+D = überspringen, 1–4 = Antwort wählen
+// Snake lenken: Pfeiltasten oder WASD (nicht, solange man im Chat tippt)
+const LENKTASTE = { ArrowUp: 'o', ArrowDown: 'u', ArrowLeft: 'l', ArrowRight: 'r', w: 'o', s: 'u', a: 'l', d: 'r' };
+document.addEventListener('keydown', e => {
+  if (!raum || !raum.istSpiel || (raum.phase !== 'spiel' && raum.phase !== 'countdown') || $('s-raum').hidden) return;
+  if (e.target?.id === 'chat-eingabe' || e.altKey || e.ctrlKey || e.metaKey) return;
+  const r = LENKTASTE[e.key.length === 1 ? e.key.toLowerCase() : e.key];
+  if (!r) return;
+  e.preventDefault();
+  raum.lenken(r);
+}, true);
+
 document.addEventListener('keydown', e => {
   const imSprint = sprint?.laeuft && !$('s-sprint').hidden;
   const imRaum = raum && raum.phase === 'frage' && !$('s-raum').hidden;
@@ -928,6 +1091,7 @@ function route(erzwingen = false) {
   if (sprint && !/^#\/sprint\/[a-z]+$/.test(h)) { sprint.laeuft = false; sprint = null; }
   if (h !== '#/' && lobbyAus) { lobbyAus(); lobbyAus = null; }
   if (!$('s-lernen').hidden && h !== '#/lernen' && $('lernen-detail').open) $('lernen-detail').close();
+  chipZeichnen();
   if (h === '#/lernen') return lernenZeigen();
   if (h === '#/sprint') return sprintWahlZeigen();
   const sm = h.match(/^#\/sprint\/([a-z]+)$/);
@@ -953,6 +1117,7 @@ async function los() {
   sprintAufbauen();
   profilAufbauen();
   lernenAufbauen();
+  zustandWiederherstellen();
   // Direktlink (z. B. Einladung in einen Raum): die Bude kommt darunter, damit „Zurück" dorthin führt
   const start = location.hash || '#/';
   if (history.state?.qbTiefe == null) {
@@ -973,9 +1138,10 @@ async function los() {
     });
   }
   route(true);
+  setTimeout(versionPruefen, 4000);
 }
 
 // Für die Fehlersuche in der Konsole: quizbude.raum
-window.quizbude = { get raum() { return raum; }, get sprint() { return sprint; } };
+window.quizbude = { get raum() { return raum; }, get sprint() { return sprint; }, versionPruefen };
 
 los();

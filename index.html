@@ -7,7 +7,7 @@
 <meta name="description" content="Flaggen raten in der Pause, allein oder zusammen im Raum.">
 <meta name="theme-color" content="#1B1E21">
 <link rel="icon" href="bilder/icon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="css/stil.css?v=0.4.5">
+<link rel="stylesheet" href="css/stil.css?v=0.5.0">
 </head>
 <body>
 <main>
@@ -38,8 +38,10 @@
           <p class="fehler" id="anmelde-fehler" role="alert"></p>
           <button class="knopf haupt breit" type="submit" id="anmelde-knopf">Anmelden</button>
         </form>
-        <p class="hinweis" id="offline-hinweis" hidden>Der Server wird gerade eingerichtet. Bis dahin geht nur der Flaggen-Sprint ohne Konto.</p>
-        <button class="knopf zweit breit" id="gast-sprint" hidden>Flaggen-Sprint ohne Konto</button>
+        <p class="hinweis" id="offline-hinweis" hidden>Der Server ist gerade nicht erreichbar. Bis dahin geht nur das Spielen als Gast.</p>
+        <div class="oder" aria-hidden="true"><span>oder</span></div>
+        <button class="knopf zweit breit" id="gast-los">Als Gast spielen</button>
+        <p class="hinweis gast-hinweis">Ohne Konto gehen Sprint und Lernen. Deine Rekorde bleiben dann nur auf diesem Gerät. Für Räume mit anderen brauchst du ein Konto.</p>
       </div>
     </div>
   </section>
@@ -167,7 +169,7 @@
             <p class="phase-text" id="warten-text"></p>
             <div class="einst" id="einst">
               <label class="breit">Kategorie <select data-e="kategorie" id="einst-kategorie"></select></label>
-              <label>Auswahl <select data-e="auswahl" id="einst-auswahl"></select></label>
+              <label><span id="einst-auswahl-titel">Auswahl</span> <select data-e="auswahl" id="einst-auswahl"></select></label>
               <label>Antworten <select data-e="modus" id="einst-modus"><option value="tippen">Selbst tippen</option><option value="auswahl">Zur Auswahl</option></select></label>
               <label>Runden <select data-e="runden"><option>5</option><option>10</option><option>15</option><option>20</option><option>30</option></select></label>
               <label>Zeit pro Frage <select data-e="zeit"><option value="10">10 s</option><option value="15">15 s</option><option value="20">20 s</option><option value="30">30 s</option></select></label>
@@ -192,8 +194,17 @@
             <p class="rueckmeldung" id="rueckmeldung" aria-live="polite"></p>
           </div>
 
+          <div class="phase" id="p-spiel">
+            <div class="spiel-kopf" id="spiel-info"></div>
+            <div class="spiel-buehne">
+              <canvas class="spiel-feld" id="spiel-feld" aria-label="Spielfeld"></canvas>
+              <p class="spiel-countdown" id="spiel-countdown" hidden></p>
+            </div>
+            <p class="phase-text" id="spiel-hilfe">Lenken mit den Pfeiltasten oder W A S D, am Handy durch Wischen. Fahr nicht in die Wand oder in eine Schlange, rote Punkte machen dich länger.</p>
+          </div>
+
           <div class="phase" id="p-ende">
-            <h2 class="phase-titel">Endstand</h2>
+            <h2 class="phase-titel" id="ende-titel">Endstand</h2>
             <ol class="podest" id="podest"></ol>
             <div class="zeile mitte">
               <button class="knopf haupt" id="nochmal">Nochmal</button>
@@ -272,7 +283,7 @@
 </nav>
 <div class="toast" id="toast" role="status" hidden></div>
 
-<script src="vendor/supabase.js?v=0.4.5"></script>
-<script type="module" src="js/app.js?v=0.4.5"></script>
+<script src="vendor/supabase.js?v=0.5.0"></script>
+<script type="module" src="js/app.js?v=0.5.0"></script>
 </body>
 </html>

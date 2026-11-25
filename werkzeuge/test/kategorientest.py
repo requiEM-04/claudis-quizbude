@@ -60,7 +60,8 @@ async def main():
         await A.wait_for_selector('#p-warten:not([hidden])')
         await B.wait_for_timeout(900)
         print('Lobby:', (await B.inner_text('#raum-liste')).replace('\n', ' | '))
-        await B.click('#raum-liste a'); await B.wait_for_selector('#p-warten:not([hidden])')
+        code = (await A.inner_text('#raum-code')).strip()
+        await B.goto(BASIS + '?sitzung=2#/raum/' + code); await B.wait_for_selector('#p-warten:not([hidden])')
         for kat in ['gemischt', 'flaggen', 'umrisse', 'hauptstaedte', 'groesser', 'wissen', 'emoji']:
             await waehle(A, '#einst-kategorie', kat); await A.wait_for_timeout(300)
             await waehle(A, '#einst [data-e=runden]', '10' if kat == 'gemischt' else '5')
