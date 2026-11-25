@@ -1,8 +1,8 @@
-import { sb, spielEintragen, spielLoggen } from './server.js?v=0.6.1';
-import { fragenBauen, pruefeFrage, richtigeWahl, fragenVorladen, KATEGORIEN, kategorieVon } from './kategorien.js?v=0.6.1';
-import { lobbyMelden, lobbyAbmelden } from './lobby.js?v=0.6.1';
-import { chatErlaubt, textPruefen } from './filter.js?v=0.6.1';
-import { KurvenSim, KurvenBild } from './kurve.js?v=0.6.1';
+import { sb, spielEintragen, spielLoggen } from './server.js?v=0.6.2';
+import { fragenBauen, pruefeFrage, richtigeWahl, fragenVorladen, KATEGORIEN, kategorieVon } from './kategorien.js?v=0.6.2';
+import { lobbyMelden, lobbyAbmelden } from './lobby.js?v=0.6.2';
+import { chatErlaubt, textPruefen } from './filter.js?v=0.6.2';
+import { KurvenSim, KurvenBild } from './kurve.js?v=0.6.2';
 
 export const STANDARD = { kategorie: 'flaggen', runden: 10, zeit: 15, auswahl: 'alle', modus: 'tippen', chat: 'eingeschraenkt', sichtbar: 'geschlossen' };
 const COUNTDOWN = 3000;

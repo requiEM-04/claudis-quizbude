@@ -7,7 +7,7 @@
 <meta name="description" content="Flaggen raten in der Pause, allein oder zusammen im Raum.">
 <meta name="theme-color" content="#1B1E21">
 <link rel="icon" href="bilder/icon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="css/stil.css?v=0.6.1">
+<link rel="stylesheet" href="css/stil.css?v=0.6.2">
 </head>
 <body>
 <main>
@@ -172,7 +172,7 @@
         <div class="buehne-kopf">
           <button class="raum-code" id="raum-code" title="Einladungslink kopieren"></button>
           <span class="runde" id="raum-runde"></span>
-          <a class="knopf zweit klein" href="#/">Raus</a>
+          <span class="kopf-knoepfe"><button class="tasten-knopf" type="button" title="Tasten anzeigen (?)" aria-label="Tasten anzeigen">⌨</button><a class="knopf zweit klein" href="#/">Raus</a></span>
         </div>
         <div class="zeitleiste" id="zeitleiste" hidden><div class="zeitleiste-fuellung" id="zeitleiste-fuellung"></div></div>
 
@@ -243,7 +243,7 @@
   <section class="screen" id="s-sprintwahl" hidden>
     <div class="lernen-kopf">
       <h1>Sprint</h1>
-      <p class="unterzeile">Allein gegen die Uhr, ganz ohne Raum: 60 Sekunden, so viele wie möglich. Überspringen kostet 2 Sekunden.</p>
+      <p class="unterzeile">Allein gegen die Uhr, ganz ohne Raum: 60 Sekunden, so viele wie möglich. Überspringen kostet 2 Sekunden. <button class="tasten-knopf text" type="button">Alle Tasten anzeigen</button></p>
     </div>
     <div class="kachel-raster" id="sprint-kacheln"></div>
   </section>
@@ -254,7 +254,7 @@
       <div class="buehne-kopf">
         <span class="sprint-punkte"><span id="sprint-punkte">0</span> <small>Treffer</small></span>
         <span class="runde" id="sprint-zeit">60 s</span>
-        <a class="knopf zweit klein" href="#/sprint">Raus</a>
+        <span class="kopf-knoepfe"><button class="tasten-knopf" type="button" title="Tasten anzeigen (?)" aria-label="Tasten anzeigen">⌨</button><a class="knopf zweit klein" href="#/sprint">Raus</a></span>
       </div>
       <div class="zeitleiste"><div class="zeitleiste-fuellung" id="sprint-leiste"></div></div>
       <div class="buehne">
@@ -265,7 +265,7 @@
             <input id="sprint-eingabe" placeholder="Welches Land?" spellcheck="false" autocapitalize="off">
           </form>
           <div class="optionen" id="sprint-optionen"></div>
-          <button class="textknopf" id="sprint-skip">Weiß ich nicht, weiter <span class="tasten"><kbd>→</kbd> oder <kbd>Alt</kbd>+<kbd>D</kbd>, kostet 2 Sekunden</span></button>
+          <button class="textknopf" id="sprint-skip">Weiß ich nicht, weiter</button>
           <p class="rueckmeldung" id="sprint-rueck" aria-live="polite"></p>
         </div>
         <div class="phase" id="sp-ende" hidden>
@@ -285,6 +285,21 @@
   <footer class="fuss">Version <span id="version"></span>. Flaggen von svg-country-flags (gemeinfrei), Länderdaten und Umrisse von world-countries (ODbL).</footer>
 </main>
 
+<!-- Tastenliste -->
+<dialog class="tasten-dialog" id="tasten-dialog" aria-labelledby="tasten-titel">
+  <button class="dialog-zu" id="tasten-zu" aria-label="Schließen">×</button>
+  <h2 id="tasten-titel">Tasten</h2>
+  <dl class="tasten-liste">
+    <dt>Antwort wählen</dt><dd><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> <kbd>4</kbd> oder <kbd>A</kbd> <kbd>B</kbd> <kbd>C</kbd> <kbd>D</kbd></dd>
+    <dt>Antwort abschicken</dt><dd><kbd>Enter</kbd></dd>
+    <dt>Überspringen im Sprint</dt><dd><kbd>→</kbd> oder <kbd>Alt</kbd> + <kbd>D</kbd> (kostet 2 Sekunden)</dd>
+    <dt>Snake lenken</dt><dd><kbd>←</kbd> <kbd>→</kbd> oder <kbd>A</kbd> <kbd>D</kbd></dd>
+    <dt>Rakete abfeuern</dt><dd><kbd>↑</kbd>, <kbd>W</kbd> oder <kbd>Leertaste</kbd></dd>
+    <dt>Raus</dt><dd>Zurück-Taste im Browser oder an der Maus</dd>
+    <dt>Diese Liste</dt><dd><kbd>?</kbd></dd>
+  </dl>
+</dialog>
+
 <!-- Dock: Navigation unten in der Mitte -->
 <nav class="dock" id="dock" aria-label="Navigation" hidden>
   <a class="dock-marke" href="#/" aria-label="Zur Bude"><img src="bilder/logo.svg" alt="" width="34" height="34"></a>
@@ -296,7 +311,7 @@
 </nav>
 <div class="toast" id="toast" role="status" hidden></div>
 
-<script src="vendor/supabase.js?v=0.6.1"></script>
-<script type="module" src="js/app.js?v=0.6.1"></script>
+<script src="vendor/supabase.js?v=0.6.2"></script>
+<script type="module" src="js/app.js?v=0.6.2"></script>
 </body>
 </html>

@@ -1,20 +1,20 @@
-import { VERSION } from './config.js?v=0.6.1';
+import { VERSION } from './config.js?v=0.6.2';
 import {
   online, nameFehler, registrieren, anmelden, abmelden, sitzungHolen, profilLaden, profilSpeichern,
   bestenliste, letzteSpiele, spieleSeit, alleProfile, sprintEintragen, sprintBestenliste, rangVon, spielerAnzahl, spieleVon, sb,
-} from './server.js?v=0.6.1';
-import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.6.1';
-import { Raum, codeNeu, STANDARD } from './raum.js?v=0.6.1';
-import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.6.1';
+} from './server.js?v=0.6.2';
+import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.6.2';
+import { Raum, codeNeu, STANDARD } from './raum.js?v=0.6.2';
+import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.6.2';
 import {
   KATEGORIEN, KATEGORIE_REIHE, RAUM_REIHE, SPIEL_NAME, kategorieVon, optionSchluessel, richtigeWahl, umrisseDa, umrisseLaden,
   sprintFrage, pruefeFrage, fragenVorladen, kanon,
-} from './kategorien.js?v=0.6.1';
-import { LAENDER } from './laender.js?v=0.6.1';
-import { auswahlfeld } from './auswahlfeld.js?v=0.6.1';
-import { KATEGORIE_SYMBOL } from './symbole.js?v=0.6.1';
-import { KURVEN_FARBEN } from './kurve.js?v=0.6.1';
-import { konfetti } from './konfetti.js?v=0.6.1';
+} from './kategorien.js?v=0.6.2';
+import { LAENDER } from './laender.js?v=0.6.2';
+import { auswahlfeld } from './auswahlfeld.js?v=0.6.2';
+import { KATEGORIE_SYMBOL } from './symbole.js?v=0.6.2';
+import { KURVEN_FARBEN } from './kurve.js?v=0.6.2';
+import { konfetti } from './konfetti.js?v=0.6.2';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -1268,11 +1268,25 @@ document.addEventListener('keydown', e => {
       return;
     }
   }
-  if (/^[1-4]$/.test(e.key) && !e.altKey && !e.ctrlKey && !e.metaKey && !(tippt && ziel.id === 'chat-eingabe')) {
+  // Antworten: 1–4 oder A–D (Buchstaben nur, wenn man nicht gerade in ein Feld tippt)
+  if (e.altKey || e.ctrlKey || e.metaKey) return;
+  const taste = e.key.toLowerCase();
+  const nr = /^[1-4]$/.test(taste) && !(tippt && ziel.id === 'chat-eingabe') ? Number(taste)
+    : /^[a-d]$/.test(taste) && !tippt ? 'abcd'.indexOf(taste) + 1 : 0;
+  if (nr) {
     const knoepfe = [...document.querySelectorAll(imSprint ? '#sprint-optionen button' : '#optionen button')];
-    const k = knoepfe[Number(e.key) - 1];
+    const k = knoepfe[nr - 1];
     if (k && !k.disabled) { e.preventDefault(); k.click(); }
   }
+});
+
+// ---------- Tastenliste ----------
+document.addEventListener('click', e => { if (e.target.closest('.tasten-knopf')) $('tasten-dialog').showModal(); });
+$('tasten-zu').onclick = () => $('tasten-dialog').close();
+$('tasten-dialog').onclick = e => { if (e.target === $('tasten-dialog')) $('tasten-dialog').close(); };
+document.addEventListener('keydown', e => {
+  const tippt = e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement;
+  if (e.key === '?' && !tippt && !$('tasten-dialog').open) { e.preventDefault(); $('tasten-dialog').showModal(); }
 });
 
 // ---------- Weiche ----------
