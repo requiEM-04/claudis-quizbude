@@ -1,25 +1,25 @@
-import { VERSION } from './config.js?v=0.9.4';
+import { VERSION } from './config.js?v=0.9.5';
 import {
   online, nameFehler, registrieren, anmelden, abmelden, sitzungHolen, profilLaden, profilSpeichern,
   bestenliste, spieleSeit, alleProfile, sprintEintragen, sprintBestenliste, rangVon, spielerAnzahl, spieleVon, sb,
   adminAnmelden, istAdminName, konfigLaden, adminEinrichten, einrichtungOffen,
-} from './server.js?v=0.9.4';
-import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.9.4';
-import { Raum, codeNeu, STANDARD, TIPPFEHLER_ABZUG } from './raum.js?v=0.9.4';
-import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.9.4';
+} from './server.js?v=0.9.5';
+import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.9.5';
+import { Raum, codeNeu, STANDARD, TIPPFEHLER_ABZUG } from './raum.js?v=0.9.5';
+import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.9.5';
 import {
   KATEGORIEN, KATEGORIE_REIHE, SPRINT_REIHE, kategorieVon, optionSchluessel, richtigeWahl, umrisseDa, umrisseLaden,
   sprintFrage, pruefeFrage, fragenVorladen, kanon,
-} from './kategorien.js?v=0.9.4';
-import { LAENDER } from './laender.js?v=0.9.4';
-import { auswahlfeld } from './auswahlfeld.js?v=0.9.4';
-import { KATEGORIE_SYMBOL } from './symbole.js?v=0.9.4';
-import { konfetti } from './konfetti.js?v=0.9.4';
-import { karteBauen, karteLaden, auswerten } from './weltkarte.js?v=0.9.4';
+} from './kategorien.js?v=0.9.5';
+import { LAENDER } from './laender.js?v=0.9.5';
+import { auswahlfeld } from './auswahlfeld.js?v=0.9.5';
+import { KATEGORIE_SYMBOL } from './symbole.js?v=0.9.5';
+import { konfetti } from './konfetti.js?v=0.9.5';
+import { karteBauen, karteLaden, auswerten } from './weltkarte.js?v=0.9.5';
 import {
   RAENGE, BILDER, ARTEN, JOKER, ruhmInfo, stufeVon, stufeInfo, wappen, effektHtml, rahmenDeko, stilVon, istFrei, freiAb, neuFrei,
   belohnungName, rangVonId, symbol, symbolSvg, SCHWELLEN,
-} from './ruhm.js?v=0.9.4';
+} from './ruhm.js?v=0.9.5';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -329,7 +329,7 @@ function faecherFuellen() {
   ];
   document.querySelectorAll('[data-faecher]').forEach(f => {
     if (f.closest('.screen')?.hidden) return;
-    f.innerHTML = drei.map((c, i) => { const l = lage[i]; return `<img src="${flaggeUrl(c)}" alt="" draggable="false" style="--i:${i};--x:${l.x};--y:${l.y};--dreh:${l.dreh};--sx:${l.sx};--sy:${l.sy};--sdreh:${l.sdreh}">`; }).join('');
+    f.innerHTML = drei.map((c, i) => { const l = lage[i]; return `<span class="ff" style="--i:${i};--x:${l.x};--y:${l.y};--dreh:${l.dreh}"><img src="${flaggeUrl(c)}" alt="" draggable="false"></span>`; }).join('');
     // Klick mischt neue Flaggen
     f.onclick = () => { f.classList.remove('neu'); faecherFuellen(); void f.offsetWidth; f.classList.add('neu'); };
   });
@@ -563,7 +563,7 @@ async function bestenLaden() {
       const [zahl, einheit] = SPALTE[spalte](p.wert);
       const titel = titelVon(p), rahmen = hatRuhm(p) && stilVon(p).rahmen;
       return `<li class="besten-feld${platz <= 3 ? ` top p${platz}` : ''}${ich && p.id === ich.id ? ' ich' : ''}${rahmen ? ` lr-${rahmen}` : ''}" style="--i:${platz - 1}">
-        <a href="#/profil/${esc(p.id)}">
+        <a data-spieler="${esc(p.id)}" data-platz="${platz}" role="button" tabindex="0">
           <span class="rang">${platz}</span>
           <span class="bf-avatar">${platz === 1 ? '<span class="krone" aria-hidden="true">👑</span>' : ''}${avatarMitWappen(p, 14)}</span>
           <span class="bf-mitte"><span class="bf-name${nameKlasse(p)}">${esc(p.name)}</span>${titel ? `<span class="bf-titel titel-zeile nf-${titel.rang}">${esc(titel.text)}</span>` : ''}</span>
@@ -590,7 +590,98 @@ async function bestenLaden() {
   }
 }
 
+// Raumspiele einer Person: Platz je Spiel und Summen je Kategorie (alte Kategorie „spiele“ gibt es nicht mehr)
+function spieleAuswerten(spiele, name) {
+  const n = String(name).toLowerCase();
+  const meine = spiele.filter(sp => sp.kategorie !== 'spiele').map(sp => {
+    const liste = sp.spieler || [];
+    const platz = liste.findIndex(x => String(x.name).toLowerCase() === n) + 1;
+    return { ...sp, platz, von: liste.length, pkt: liste[platz - 1]?.pkt ?? 0 };
+  }).filter(x => x.platz > 0);
+  const proKat = new Map();
+  for (const g of meine) {
+    const k = g.kategorie || 'flaggen';
+    const e = proKat.get(k) || { n: 0, siege: 0, pkt: 0, best: 0 };
+    e.n++; e.pkt += g.pkt; e.best = Math.max(e.best, g.pkt); if (g.platz === 1 && g.von > 1) e.siege++;
+    proKat.set(k, e);
+  }
+  return { meine, proKat };
+}
+
+// Klick in die Bestenliste: Fenster mit Karte und Saison der Person
+async function spielerFenster(id, platz) {
+  const d = $('spieler-fenster'), innen = $('sf-innen');
+  const zeit = $('besten-zeit').value || saisonOptionen()[0].wert;
+  const zeitName = saisonOptionen().find(o => o.wert === zeit)?.name || 'Allzeit';
+  innen.innerHTML = '<p class="sf-laden">Wird geladen …</p>';
+  if (!d.open) d.showModal();
+  try {
+    const p = await profilLaden(id);
+    if (!p) throw new Error('Das Profil gibt es nicht mehr.');
+    const allzeit = zeit === 'allzeit';
+    let spiele;
+    if (allzeit) spiele = await spieleVon(p.name);
+    else { const [von, bis] = saisonGrenzen(zeit); spiele = (await spieleSeit(von)).filter(s => new Date(s.am) < bis); }
+    const { meine, proKat } = spieleAuswerten(spiele, p.name);
+    const summe = allzeit
+      ? { punkte: p.punkte, siege: p.siege, spiele: p.spiele }
+      : { punkte: meine.reduce((s, g) => s + g.pkt, 0), siege: meine.filter(g => g.platz === 1 && g.von > 1).length, spiele: meine.length };
+    const rekorde = { ...(p.sprint_rekord ? { flaggen: p.sprint_rekord } : {}), ...(p.rekorde || {}) };
+    const z = n => Number(n || 0).toLocaleString('de-DE');
+    const spalteName = { punkte: 'Punkte', siege: 'Siege', sprint: 'Sprint' }[besteSpalte] || 'Punkte';
+    const zeilen = SPRINT_REIHE.map(k => {
+      const e = proKat.get(k), r = rekorde[k] || 0;
+      if (!e && !r) return `<tr class="leer"><th>${esc(KATEGORIEN[k].name)}</th><td>–</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>`;
+      return `<tr><th>${esc(KATEGORIEN[k].name)}</th><td>${e ? e.n : '–'}</td><td class="${e?.siege ? 'gold' : ''}">${e ? e.siege : '–'}</td>
+        <td>${e ? z(Math.round(e.pkt / e.n)) : '–'}</td><td>${e ? z(e.best) : '–'}</td><td class="sf-sprint">${r ? `<b>${r}</b>` : '–'}</td></tr>`;
+    }).join('');
+    innen.innerHTML = `
+      <header class="sf-kopf">
+        <div>
+          <h2><span class="${nameKlasse(p).trim()}">${esc(p.name)}</span> <span class="sf-zeit">· ${esc(zeitName)}</span></h2>
+          <p class="sf-summe"><b>${z(summe.punkte)}</b> ${allzeit ? 'Punkte' : 'Saisonpunkte'} · <b>${z(summe.siege)}</b> ${summe.siege === 1 ? 'Sieg' : 'Siege'} · <b>${z(summe.spiele)}</b> ${summe.spiele === 1 ? 'Spiel' : 'Spiele'} · <b>${z(p.ruhm)}</b> Ruhm</p>
+        </div>
+        ${platz ? `<span class="sf-platz p${Math.min(+platz, 4)}">Platz ${platz}<small>${esc(spalteName)}</small></span>` : ''}
+        <button class="sf-zu" type="button" data-sf="zu" aria-label="Schließen"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      </header>
+      <div class="sf-raster">
+        <div class="sf-karte">${hochkarteHtml(p, stilVon(p))}</div>
+        <div class="sf-rechts">
+          <table class="sf-tabelle">
+            <thead><tr><th>Kategorie</th><th>Spiele</th><th>Siege</th><th>Ø Punkte</th><th>Bestes Spiel</th><th>Sprint-Rekord</th></tr></thead>
+            <tbody>${zeilen}</tbody>
+          </table>
+          <p class="sf-erklaerung">${allzeit
+            ? 'Alles seit dem Start der Quizbude. Die Kategorien zählen die letzten 60 Raumspiele.'
+            : 'Saisonpunkte sind alle Punkte aus Raumspielen in diesem Monat. Ein Sieg zählt, wenn jemand in einem Raum mit mindestens zwei Leuten vorne liegt.'} Sprint-Rekord ist das beste Ergebnis aller Zeiten in 60 Sekunden.</p>
+        </div>
+      </div>
+      <div class="sf-knoepfe">
+        <button class="knopf zweit" type="button" data-sf="profil">Ganzes Profil ansehen</button>
+        <button class="knopf haupt" type="button" data-sf="zu">Schließen</button>
+      </div>`;
+    innen.dataset.id = id;
+  } catch (e) {
+    innen.innerHTML = `<p class="sf-laden">${esc(e.message)}</p><div class="sf-knoepfe"><button class="knopf haupt" type="button" data-sf="zu">Schließen</button></div>`;
+  }
+}
+
 function budeAufbauen() {
+  $('besten-liste').addEventListener('click', e => {
+    const a = e.target.closest('[data-spieler]');
+    if (a) spielerFenster(a.dataset.spieler, a.dataset.platz);
+  });
+  $('besten-liste').addEventListener('keydown', e => {
+    const a = e.target.closest('[data-spieler]');
+    if (a && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); spielerFenster(a.dataset.spieler, a.dataset.platz); }
+  });
+  $('spieler-fenster').addEventListener('click', e => {
+    const d = $('spieler-fenster');
+    if (e.target === d) { d.close(); return; }
+    const b = e.target.closest('[data-sf]'); if (!b) return;
+    d.close();
+    if (b.dataset.sf === 'profil') navigieren('#/profil/' + $('sf-innen').dataset.id);
+  });
   $('raum-neu').onclick = () => raumAufmachen('gemischt');
   kachelnZeichnen();
   $('kachel-raster').onclick = e => {
@@ -1048,18 +1139,7 @@ async function profilZeigen(id) {
       : '<li class="leer">Noch kein Sprint gespielt.</li>';
 
     // Spiele dieses Profils auswerten
-    const meine = spiele.map(sp => {
-      const liste = sp.spieler || [];
-      const platz = liste.findIndex(x => x.name === p.name) + 1;
-      return { ...sp, platz, von: liste.length, pkt: liste[platz - 1]?.pkt ?? 0 };
-    }).filter(x => x.platz > 0);
-    const proKat = new Map();
-    for (const g of meine) {
-      const k = g.kategorie || 'flaggen';
-      const e = proKat.get(k) || { n: 0, siege: 0, pkt: 0 };
-      e.n++; e.pkt += g.pkt; if (g.platz === 1 && g.von > 1) e.siege++;
-      proKat.set(k, e);
-    }
+    const { meine, proKat } = spieleAuswerten(spiele, p.name);
     const kats = [...proKat].sort((a, b) => b[1].n - a[1].n);
     $('profil-kategorien').innerHTML = kats.length ? kats.map(([k, e], i) => `
       <li><span>${esc(KATEGORIEN[k]?.name || k)}${i === 0 && kats.length > 1 ? ' <span class="neben">(am liebsten)</span>' : ''}</span>

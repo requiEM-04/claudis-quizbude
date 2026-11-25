@@ -7,7 +7,7 @@
 <meta name="description" content="Flaggen raten in der Pause, allein oder zusammen im Raum.">
 <meta name="theme-color" content="#1B1E21">
 <link rel="icon" href="bilder/icon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="css/stil.css?v=0.9.4">
+<link rel="stylesheet" href="css/stil.css?v=0.9.5">
 </head>
 <body>
 <div class="nachricht" id="nachricht" role="status" hidden>
@@ -328,6 +328,7 @@
 </main>
 
 <!-- Tastenliste -->
+<dialog class="spieler-fenster" id="spieler-fenster" aria-label="Spieler"><div class="sf-innen" id="sf-innen"></div></dialog>
 <dialog class="aufstieg" id="aufstieg" aria-labelledby="aufstieg-titel"><div class="aufstieg-inhalt" id="aufstieg-inhalt"></div></dialog>
 <dialog class="tasten-dialog" id="tasten-dialog" aria-labelledby="tasten-titel">
   <button class="dialog-zu" id="tasten-zu" aria-label="Schließen">×</button>
@@ -353,7 +354,7 @@
 </nav>
 <div class="toast" id="toast" role="status" hidden></div>
 
-<script src="vendor/supabase.js?v=0.9.4"></script>
-<script type="module" src="js/app.js?v=0.9.4"></script>
+<script src="vendor/supabase.js?v=0.9.5"></script>
+<script type="module" src="js/app.js?v=0.9.5"></script>
 </body>
 </html>

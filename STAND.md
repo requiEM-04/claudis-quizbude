@@ -2,7 +2,7 @@
 
 ## Aktuell (25.11.2026)
 
-- **Version:** 0.9.4
+- **Version:** 0.9.5
 - **Live:** https://requiem-04.github.io/claudis-quizbude/ (Repo `requiEM-04/claudis-quizbude`, Branch `main`, GitHub Pages)
 - **Server:** Supabase-Projekt `quizbude` (Ref `jgvjjjiwfjxynbzjaxsg`, Frankfurt), E-Mail-Bestätigung aus, Realtime mit öffentlichen Kanälen.
 - **Inhalt:** Konten (Name + Passwort ab 4 Zeichen), Räume mit 4-Buchstaben-Code (live über Realtime), Flaggenraten (tippen oder 4 zur Auswahl), Flaggen-Sprint (60 s), Bestenliste (Siege, Punkte, Sprint), „Zuletzt gespielt".
@@ -106,6 +106,11 @@
   - Admin-Passwort einmalig beim ersten Anmelden festlegen.
   - Fußzeile sitzt immer ganz unten, Inhalt steht bei breiten Bildschirmen in der Bildschirmmitte, Sprint passt bei 1920×1080 ohne Scrollen.
   - Interne Links ohne href (keine Adresse mehr unten links in Chrome), Klick aufs Logo lädt die Seite neu (dreht sich dabei).
+
+- **Neu in 0.9.5:**
+  - Klick in die Bestenliste öffnet ein Fenster: Karte links, rechts die Saison je Kategorie (Spiele, Siege, Ø, bestes Spiel, Sprint-Rekord), Platz-Abzeichen, Knopf zum ganzen Profil.
+  - Flaggen-Fächer: feste Trefferflächen (kein Flackern an den Kanten), Flagge unter der Maus wird hervorgehoben, die anderen leicht abgedunkelt, nichts verschwindet.
+  - Alte Kategorie „spiele“ taucht in Profil-Auswertungen nicht mehr auf.
 
 ## Als Nächstes (mit Colin besprochen)
 
