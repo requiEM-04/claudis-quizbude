@@ -2,7 +2,7 @@
 
 ## Aktuell (25.11.2026)
 
-- **Version:** 0.9.5
+- **Version:** 0.9.6
 - **Live:** https://requiem-04.github.io/claudis-quizbude/ (Repo `requiEM-04/claudis-quizbude`, Branch `main`, GitHub Pages)
 - **Server:** Supabase-Projekt `quizbude` (Ref `jgvjjjiwfjxynbzjaxsg`, Frankfurt), E-Mail-Bestätigung aus, Realtime mit öffentlichen Kanälen.
 - **Inhalt:** Konten (Name + Passwort ab 4 Zeichen), Räume mit 4-Buchstaben-Code (live über Realtime), Flaggenraten (tippen oder 4 zur Auswahl), Flaggen-Sprint (60 s), Bestenliste (Siege, Punkte, Sprint), „Zuletzt gespielt".
@@ -111,6 +111,12 @@
   - Klick in die Bestenliste öffnet ein Fenster: Karte links, rechts die Saison je Kategorie (Spiele, Siege, Ø, bestes Spiel, Sprint-Rekord), Platz-Abzeichen, Knopf zum ganzen Profil.
   - Flaggen-Fächer: feste Trefferflächen (kein Flackern an den Kanten), Flagge unter der Maus wird hervorgehoben, die anderen leicht abgedunkelt, nichts verschwindet.
   - Alte Kategorie „spiele“ taucht in Profil-Auswertungen nicht mehr auf.
+
+- **Neu in 0.9.6:**
+  - Weltkarte über den ganzen Bildschirm, Frage oben und Spielerliste rechts schweben als Glas-Panels darüber (Leiste und Fußzeile im Kartenmodus aus).
+  - Länder werden auf Canvas gemalt (ein Path2D je Land, einmal gebaut): 60 Bilder/s beim Ziehen und Zoomen. Pins, Linien und Beschriftungen liegen als SVG darüber.
+  - Ansichten (Region, Auflösung) passen sich an die verdeckten Ränder an (opt.rand in karteBauen).
+  - Auflösung bei Hauptstädten: alle Hauptstädte als kleine Punkte, die gesuchte mit Ring und Namen.
 
 ## Als Nächstes (mit Colin besprochen)
 

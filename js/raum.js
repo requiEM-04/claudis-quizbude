@@ -1,11 +1,11 @@
-import { sb, spielEintragen, spielLoggen } from './server.js?v=0.9.5';
-import { stilVon } from './ruhm.js?v=0.9.5';
-import { letzteTippfehler } from './abgleich.js?v=0.9.5';
-import { auswerten } from './weltkarte.js?v=0.9.5';
+import { sb, spielEintragen, spielLoggen } from './server.js?v=0.9.6';
+import { stilVon } from './ruhm.js?v=0.9.6';
+import { letzteTippfehler } from './abgleich.js?v=0.9.6';
+import { auswerten } from './weltkarte.js?v=0.9.6';
 export const TIPPFEHLER_ABZUG = 10; // Punkte Abzug je Tippfehler bei einer richtigen Antwort
-import { fragenBauen, pruefeFrage, richtigeWahl, fragenVorladen, KATEGORIEN, kategorieVon } from './kategorien.js?v=0.9.5';
-import { lobbyMelden, lobbyAbmelden } from './lobby.js?v=0.9.5';
-import { chatErlaubt, textPruefen } from './filter.js?v=0.9.5';
+import { fragenBauen, pruefeFrage, richtigeWahl, fragenVorladen, KATEGORIEN, kategorieVon } from './kategorien.js?v=0.9.6';
+import { lobbyMelden, lobbyAbmelden } from './lobby.js?v=0.9.6';
+import { chatErlaubt, textPruefen } from './filter.js?v=0.9.6';
 
 export const STANDARD = { kategorie: 'flaggen', runden: 10, zeit: 15, auswahl: 'alle', modus: 'tippen', chat: 'eingeschraenkt', sichtbar: 'offen', ziel: 'beides' };
 const COUNTDOWN = 3000;

@@ -1323,17 +1323,11 @@ body[data-hg="joker"]::before { inset: -20%; animation: polarlicht-zug 26s ease-
 .kb-karte { width: 96px; height: auto; filter: drop-shadow(0 6px 10px rgba(0,0,0,.5)); }
 #kachel-raster .kb-karte { width: 74px; }
 .sprint-karte .kb-karte { width: 128px; }
-.weltkarte { user-select: none; -webkit-user-select: none; position: relative; width: 100%; height: min(64vh, 640px); min-height: 340px; border-radius: 18px; overflow: hidden; background: #141C24; border: 1px solid var(--linie-stark); box-shadow: inset 0 0 60px rgba(0,0,0,.45); }
+.weltkarte { position: fixed; inset: 0; z-index: 0; user-select: none; -webkit-user-select: none; overflow: hidden; background: #16212B; }
 .weltkarte[hidden] { display: none; }
-.wk-svg { display: block; width: 100%; height: 100%; touch-action: none; cursor: crosshair; user-select: none; -webkit-user-select: none; }
-.weltkarte.zieht .wk-svg { cursor: grabbing; }
-.wk-meer { fill: #16212B; }
-.wk-gitter { fill: none; stroke: rgba(255,255,255,.045); }
-.wk-laender { stroke: #1A2026; stroke-linejoin: round; }
-.wk-laender path { fill: #3B434A; fill-rule: evenodd; }
-.wk-laender path:hover { fill: #4A545C; }
-.weltkarte.zieht .wk-laender { pointer-events: none; } /* beim Ziehen keine Hover-Prüfung */
-.wk-laender path.ziel { fill: var(--sand); animation: wk-ziel 1s ease-in-out infinite alternate; }
+.wk-flaeche { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: crosshair; }
+.weltkarte.zieht .wk-flaeche { cursor: grabbing; }
+.wk-svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; overflow: visible; }
 @keyframes wk-ziel { from { fill: #CDB68C; } to { fill: #F2D9A2; } }
 .wk-linie { stroke: var(--f, var(--sand)); stroke-width: 2px; stroke-dasharray: 6 5; vector-effect: non-scaling-stroke; opacity: .9; animation: wk-strich 1.2s linear infinite; }
 @keyframes wk-strich { to { stroke-dashoffset: -22; } }
@@ -1356,13 +1350,35 @@ body[data-hg="joker"]::before { inset: -20%; animation: polarlicht-zug 26s ease-
 .wk-frage .wk-klein img { height: 22px; border-radius: 3px; }
 .frage-bild[data-art="karte"], #sprint-bild:has(.wk-frage) { min-height: 0 !important; }
 /* Kartenmodus: die Karte füllt den Bildschirm */
-body.kartenmodus main { max-width: none; padding-bottom: 24px; }
-body.kartenmodus .sprint { max-width: none; }
+/* Kartenmodus: Karte über den ganzen Bildschirm, Frage oben und Spielerliste rechts schweben darüber */
+body.kartenmodus { padding: 0 !important; overflow: hidden; }
+body.kartenmodus .dock, body.kartenmodus .fuss, body.kartenmodus .nachricht { display: none; }
+body.kartenmodus main { position: relative; z-index: 1; max-width: none; min-height: 0; padding: 0; pointer-events: none; }
+body.kartenmodus .raum-raster { display: block; }
+body.kartenmodus .buehne-karte {
+  position: fixed; z-index: 3; top: 14px; left: 14px; right: 14px; margin: 0 auto; width: auto; max-width: 760px;
+  padding: 12px 18px 14px; border-radius: 24px; pointer-events: auto;
+  background: rgba(24, 27, 30, .86); border: 1px solid var(--linie-stark);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2); backdrop-filter: blur(14px) saturate(1.2);
+  box-shadow: 0 24px 50px -20px rgba(0,0,0,.85);
+}
+body.kartenmodus .buehne-kopf { margin-bottom: 10px; }
+body.kartenmodus .zeitleiste { margin-bottom: 12px; }
 body.kartenmodus .buehne { min-height: 0; }
-body.kartenmodus .phase { gap: 12px; user-select: none; -webkit-user-select: none; }
-body.kartenmodus .weltkarte { height: calc(100vh - 270px); }
+body.kartenmodus .phase { gap: 8px; user-select: none; -webkit-user-select: none; }
+body.kartenmodus .frage-hinweis { margin: 0; }
+body.kartenmodus .wk-flagge { height: 46px; }
+body.kartenmodus .wk-gross { font-size: clamp(1.5rem, 2.6vw, 2.2rem); }
+body.kartenmodus #s-raum aside.seite {
+  position: fixed; z-index: 3; top: 14px; right: 14px; width: 300px; max-height: calc(100vh - 100px); overflow: auto; pointer-events: auto;
+  background: rgba(24, 27, 30, .86); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+}
+@media (min-width: 1100px) { body.kartenmodus #s-raum .buehne-karte { right: 328px; } }
+@media (max-width: 1099px) { body.kartenmodus #s-raum aside.seite { display: none; } }
+body.kartenmodus .toast { z-index: 9; }
+.wk-stadt-name { font-size: 13px; fill: #FFF1CF; }
 @media (min-width: 900px) { body.spielt { padding-left: 0; } }
-@media (max-width: 700px) { .weltkarte, body.kartenmodus .weltkarte { height: calc(100vh - 300px); min-height: 300px; } .wk-hilfe { display: none; } .wk-flagge { height: 40px; } }
+@media (max-width: 700px) { .wk-hilfe { display: none; } .wk-flagge { height: 40px; } }
 
 /* =====================================================================
    Nichts markieren oder wegziehen (außer in Eingabefeldern und im Chat)

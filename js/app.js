@@ -1,25 +1,25 @@
-import { VERSION } from './config.js?v=0.9.5';
+import { VERSION } from './config.js?v=0.9.6';
 import {
   online, nameFehler, registrieren, anmelden, abmelden, sitzungHolen, profilLaden, profilSpeichern,
   bestenliste, spieleSeit, alleProfile, sprintEintragen, sprintBestenliste, rangVon, spielerAnzahl, spieleVon, sb,
   adminAnmelden, istAdminName, konfigLaden, adminEinrichten, einrichtungOffen,
-} from './server.js?v=0.9.5';
-import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.9.5';
-import { Raum, codeNeu, STANDARD, TIPPFEHLER_ABZUG } from './raum.js?v=0.9.5';
-import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.9.5';
+} from './server.js?v=0.9.6';
+import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.9.6';
+import { Raum, codeNeu, STANDARD, TIPPFEHLER_ABZUG } from './raum.js?v=0.9.6';
+import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.9.6';
 import {
   KATEGORIEN, KATEGORIE_REIHE, SPRINT_REIHE, kategorieVon, optionSchluessel, richtigeWahl, umrisseDa, umrisseLaden,
   sprintFrage, pruefeFrage, fragenVorladen, kanon,
-} from './kategorien.js?v=0.9.5';
-import { LAENDER } from './laender.js?v=0.9.5';
-import { auswahlfeld } from './auswahlfeld.js?v=0.9.5';
-import { KATEGORIE_SYMBOL } from './symbole.js?v=0.9.5';
-import { konfetti } from './konfetti.js?v=0.9.5';
-import { karteBauen, karteLaden, auswerten } from './weltkarte.js?v=0.9.5';
+} from './kategorien.js?v=0.9.6';
+import { LAENDER } from './laender.js?v=0.9.6';
+import { auswahlfeld } from './auswahlfeld.js?v=0.9.6';
+import { KATEGORIE_SYMBOL } from './symbole.js?v=0.9.6';
+import { konfetti } from './konfetti.js?v=0.9.6';
+import { karteBauen, karteLaden, auswerten } from './weltkarte.js?v=0.9.6';
 import {
   RAENGE, BILDER, ARTEN, JOKER, ruhmInfo, stufeVon, stufeInfo, wappen, effektHtml, rahmenDeko, stilVon, istFrei, freiAb, neuFrei,
   belohnungName, rangVonId, symbol, symbolSvg, SCHWELLEN,
-} from './ruhm.js?v=0.9.5';
+} from './ruhm.js?v=0.9.6';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -772,10 +772,21 @@ async function sprintSaisonLaden() {
 // ---------- Weltkarte: je eine Karte für Raum und Sprint, einmal gebaut ----------
 const KARTEN = {};
 const kartenPin = {};
+// Die Karte liegt über den ganzen Bildschirm, Frage und Spielerliste schweben darüber.
+// Was davon verdeckt ist, bekommt die Karte als Rand, damit Regionen und Auflösungen im freien Bereich landen.
+function kartenRand(id) {
+  const screen = $(id === 'raum-weltkarte' ? 's-raum' : 's-sprint');
+  const panel = screen.querySelector('.buehne-karte').getBoundingClientRect();
+  const seite = id === 'raum-weltkarte' ? screen.querySelector('aside.seite') : null;
+  const sr = seite && getComputedStyle(seite).display !== 'none' ? seite.getBoundingClientRect() : null;
+  return { t: panel.bottom + 14, r: sr && sr.left > innerWidth / 2 ? innerWidth - sr.left + 14 : 14, b: 64, l: 14 };
+}
 function weltkarte(id) {
-  if (!KARTEN[id]) KARTEN[id] = karteBauen($(id), (lon, lat) => kartenPin[id]?.(lon, lat));
+  if (!KARTEN[id]) KARTEN[id] = karteBauen($(id), (lon, lat) => kartenPin[id]?.(lon, lat), { rand: () => kartenRand(id) });
   return KARTEN[id];
 }
+// Karten ganz nach hinten in die Seite hängen: sie liegen fest über dem ganzen Bildschirm
+for (const id of ['raum-weltkarte', 'sprint-weltkarte']) document.body.prepend($(id));
 const kartenmodus = an => document.body.classList.toggle('kartenmodus', !!an);
 const kmText = a => a.km === 0 ? 'Getroffen!' : `${a.km.toLocaleString('de-DE')} km daneben`;
 
@@ -1353,7 +1364,7 @@ function raumZeichnen() {
           const p = r.spieler.get(id) || r.bekannt.get(id) || {};
           return { lon: g.lon, lat: g.lat, name: id === r.ich.id ? 'Du' : p.name, farbe: id === r.ich.id ? 'var(--sand)' : farbe(p.farbe) };
         });
-        karteLaden().then(() => weltkarte('raum-weltkarte').loesung(f.c, f.t, pins));
+        karteLaden().then(() => weltkarte('raum-weltkarte').loesung(f.c, f.t, pins, LAND[f.c]?.stadt));
       }
       if (f.k === 'groesser') duellAufdecken($('optionen'), f, null);
       else document.querySelectorAll('#optionen button').forEach(b => {
@@ -1619,7 +1630,7 @@ function sprintPin(lon, lat) {
   if (!s?.laeuft || s.frage?.k !== 'karte' || s.pauseSeit) return;
   const f = s.frage, a = auswerten(f.c, f.t, lon, lat), k = weltkarte('sprint-weltkarte');
   s.pauseSeit = performance.now();
-  k.loesung(f.c, f.t, [{ lon, lat, name: 'Du', farbe: 'var(--sand)' }]);
+  k.loesung(f.c, f.t, [{ lon, lat, name: 'Du', farbe: 'var(--sand)' }], LAND[f.c]?.stadt);
   const rm = $('sprint-rueck');
   if (a.treffer) { trefferMerken(s); s.punkte++; punktePop(); rm.className = 'rueckmeldung gut'; rm.textContent = a.km ? `${kmText(a)}, zählt!` : 'Getroffen!'; }
   else { s.verpasst.push(f); s.serie = 0; rm.className = 'rueckmeldung schlecht'; rm.textContent = `${kmText(a)}. Das war ${kategorieVon(f).loesung(f)}.`; }

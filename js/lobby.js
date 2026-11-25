@@ -1,4 +1,4 @@
-import { sb } from './server.js?v=0.9.5';
+import { sb } from './server.js?v=0.9.6';
 
 // Ein gemeinsamer Kanal, in dem Gastgeber ihre offenen Räume anzeigen.
 let kanal = null;
