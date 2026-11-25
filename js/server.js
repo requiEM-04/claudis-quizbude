@@ -1,5 +1,5 @@
-import { CONFIG } from './config.js?v=0.6.0';
-import { textPruefen } from './filter.js?v=0.6.0';
+import { CONFIG } from './config.js?v=0.6.1';
+import { textPruefen } from './filter.js?v=0.6.1';
 
 // ?sitzung=2 in der Adresse = zweites Konto im selben Browser (zum Testen mit zwei Tabs)
 const sitzung = new URLSearchParams(location.search).get('sitzung');
@@ -106,6 +106,20 @@ export async function rangVon(spalte, wert) {
   const { count, error } = await sb.from('profile').select('id', { count: 'exact', head: true }).gt(spalte, wert);
   if (error) return null;
   return (count ?? 0) + 1;
+}
+
+// Für die Monatswertung: alle Spiele seit einem Zeitpunkt und alle Profile (Name -> id, Farbe)
+export async function spieleSeit(seit) {
+  const { data, error } = await sb.from('spiele').select('am,spieler,kategorie,auswahl')
+    .gte('am', seit.toISOString()).order('am', { ascending: false }).limit(1000);
+  if (error) throw new Error(uebersetzen(error));
+  return data || [];
+}
+
+export async function alleProfile() {
+  const { data, error } = await sb.from('profile').select('id,name,avatar,farbe').limit(1000);
+  if (error) throw new Error(uebersetzen(error));
+  return data || [];
 }
 
 export async function spielerAnzahl() {

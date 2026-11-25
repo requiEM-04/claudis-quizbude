@@ -170,8 +170,13 @@ label { display: grid; gap: 6px; font-weight: 600; font-size: .86rem; color: var
 /* Podest fährt Platz für Platz hoch */
 @keyframes aufsteigen { from { transform: translateY(18px); opacity: 0; } to { transform: none; opacity: 1; } }
 .podest li { animation: aufsteigen .5s cubic-bezier(.2, .8, .2, 1) both; animation-delay: calc(var(--i, 0) * 140ms + 120ms); }
-.podest li:first-child { box-shadow: 0 0 0 1px rgba(205,182,140,.35), 0 18px 40px -18px rgba(205,182,140,.45); }
-.podest li.ich { outline: 1px dashed rgba(143,179,162,.55); outline-offset: -1px; }
+.podest { display: grid; gap: 8px; }
+ol.podest li { background: rgba(255,255,255,.03); border-radius: 14px; padding: 12px 18px; }
+ol.podest li:first-child { background: linear-gradient(90deg, rgba(205,182,140,.2), rgba(205,182,140,.05)); padding: 16px 18px; }
+.podest li .wert { font: 800 1.1rem var(--display); font-variant-numeric: tabular-nums; }
+.podest li:first-child .wert { color: var(--sand); font-size: 1.3rem; }
+.podest li.ich .podest-name::after { content: "du"; margin-left: 8px; padding: 1px 7px; border-radius: 99px; font: 700 .7rem var(--schrift); color: var(--salbei); background: rgba(143,179,162,.15); }
+.podest li:nth-child(2) .platz { color: #B9C0C4; } .podest li:nth-child(3) .platz { color: #C49A72; }
 .podest-name { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
 .krone { display: inline-block; animation: krone 1.2s ease .6s both; }
 @keyframes krone { 0% { transform: translateY(-14px) rotate(-20deg); opacity: 0; } 60% { transform: translateY(2px) rotate(8deg); opacity: 1; } 100% { transform: none; } }
@@ -319,7 +324,54 @@ legend { font-weight: 600; font-size: .86rem; color: var(--text-2); margin-botto
 .code-feld:focus-within { border-color: rgba(205,182,140,.5); }
 
 .bude-raster { display: grid; gap: 20px; margin-top: 44px; }
-@media (min-width: 900px) { .bude-raster { grid-template-columns: 1.15fr 1fr; align-items: start; } }
+@media (min-width: 900px) { .bude-raster { grid-template-columns: 1fr 1fr; align-items: start; } }
+
+/* Bude mit Bestenliste als eigener Spalte rechts (ab breiten Bildschirmen) */
+.screen.bude { display: grid; gap: 28px; align-items: start; }
+.screen.bude[hidden] { display: none; }
+.bude-rechts { min-width: 0; }
+@media (min-width: 1480px) {
+  body:has(#s-bude:not([hidden])) main { max-width: 1580px; }
+  .screen.bude { grid-template-columns: minmax(0, 1fr) 360px; }
+  .bude-rechts { position: sticky; top: 20px; margin-top: 18px; }
+  .bude-rechts .besten-karte { max-height: calc(100vh - 150px); overflow-y: auto; scrollbar-width: thin; }
+}
+.besten-karte { padding-bottom: 18px; }
+.besten-kopf { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+.besten-kopf h2 { margin: 0; }
+.besten-saison { color: var(--sand); font-weight: 700; font-size: .85rem; }
+.umschalter.voll { display: flex; width: 100%; }
+.umschalter.voll .umschalter-knopf { flex: 1; }
+.besten-kategorie { margin: 12px 0 0; display: block; }
+.besten-kategorie .feld { min-width: 0; }
+/* Podest oben */
+.besten-podest { display: grid; grid-template-columns: 1fr 1.15fr 1fr; align-items: end; gap: 8px; margin: 18px 0 8px; }
+.besten-podest:empty { display: none; }
+.podest-platz {
+  position: relative; display: grid; justify-items: center; gap: 4px; text-align: center; min-width: 0;
+  color: var(--text); text-decoration: none; padding-top: 14px;
+}
+.podest-platz .avatar { width: 46px; height: 46px; font-size: 1.4rem; box-shadow: 0 0 0 3px var(--medaille), 0 10px 24px -8px rgba(0,0,0,.7); }
+.podest-platz.p1 .avatar { width: 58px; height: 58px; font-size: 1.8rem; }
+.podest-platz .krone { position: absolute; top: -6px; font-size: 1.3rem; }
+.podest-name { font-weight: 700; font-size: .88rem; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.podest-wert { font-size: .78rem; color: var(--text-2); font-weight: 600; }
+.podest-sockel {
+  width: 100%; display: grid; place-items: center; margin-top: 4px; border-radius: 12px 12px 6px 6px;
+  font: 800 1.3rem var(--display); color: #16191B; background: var(--medaille);
+  box-shadow: inset 0 -10px 18px rgba(0,0,0,.18);
+}
+.podest-platz.p1 { --medaille: #CDB68C; } .podest-platz.p1 .podest-sockel { height: 62px; }
+.podest-platz.p2 { --medaille: #B9C0C4; } .podest-platz.p2 .podest-sockel { height: 44px; }
+.podest-platz.p3 { --medaille: #C49A72; } .podest-platz.p3 .podest-sockel { height: 32px; }
+.podest-platz:hover .podest-name { text-decoration: underline; text-underline-offset: 3px; }
+.podest-platz.ich .podest-name { color: var(--salbei); }
+.besten-liste li .rang { font: 800 .95rem var(--display); color: var(--text-3); text-align: center; }
+.besten-liste li.ich, .besten-ich { background: rgba(143,179,162,.1); border-radius: 12px; box-shadow: inset 3px 0 0 var(--salbei); }
+.besten-ich { display: grid; grid-template-columns: 2em auto 1fr auto; gap: 12px; align-items: center; padding: 10px 12px; margin-top: 10px; font-weight: 700; }
+.besten-ich[hidden] { display: none; }
+.besten-ich .rang { font: 800 .95rem var(--display); color: var(--salbei); text-align: center; }
+.besten-fuss { margin: 14px 0 0; color: var(--text-3); font-size: .82rem; }
 
 .raum-liste, .letzte-liste, .besten-liste { list-style: none; margin: 0; padding: 0; }
 .raum-liste li {
@@ -346,8 +398,7 @@ legend { font-weight: 600; font-size: .86rem; color: var(--text-2); margin-botto
   padding: 9px 0; border-top: 1px solid var(--linie);
 }
 .besten-liste li:first-child { border-top: 0; }
-.besten-liste li::before { content: counter(platz); font: 800 1rem var(--display); color: var(--text-3); text-align: center; }
-.besten-liste li:nth-child(1)::before { color: var(--sand); }
+/* Platznummer steht jetzt in .rang */
 .besten-liste li.leer { display: block; border: 0; }
 .besten-liste li.leer::before { content: none; }
 .wert { font: 800 1.05rem var(--display); font-variant-numeric: tabular-nums; }
@@ -542,7 +593,7 @@ img[src$="/np.svg"] { border-radius: 0 !important; }
 .podest { list-style: none; margin: 0; padding: 0; width: min(100%, 480px); text-align: left; }
 .podest li { display: grid; grid-template-columns: 2em auto 1fr auto; gap: 12px; align-items: center; padding: 10px 14px; border-radius: var(--r-klein); }
 .podest li .platz { font: 800 1.1rem var(--display); color: var(--text-3); }
-.podest li:first-child { background: rgba(205,182,140,.1); font-size: 1.15rem; }
+.podest li:first-child { font-size: 1.15rem; }
 .podest li:first-child .platz { color: var(--sand); }
 
 .seite h2 { font-size: 1.1rem; }

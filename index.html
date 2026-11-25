@@ -7,7 +7,7 @@
 <meta name="description" content="Flaggen raten in der Pause, allein oder zusammen im Raum.">
 <meta name="theme-color" content="#1B1E21">
 <link rel="icon" href="bilder/icon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="css/stil.css?v=0.6.0">
+<link rel="stylesheet" href="css/stil.css?v=0.6.1">
 </head>
 <body>
 <main>
@@ -47,7 +47,8 @@
   </section>
 
   <!-- Bude (Start) -->
-  <section class="screen" id="s-bude" hidden>
+  <section class="screen bude" id="s-bude" hidden>
+    <div class="bude-links">
     <div class="buehnenbild">
       <p class="riese" aria-hidden="true"><span>Claudis</span>Quizbude</p>
       <div class="faecher" data-faecher aria-hidden="true"></div>
@@ -75,22 +76,34 @@
       <section class="karte">
         <h2>Offene Räume</h2>
         <ul id="raum-liste" class="raum-liste"></ul>
-        <h2 class="abstand">Zuletzt gespielt</h2>
-        <ul id="letzte-liste" class="letzte-liste"></ul>
       </section>
       <section class="karte">
-        <div class="karte-kopf">
-          <h2>Bestenliste</h2>
-          <div class="umschalter klein" role="tablist" id="besten-reiter">
-            <button role="tab" class="umschalter-knopf aktiv" data-spalte="siege" aria-selected="true">Siege</button>
-            <button role="tab" class="umschalter-knopf" data-spalte="punkte" aria-selected="false">Punkte</button>
-            <button role="tab" class="umschalter-knopf" data-spalte="sprint" aria-selected="false">Sprint</button>
-          </div>
-        </div>
-        <label class="besten-kategorie" hidden>Sprint-Rekorde bei <select id="besten-kategorie"></select></label>
-        <ol id="besten-liste" class="besten-liste"></ol>
+        <h2>Zuletzt gespielt</h2>
+        <ul id="letzte-liste" class="letzte-liste"></ul>
       </section>
     </div>
+    </div>
+
+    <!-- Bestenliste als eigene Spalte rechts -->
+    <aside class="bude-rechts" aria-labelledby="besten-titel">
+      <section class="karte besten-karte">
+        <div class="besten-kopf">
+          <h2 id="besten-titel">Bestenliste</h2>
+          <span class="besten-saison" id="besten-saison"></span>
+        </div>
+        <div class="umschalter klein voll" role="tablist" id="besten-reiter">
+          <button role="tab" class="umschalter-knopf aktiv" data-spalte="monat" aria-selected="true">Monat</button>
+          <button role="tab" class="umschalter-knopf" data-spalte="siege" aria-selected="false">Siege</button>
+          <button role="tab" class="umschalter-knopf" data-spalte="punkte" aria-selected="false">Punkte</button>
+          <button role="tab" class="umschalter-knopf" data-spalte="sprint" aria-selected="false">Sprint</button>
+        </div>
+        <label class="besten-kategorie" hidden><select id="besten-kategorie"></select></label>
+        <div class="besten-podest" id="besten-podest"></div>
+        <ol id="besten-liste" class="besten-liste"></ol>
+        <div class="besten-ich" id="besten-ich" hidden></div>
+        <p class="besten-fuss" id="besten-fuss"></p>
+      </section>
+    </aside>
   </section>
 
   <!-- Profil -->
@@ -283,7 +296,7 @@
 </nav>
 <div class="toast" id="toast" role="status" hidden></div>
 
-<script src="vendor/supabase.js?v=0.6.0"></script>
-<script type="module" src="js/app.js?v=0.6.0"></script>
+<script src="vendor/supabase.js?v=0.6.1"></script>
+<script type="module" src="js/app.js?v=0.6.1"></script>
 </body>
 </html>

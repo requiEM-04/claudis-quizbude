@@ -16,6 +16,7 @@
       },
       eq(c, v) { q.filters.push(r => r[c] === v); return api; },
       gt(c, v) { q.filters.push(r => (r[c] || 0) > v); return api; },
+      gte(c, v) { q.filters.push(r => String(r[c] || '') >= String(v)); return api; },
       order(c, o) { q.orderCol = c; q.asc = o?.ascending; return api; },
       limit(n) { q.lim = n; return api; },
       maybeSingle() { q.single = true; return api; },

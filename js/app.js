@@ -1,20 +1,20 @@
-import { VERSION } from './config.js?v=0.6.0';
+import { VERSION } from './config.js?v=0.6.1';
 import {
   online, nameFehler, registrieren, anmelden, abmelden, sitzungHolen, profilLaden, profilSpeichern,
-  bestenliste, letzteSpiele, sprintEintragen, sprintBestenliste, rangVon, spielerAnzahl, spieleVon, sb,
-} from './server.js?v=0.6.0';
-import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.6.0';
-import { Raum, codeNeu, STANDARD } from './raum.js?v=0.6.0';
-import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.6.0';
+  bestenliste, letzteSpiele, spieleSeit, alleProfile, sprintEintragen, sprintBestenliste, rangVon, spielerAnzahl, spieleVon, sb,
+} from './server.js?v=0.6.1';
+import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.6.1';
+import { Raum, codeNeu, STANDARD } from './raum.js?v=0.6.1';
+import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.6.1';
 import {
   KATEGORIEN, KATEGORIE_REIHE, RAUM_REIHE, SPIEL_NAME, kategorieVon, optionSchluessel, richtigeWahl, umrisseDa, umrisseLaden,
   sprintFrage, pruefeFrage, fragenVorladen, kanon,
-} from './kategorien.js?v=0.6.0';
-import { LAENDER } from './laender.js?v=0.6.0';
-import { auswahlfeld } from './auswahlfeld.js?v=0.6.0';
-import { KATEGORIE_SYMBOL } from './symbole.js?v=0.6.0';
-import { KURVEN_FARBEN } from './kurve.js?v=0.6.0';
-import { konfetti } from './konfetti.js?v=0.6.0';
+} from './kategorien.js?v=0.6.1';
+import { LAENDER } from './laender.js?v=0.6.1';
+import { auswahlfeld } from './auswahlfeld.js?v=0.6.1';
+import { KATEGORIE_SYMBOL } from './symbole.js?v=0.6.1';
+import { KURVEN_FARBEN } from './kurve.js?v=0.6.1';
+import { konfetti } from './konfetti.js?v=0.6.1';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -40,7 +40,7 @@ let ich = null;
 let raum = null;
 let sprint = null;
 let neuErstellt = null;
-let besteSpalte = 'siege';
+let besteSpalte = 'monat';
 let lobbyAus = null;
 
 // ---------- Kleinkram ----------
@@ -312,21 +312,92 @@ function raeumeZeichnen(raeume) {
 }
 
 const SPALTE = {
+  monat: n => `${n.toLocaleString('de-DE')} Pkt.`,
   siege: n => `${n} ${n === 1 ? 'Sieg' : 'Siege'}`,
   punkte: n => `${n.toLocaleString('de-DE')} Pkt.`,
   sprint: n => `${n} richtig`,
 };
+const MONATE = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
 
+// Monatswertung: Punkte und Siege aus allen Raum-Spielen dieses Monats (Gäste zählen nicht)
+async function monatsWertung() {
+  const jetzt = new Date();
+  const start = new Date(jetzt.getFullYear(), jetzt.getMonth(), 1);
+  const [spiele, profile] = await Promise.all([spieleSeit(start), alleProfile()]);
+  const proName = new Map(profile.map(p => [p.name.toLowerCase(), p]));
+  const summe = new Map();
+  for (const s of spiele) {
+    const sp = s.spieler || [];
+    sp.forEach((e, i) => {
+      const p = proName.get(String(e.name || '').toLowerCase());
+      if (!p) return;
+      const z = summe.get(p.id) || { ...p, wert: 0, siege: 0, spiele: 0 };
+      z.wert += e.pkt || 0; z.spiele++;
+      if (i === 0 && sp.length > 1 && e.pkt > 0) z.siege++;
+      summe.set(p.id, z);
+    });
+  }
+  const liste = [...summe.values()].sort((a, b) => b.wert - a.wert || b.siege - a.siege);
+  return { liste, spiele: spiele.length, ende: new Date(jetzt.getFullYear(), jetzt.getMonth() + 1, 1) };
+}
+
+let bestenUhr = null;
 async function bestenLaden() {
-  const ol = $('besten-liste');
+  const ol = $('besten-liste'), podest = $('besten-podest'), ichBox = $('besten-ich'), fuss = $('besten-fuss');
+  const spalte = besteSpalte;
+  document.querySelector('.besten-kategorie').hidden = spalte !== 'sprint';
+  clearInterval(bestenUhr);
+  bestenUhr = setInterval(() => { if (!$('s-bude').hidden && !document.hidden) bestenLaden(); }, 30000); // frisch halten
   try {
-    const sprintModus = besteSpalte === 'sprint';
-    document.querySelector('.besten-kategorie').hidden = !sprintModus;
-    const daten = sprintModus ? await sprintBestenliste($('besten-kategorie').value) : await bestenliste(besteSpalte);
-    ol.innerHTML = daten.length
-      ? daten.map(p => `<li>${avatarHtml(p)}<a href="#/profil/${esc(p.id)}">${esc(p.name)}</a><span class="wert">${SPALTE[besteSpalte](sprintModus ? p.wert : p[besteSpalte])}</span></li>`).join('')
-      : '<li class="leer">Hier steht noch keiner. Spiel eine Runde, dann bist du der Erste.</li>';
+    let liste, fussText = '', saison = '';
+    if (spalte === 'monat') {
+      const m = await monatsWertung();
+      liste = m.liste;
+      const tage = Math.ceil((m.ende - new Date()) / 86400000);
+      saison = `Saison ${MONATE[new Date().getMonth()]}`;
+      fussText = `${m.spiele} ${m.spiele === 1 ? 'Spiel' : 'Spiele'} diesen Monat, die Saison endet ${tage <= 1 ? 'heute Nacht' : `in ${tage} Tagen`}.`;
+    } else if (spalte === 'sprint') {
+      liste = await sprintBestenliste($('besten-kategorie').value);
+      saison = 'Allzeit';
+      fussText = 'Rekorde aus dem 60-Sekunden-Sprint.';
+    } else {
+      liste = (await bestenliste(spalte)).map(p => ({ ...p, wert: p[spalte] }));
+      saison = 'Allzeit';
+      fussText = spalte === 'siege' ? 'Siege in Räumen mit mindestens zwei Leuten.' : 'Alle Punkte aus Raum-Spielen.';
+    }
+    if (besteSpalte !== spalte) return; // inzwischen anderer Reiter
+    $('besten-saison').textContent = saison;
+    const zeile = (p, platz) => `<li class="${ich && p.id === ich.id ? 'ich' : ''}"><span class="rang">${platz}</span>${avatarHtml(p)}<a href="#/profil/${esc(p.id)}">${esc(p.name)}</a><span class="wert">${SPALTE[spalte](p.wert)}</span></li>`;
+    if (!liste.length) {
+      podest.innerHTML = '';
+      ol.innerHTML = `<li class="leer">${spalte === 'monat' ? 'Diesen Monat hat noch keiner gespielt. Der erste Platz ist frei.' : 'Hier steht noch keiner. Spiel eine Runde, dann bist du der Erste.'}</li>`;
+    } else {
+      // Podest: Platz 2 links, Platz 1 in der Mitte, Platz 3 rechts
+      const top = liste.slice(0, 3);
+      const reihe = [top[1], top[0], top[2]].map((p, i) => p ? { p, platz: [2, 1, 3][i] } : null).filter(Boolean);
+      podest.innerHTML = reihe.map(({ p, platz }) => `
+        <a class="podest-platz p${platz}${ich && p.id === ich.id ? ' ich' : ''}" href="#/profil/${esc(p.id)}">
+          ${platz === 1 ? '<span class="krone" aria-hidden="true">👑</span>' : ''}
+          ${avatarHtml(p)}
+          <span class="podest-name">${esc(p.name)}</span>
+          <span class="podest-wert">${SPALTE[spalte](p.wert)}</span>
+          <span class="podest-sockel">${platz}</span>
+        </a>`).join('');
+      ol.innerHTML = liste.slice(3, 15).map((p, i) => zeile(p, i + 4)).join('');
+    }
+    // eigener Platz, wenn man nicht oben steht
+    ichBox.hidden = true;
+    if (ich && !liste.slice(0, 15).some(p => p.id === ich.id)) {
+      let platz = null, wert = null;
+      if (spalte === 'monat') { const i = liste.findIndex(p => p.id === ich.id); if (i >= 0) { platz = i + 1; wert = liste[i].wert; } }
+      else if (spalte === 'siege' || spalte === 'punkte') { wert = ich[spalte] || 0; platz = await rangVon(spalte, wert); }
+      else { wert = sprintRekord($('besten-kategorie').value); }
+      ichBox.innerHTML = `<span class="rang">${platz ?? '–'}</span>${avatarHtml(ich)}<span>Du</span><span class="wert">${wert ? SPALTE[spalte](wert) : 'spiel mit, dann stehst du hier'}</span>`;
+      ichBox.hidden = false;
+    }
+    fuss.textContent = fussText;
   } catch (e) {
+    podest.innerHTML = '';
     ol.innerHTML = `<li class="leer">${esc(e.message)}</li>`;
   }
 }
