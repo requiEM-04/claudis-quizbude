@@ -2,7 +2,7 @@
 
 ## Aktuell (25.11.2026)
 
-- **Version:** 0.11.2
+- **Version:** 0.11.3
 - **Live:** https://requiem-04.github.io/claudis-quizbude/ (Repo `requiEM-04/claudis-quizbude`, Branch `main`, GitHub Pages)
 - **Server:** Supabase-Projekt `quizbude` (Ref `jgvjjjiwfjxynbzjaxsg`, Frankfurt), E-Mail-Bestätigung aus, Realtime mit öffentlichen Kanälen.
 - **Inhalt:** Konten (Name + Passwort ab 4 Zeichen), Räume mit 4-Buchstaben-Code (live über Realtime), Flaggenraten (tippen oder 4 zur Auswahl), Flaggen-Sprint (60 s), Bestenliste (Siege, Punkte, Sprint), „Zuletzt gespielt".
@@ -168,6 +168,8 @@
   - Neue Kategorien **Nachbarn** (Land gegeben, ein Nachbarland nennen, jedes zählt; Auswahl: das eine angrenzende Land finden; Daten `js/grenzen.js` aus world-countries über `werkzeuge/grenzen_bauen.mjs`, 158 Länder mit Landgrenze) und **Buchstabensalat** (Ländername mit gemischten Buchstaben als Kacheln, der Gastgeber mischt, Auswahl mit ähnlich langen Namen). Beide in Räumen und bei „Gemischt“. Im Sprint erst nach Migration 010 (Server-Liste der Kategorien).
   - Abzeichen größer: Spielerkarte 52 px, Übersicht 58 px, Reiter 68 px.
   - Lange Lösungen (z. B. viele Nachbarländer) werden kleiner gesetzt.
+
+- **Neu in 0.11.3:** Alle 20 Figuren neu gezeichnet im Sammelkarten-Stil (Colin: „cooler, weniger kindlich“ und „detaillierter, edler“): kräftiger Umriss, Licht-Verläufe, entschlossener Blick mit Lid und farbiger Iris, keine Bäckchen und Grinsemünder. Verläufe mit eindeutigen IDs je Zeichnung (Präfix je Modul + Zähler).
 
 ## Als Nächstes (mit Colin besprochen)
 - Reihenfolge jetzt: neue Profilbilder (live in 0.11.0) → Freunde und Einladungen → neue Quizze Nachbarn und Buchstabensalat → vorgemerkt: Seitenverhältnisse (von Flaggen) raten. Kein Tagesrätsel nach Loldle-Art.
