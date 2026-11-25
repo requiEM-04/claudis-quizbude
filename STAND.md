@@ -2,7 +2,7 @@
 
 ## Aktuell (25.11.2026)
 
-- **Version:** 0.9.6
+- **Version:** 0.9.7
 - **Live:** https://requiem-04.github.io/claudis-quizbude/ (Repo `requiEM-04/claudis-quizbude`, Branch `main`, GitHub Pages)
 - **Server:** Supabase-Projekt `quizbude` (Ref `jgvjjjiwfjxynbzjaxsg`, Frankfurt), E-Mail-Bestätigung aus, Realtime mit öffentlichen Kanälen.
 - **Inhalt:** Konten (Name + Passwort ab 4 Zeichen), Räume mit 4-Buchstaben-Code (live über Realtime), Flaggenraten (tippen oder 4 zur Auswahl), Flaggen-Sprint (60 s), Bestenliste (Siege, Punkte, Sprint), „Zuletzt gespielt".
@@ -117,6 +117,11 @@
   - Länder werden auf Canvas gemalt (ein Path2D je Land, einmal gebaut): 60 Bilder/s beim Ziehen und Zoomen. Pins, Linien und Beschriftungen liegen als SVG darüber.
   - Ansichten (Region, Auflösung) passen sich an die verdeckten Ränder an (opt.rand in karteBauen).
   - Auflösung bei Hauptstädten: alle Hauptstädte als kleine Punkte, die gesuchte mit Ring und Namen.
+
+- **Neu in 0.9.7:**
+  - Ladebildschirm (vier Asse werden ausgeteilt, Balken, Schritte): Schriften, Bilder und alle Effekte werden einmal unsichtbar vorgezeichnet. Mindestens 0,65 s, höchstens 2,5 s, Notaus per CSS nach 9 s.
+  - Leistung: alle Weichzeichner (backdrop-filter) entfernt, Holo per transform statt background-position, weniger Partikel je Effekt, Effekt-Vorschauen im Anpassen laufen nur beim Drüberfahren, Effekte pausieren bei offenen Fenstern und im Kartenmodus.
+  - Anmeldeseite: Überschrift „Quizzen in der Pause …“, Spielarten als Chips, darunter „Gerade vorne“ (Saison-Top 5, Klick öffnet das Spieler-Fenster).
 
 ## Als Nächstes (mit Colin besprochen)
 

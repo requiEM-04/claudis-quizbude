@@ -1,25 +1,25 @@
-import { VERSION } from './config.js?v=0.9.6';
+import { VERSION } from './config.js?v=0.9.7';
 import {
   online, nameFehler, registrieren, anmelden, abmelden, sitzungHolen, profilLaden, profilSpeichern,
   bestenliste, spieleSeit, alleProfile, sprintEintragen, sprintBestenliste, rangVon, spielerAnzahl, spieleVon, sb,
   adminAnmelden, istAdminName, konfigLaden, adminEinrichten, einrichtungOffen,
-} from './server.js?v=0.9.6';
-import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.9.6';
-import { Raum, codeNeu, STANDARD, TIPPFEHLER_ABZUG } from './raum.js?v=0.9.6';
-import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.9.6';
+} from './server.js?v=0.9.7';
+import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.9.7';
+import { Raum, codeNeu, STANDARD, TIPPFEHLER_ABZUG } from './raum.js?v=0.9.7';
+import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.9.7';
 import {
   KATEGORIEN, KATEGORIE_REIHE, SPRINT_REIHE, kategorieVon, optionSchluessel, richtigeWahl, umrisseDa, umrisseLaden,
   sprintFrage, pruefeFrage, fragenVorladen, kanon,
-} from './kategorien.js?v=0.9.6';
-import { LAENDER } from './laender.js?v=0.9.6';
-import { auswahlfeld } from './auswahlfeld.js?v=0.9.6';
-import { KATEGORIE_SYMBOL } from './symbole.js?v=0.9.6';
-import { konfetti } from './konfetti.js?v=0.9.6';
-import { karteBauen, karteLaden, auswerten } from './weltkarte.js?v=0.9.6';
+} from './kategorien.js?v=0.9.7';
+import { LAENDER } from './laender.js?v=0.9.7';
+import { auswahlfeld } from './auswahlfeld.js?v=0.9.7';
+import { KATEGORIE_SYMBOL } from './symbole.js?v=0.9.7';
+import { konfetti } from './konfetti.js?v=0.9.7';
+import { karteBauen, karteLaden, auswerten } from './weltkarte.js?v=0.9.7';
 import {
   RAENGE, BILDER, ARTEN, JOKER, ruhmInfo, stufeVon, stufeInfo, wappen, effektHtml, rahmenDeko, stilVon, istFrei, freiAb, neuFrei,
   belohnungName, rangVonId, symbol, symbolSvg, SCHWELLEN,
-} from './ruhm.js?v=0.9.6';
+} from './ruhm.js?v=0.9.7';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -307,6 +307,14 @@ function anmeldenAufbauen() {
     }
   };
 
+  const fensterAuf = e => {
+    const el = e.target.closest('[data-spieler]');
+    if (!el || (e.type === 'keydown' && e.key !== 'Enter' && e.key !== ' ')) return;
+    e.preventDefault(); spielerFenster(el.dataset.spieler, el.dataset.platz);
+  };
+  $('anmelden-besten').addEventListener('click', fensterAuf);
+  $('anmelden-besten').addEventListener('keydown', fensterAuf);
+
   $('gast-los').onclick = () => {
     gast = true;
     try { localStorage.setItem(GAST, '1'); } catch { /* egal */ }
@@ -335,9 +343,37 @@ function faecherFuellen() {
   });
 }
 
+// Anmeldeseite: was es zu spielen gibt und wer in der Saison vorne liegt
+function anmeldenKatsZeichnen() {
+  if ($('anmelden-kats').childElementCount) return;
+  $('anmelden-kats').innerHTML = KATEGORIE_REIHE.map((k, i) => `<li style="--i:${i}"><span class="raum-symbol" aria-hidden="true">${KATEGORIE_SYMBOL[k] || ''}</span>${esc(KATEGORIEN[k].name)}</li>`).join('');
+}
+async function anmeldenBestenLaden() {
+  const box = $('anmelden-besten-box'), ol = $('anmelden-besten');
+  if (!online()) { box.hidden = true; return; }
+  try {
+    const zeit = saisonOptionen()[0];
+    const [von, bis] = saisonGrenzen(zeit.wert);
+    let liste = (await saisonWertung(von, bis)).liste.filter(p => p.punkte > 0).sort((a, b) => b.punkte - a.punkte);
+    let titel = zeit.name;
+    if (!liste.length) { liste = (await bestenliste('punkte')).filter(p => p.punkte > 0); titel = 'Allzeit'; }
+    if (!liste.length) { box.hidden = true; return; }
+    $('ab-zeit').textContent = titel;
+    ol.innerHTML = liste.slice(0, 5).map((p, i) => `<li class="${i < 3 ? 'p' + (i + 1) : ''}" style="--i:${i}">
+      <a data-spieler="${esc(p.id)}" data-platz="${i + 1}" role="button" tabindex="0">
+        <span class="rang">${i + 1}</span>${avatarMitWappen(p, 12)}
+        <span class="ab-name${nameKlasse(p)}">${esc(p.name)}</span>
+        <span class="ab-wert">${Number(p.punkte).toLocaleString('de-DE')}<small>Pkt.</small></span>
+      </a></li>`).join('');
+    box.hidden = false;
+  } catch { box.hidden = true; }
+}
+
 function anmeldenZeigen() {
   zeige('anmelden');
   faecherFuellen();
+  anmeldenKatsZeichnen();
+  anmeldenBestenLaden();
   const ohneServer = !online();
   $('anmelde-form').hidden = ohneServer;
   document.querySelector('#s-anmelden .umschalter').hidden = ohneServer;
@@ -1915,7 +1951,40 @@ function route(erzwingen = false) {
   return budeZeigen();
 }
 
+// ---------- Ladebildschirm: kurz Schriften, Bilder und Effekte vorbereiten ----------
+const bildLaden = src => new Promise(r => { const i = new Image(); i.onload = i.onerror = () => r(); i.src = src; });
+const naechstesBild = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+function ladeSchritt(text, anteil) {
+  $('lade-text').textContent = text;
+  $('lade-fuellung').style.transform = `scaleX(${anteil})`;
+}
+async function vorbereiten() {
+  ladeSchritt('Schriften laden …', .2);
+  await Promise.race([document.fonts?.ready, pause(1200)]);
+  ladeSchritt('Flaggen aufhängen …', .45);
+  const bilder = ['bilder/logo.svg', 'bilder/weltkarte-vorschau.svg', 'bilder/umriss-vorschau.svg', ...['JP', 'BR', 'SE', 'CA'].map(flaggeUrl)];
+  await Promise.race([Promise.all(bilder.map(bildLaden)), pause(1500)]);
+  // Effekte und Karten einmal unsichtbar zeichnen, damit sie danach sofort flüssig laufen
+  ladeSchritt('Karten mischen …', .75);
+  const probe = document.createElement('div');
+  probe.className = 'lade-probe'; probe.setAttribute('aria-hidden', 'true');
+  probe.innerHTML = RAENGE.map((r, i) => hochkarteHtml({ name: 'Probe', avatar: '🙂', farbe: '#CDB68C', ruhm: SCHWELLEN[Math.min(SCHWELLEN.length - 1, i * 4 + 3)], spiele: 0, siege: 0 }, { effekt: r.id, rahmen: r.id, hintergrund: r.id, farbe: r.id })).join('');
+  document.body.append(probe);
+  await naechstesBild();
+  probe.remove();
+  ladeSchritt('Los geht’s', 1);
+}
+async function ladeEnde(vorbereitung, start) {
+  await Promise.race([vorbereitung, pause(2500)]);
+  const rest = 650 - (performance.now() - start); // nicht nur aufblitzen
+  if (rest > 0) await pause(rest);
+  $('lade').classList.add('weg');
+  setTimeout(() => $('lade').remove(), 600);
+}
+
 async function los() {
+  const ladeStart = performance.now();
+  const vorbereitung = vorbereiten().catch(() => {});
   $('version').textContent = VERSION;
   anmeldenAufbauen();
   budeAufbauen();
@@ -1947,6 +2016,7 @@ async function los() {
     });
   }
   route(true);
+  ladeEnde(vorbereitung, ladeStart);
   setTimeout(versionPruefen, 4000);
 }
 

@@ -193,7 +193,7 @@ label { display: grid; gap: 6px; font-weight: 600; font-size: .86rem; color: var
   width: min(92vw, 540px); padding: 28px; border-radius: var(--r-gross);
   background: #262B2F; color: var(--text); border: 1px solid var(--linie-stark); box-shadow: 0 40px 80px -20px rgba(0,0,0,.8);
 }
-.tasten-dialog::backdrop { background: rgba(10, 12, 14, .6); backdrop-filter: blur(4px); }
+.tasten-dialog::backdrop { background: rgba(10, 12, 14, .6);  }
 .tasten-dialog h2 { margin: 0 0 16px; }
 .tasten-liste { display: grid; grid-template-columns: auto 1fr; gap: 12px 20px; margin: 0; align-items: baseline; }
 .tasten-liste dt { color: var(--text-2); font-weight: 600; }
@@ -306,6 +306,30 @@ select.nativ { display: none !important; }
 .anmelden-raster { display: grid; gap: 32px; align-items: start; margin-top: 22px; }
 @media (min-width: 880px) { .anmelden-raster { grid-template-columns: 1fr 420px; } }
 .anmelden-text h1 { font-size: clamp(1.7rem, 3.3vw, 2.6rem); max-width: 20ch; }
+.anmelden-kats { list-style: none; margin: 26px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; max-width: 620px; }
+.anmelden-kats li {
+  display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px 7px 9px; border-radius: 999px;
+  background: rgba(35, 39, 42, .72); border: 1px solid var(--linie); font-weight: 700; font-size: .88rem; color: var(--text-2);
+  animation: t-text .4s ease both; animation-delay: calc(var(--i) * 50ms + 200ms);
+}
+.anmelden-kats .raum-symbol { display: grid; place-items: center; width: 22px; height: 22px; color: var(--sand); }
+.anmelden-kats .raum-symbol svg { width: 18px; height: 18px; }
+.anmelden-besten { margin-top: 28px; max-width: 520px; padding: 20px 22px 14px; }
+.ab-kopf { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.ab-kopf h2 { font-size: 1.15rem; margin: 0; }
+.ab-kopf small { color: var(--text-3); font-weight: 700; }
+.ab-liste { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.ab-liste li { animation: t-text .4s ease both; animation-delay: calc(var(--i) * 70ms + 300ms); }
+.ab-liste a { display: flex; align-items: center; gap: 12px; padding: 7px 10px; border-radius: 14px; color: var(--text); cursor: pointer; transition: background-color .15s, transform .15s; }
+.ab-liste a:hover, .ab-liste a:focus-visible { background: rgba(255, 255, 255, .05); transform: translateX(3px); outline: none; }
+.ab-liste .rang { width: 26px; height: 26px; display: grid; place-items: center; border-radius: 50%; font: 800 .82rem var(--display); color: var(--text-3); background: var(--flaeche-hoch); flex: none; }
+.ab-liste .p1 .rang { color: #2A2310; background: #EBC660; }
+.ab-liste .p2 .rang { color: #24272A; background: #D4D8DC; }
+.ab-liste .p3 .rang { color: #2A1C12; background: #D49A6A; }
+.ab-liste .avatar { width: 36px; height: 36px; font-size: 1.1rem; }
+.ab-name { flex: 1; min-width: 0; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ab-wert { font: 800 1.05rem var(--display); color: var(--sand-hell); }
+.ab-wert small { font: 600 .7rem var(--schrift); color: var(--text-3); margin-left: 4px; }
 .unterzeile { color: var(--text-2); font-size: 1.05rem; margin: 14px 0 0; }
 .anmelde-karte form { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; margin-top: 20px; }
 .anmelde-karte .hinweis { margin-top: 16px; }
@@ -874,7 +898,7 @@ img[src$="/np.svg"] { border-radius: 0 !important; }
   background: #262B2F; color: var(--text); border: 1px solid var(--linie-stark);
   box-shadow: 0 40px 80px -20px rgba(0,0,0,.8);
 }
-.lernen-detail::backdrop { background: rgba(10, 12, 14, .6); backdrop-filter: blur(4px); }
+.lernen-detail::backdrop { background: rgba(10, 12, 14, .6);  }
 .dialog-zu {
   position: absolute; top: 14px; right: 14px; width: 38px; height: 38px; border-radius: 50%;
   border: 1px solid var(--linie); background: var(--flaeche-hoch); color: var(--text); font-size: 1.4rem; line-height: 1; cursor: pointer;
@@ -894,8 +918,7 @@ img[src$="/np.svg"] { border-radius: 0 !important; }
   position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 20;
   display: flex; align-items: center; gap: 4px;
   padding: 6px;
-  background: rgba(37, 41, 45, .82);
-  -webkit-backdrop-filter: blur(16px) saturate(1.2); backdrop-filter: blur(16px) saturate(1.2);
+  background: rgba(37, 41, 45, .97); 
   border: 1px solid var(--linie-stark);
   border-radius: 999px;
   box-shadow: 0 20px 44px -14px rgba(0,0,0,.7);
@@ -1058,7 +1081,7 @@ body[data-hg="joker"]::before { inset: -20%; animation: polarlicht-zug 26s ease-
 .e-herz i .rot { color: #F0A9C3; } .e-herz i .schwarz { color: #DCE2E6; }
 .e-herz i .kf-symbol { width: 100%; height: 100%; }
 @keyframes karten-auf { 0% { transform: translateY(0) rotate(0); opacity: 0; } 20% { opacity: .3; } 100% { transform: translateY(-300px) rotate(var(--r)); opacity: 0; } }
-.e-kreuz .strahlen { left: 50%; top: -60%; width: 900px; height: 900px; margin-left: -450px; background: repeating-conic-gradient(from 0deg, rgba(235,198,96,.14) 0 6deg, transparent 6deg 20deg); -webkit-mask: radial-gradient(closest-side, #000 10%, transparent 75%); mask: radial-gradient(closest-side, #000 10%, transparent 75%); animation: t-drehen 40s linear infinite; }
+.e-kreuz .strahlen { left: 50%; top: -60%; width: 640px; height: 640px; margin-left: -320px; will-change: transform; background: repeating-conic-gradient(from 0deg, rgba(235,198,96,.14) 0 6deg, transparent 6deg 20deg); -webkit-mask: radial-gradient(closest-side, #000 10%, transparent 75%); mask: radial-gradient(closest-side, #000 10%, transparent 75%); animation: t-drehen 40s linear infinite; }
 .e-kreuz .schein { inset: 0; background: radial-gradient(500px 220px at 50% -20%, rgba(255,226,140,.18), transparent 70%); animation: p-puls 4s ease-in-out infinite; }
 @keyframes p-puls { 0%, 100% { opacity: .6; } 50% { opacity: 1; } }
 .e-pik .glanz, .e-joker .glanz { inset: 0; background: linear-gradient(110deg, transparent 38%, rgba(255,255,255,.16) 50%, transparent 62%); transform: translateX(-100%); animation: glanz-lauf 4.5s ease-in-out infinite; }
@@ -1066,8 +1089,8 @@ body[data-hg="joker"]::before { inset: -20%; animation: polarlicht-zug 26s ease-
 .e-pik i, .e-joker i { left: var(--x); top: var(--y); width: 14px; height: 14px; color: #EAF6FF; animation: funkel var(--t) ease-in-out var(--d) infinite; }
 .e-pik i .kf-symbol, .e-joker i .kf-symbol { width: 100%; height: 100%; }
 .e-joker i { color: #FFE3F0; }
-.e-joker .holo { inset: 0; background: linear-gradient(115deg, rgba(255,120,170,.14), rgba(255,220,110,.1), rgba(120,230,170,.12), rgba(120,190,255,.14), rgba(190,150,255,.14)); background-size: 300% 300%; mix-blend-mode: screen; animation: holo-flaeche 8s ease-in-out infinite alternate; }
-@keyframes holo-flaeche { to { background-position: 100% 100%; } }
+.e-joker .holo { inset: -100% 0 0 -200%; width: 300%; height: 200%; background: linear-gradient(115deg, rgba(255,120,170,.14), rgba(255,220,110,.1), rgba(120,230,170,.12), rgba(120,190,255,.14), rgba(190,150,255,.14)); mix-blend-mode: screen; animation: holo-flaeche 8s ease-in-out infinite alternate; }
+@keyframes holo-flaeche { from { transform: translate3d(0, 0, 0); } to { transform: translate3d(66%, 50%, 0); } }
 
 /* ---------- Ruhmesweg: Tabelle Ränge × Kartenfarben ---------- */
 .ruhmesweg { display: grid; grid-template-columns: 72px repeat(4, minmax(0, 1fr)); gap: 6px; margin-top: 16px; }
@@ -1242,7 +1265,7 @@ body[data-hg="joker"]::before { inset: -20%; animation: polarlicht-zug 26s ease-
 
 /* ---------- Aufstieg ---------- */
 .aufstieg { border: 0; padding: 0; background: transparent; max-width: min(92vw, 440px); overflow: visible; }
-.aufstieg::backdrop { background: radial-gradient(circle at 50% 40%, rgba(20,22,26,.6), rgba(8,9,11,.92)); backdrop-filter: blur(4px); }
+.aufstieg::backdrop { background: radial-gradient(circle at 50% 40%, rgba(20,22,26,.6), rgba(8,9,11,.92));  }
 .aufstieg-inhalt { --rang: #EBC660; position: relative; display: grid; justify-items: center; gap: 10px; text-align: center; padding: 34px 30px 26px; border-radius: var(--r-gross); background: linear-gradient(180deg, #282C31, #1E2226); border: 1px solid var(--linie-stark); box-shadow: 0 40px 80px -30px rgba(0,0,0,.9); color: var(--text); }
 .aufstieg-buehne { position: relative; width: 150px; height: 190px; display: grid; place-items: center; perspective: 700px; }
 .aufstieg-buehne::before { content: ""; position: absolute; inset: -60px; border-radius: 50%; background: repeating-conic-gradient(color-mix(in srgb, var(--rang) 28%, transparent) 0 8deg, transparent 8deg 22deg); -webkit-mask: radial-gradient(closest-side, #000 20%, transparent); mask: radial-gradient(closest-side, #000 20%, transparent); animation: t-strahlen-rein .8s ease .5s both, t-drehen 20s linear infinite; }
@@ -1358,8 +1381,7 @@ body.kartenmodus .raum-raster { display: block; }
 body.kartenmodus .buehne-karte {
   position: fixed; z-index: 3; top: 14px; left: 14px; right: 14px; margin: 0 auto; width: auto; max-width: 760px;
   padding: 12px 18px 14px; border-radius: 24px; pointer-events: auto;
-  background: rgba(24, 27, 30, .86); border: 1px solid var(--linie-stark);
-  -webkit-backdrop-filter: blur(14px) saturate(1.2); backdrop-filter: blur(14px) saturate(1.2);
+  background: rgba(24, 27, 30, .95); border: 1px solid var(--linie-stark); 
   box-shadow: 0 24px 50px -20px rgba(0,0,0,.85);
 }
 body.kartenmodus .buehne-kopf { margin-bottom: 10px; }
@@ -1371,7 +1393,7 @@ body.kartenmodus .wk-flagge { height: 46px; }
 body.kartenmodus .wk-gross { font-size: clamp(1.5rem, 2.6vw, 2.2rem); }
 body.kartenmodus #s-raum aside.seite {
   position: fixed; z-index: 3; top: 14px; right: 14px; width: 300px; max-height: calc(100vh - 100px); overflow: auto; pointer-events: auto;
-  background: rgba(24, 27, 30, .86); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+  background: rgba(24, 27, 30, .95); 
 }
 @media (min-width: 1100px) { body.kartenmodus #s-raum .buehne-karte { right: 328px; } }
 @media (max-width: 1099px) { body.kartenmodus #s-raum aside.seite { display: none; } }
@@ -1454,7 +1476,7 @@ img, svg, a { -webkit-user-drag: none; user-drag: none; }
   border-radius: var(--r-gross); background: linear-gradient(180deg, #262A2E, #1E2226); color: var(--text);
   box-shadow: 0 50px 100px -30px rgba(0,0,0,.9);
 }
-.spieler-fenster::backdrop { background: rgba(8, 9, 11, .72); backdrop-filter: blur(5px); }
+.spieler-fenster::backdrop { background: rgba(8, 9, 11, .72);  }
 .spieler-fenster[open] { animation: sf-rein .32s cubic-bezier(.2, 1.1, .4, 1); }
 @keyframes sf-rein { from { opacity: 0; transform: translateY(18px) scale(.97); } }
 .sf-innen { padding: 28px 30px 24px; }
@@ -1495,3 +1517,49 @@ img, svg, a { -webkit-user-drag: none; user-drag: none; }
   .sf-rechts { overflow-x: auto; }
   .sf-knoepfe .knopf { flex: 1; }
 }
+
+/* Leistung: Effekte nur dort laufen lassen, wo man hinschaut */
+.stil-kachel:not(:hover) .effekt-probe .effekt *, .stil-kachel:not(:hover) .effekt-probe .effekt { animation-play-state: paused; }
+body:has(dialog[open]) main .effekt *, body:has(dialog[open]) main .effekt { animation-play-state: paused; }
+body.kartenmodus main .effekt * { animation-play-state: paused; }
+.e-karo i, .e-herz i, .e-pik i, .e-joker i { will-change: transform, opacity; }
+@media (prefers-reduced-motion: reduce) { .effekt, .effekt * { animation: none !important; } }
+
+/* ---------- Ladebildschirm ---------- */
+.lade {
+  position: fixed; inset: 0; z-index: 100; display: grid; place-items: center;
+  background: radial-gradient(ellipse 60% 50% at 50% 45%, #23292B, #15181A 70%);
+  transition: opacity .45s ease, visibility 0s linear .45s;
+  animation: lade-notaus 0s linear 9s forwards; /* falls etwas hängt: nach 9 s trotzdem weg */
+}
+.lade.weg { opacity: 0; visibility: hidden; pointer-events: none; }
+.lade.weg .lade-tisch { transform: scale(1.04); }
+@keyframes lade-notaus { to { opacity: 0; visibility: hidden; pointer-events: none; } }
+.lade-tisch { display: grid; justify-items: center; gap: 22px; transition: transform .45s ease; }
+.lade-karten { position: relative; width: 300px; height: 168px; }
+.lk {
+  position: absolute; left: 50%; top: 8px; width: 82px; height: 116px; margin-left: -41px;
+  border-radius: 10px; background: linear-gradient(160deg, #FBF6EC, #EDE3D1);
+  box-shadow: 0 0 0 2px var(--rang) inset, 0 0 0 5px #FBF6EC inset, 0 18px 30px -12px rgba(0,0,0,.75);
+  display: grid; place-items: center; transform-origin: 50% 120%;
+  animation: lk-austeilen .7s cubic-bezier(.2, 1.2, .35, 1) backwards, lk-wippen 2.4s ease-in-out infinite;
+  animation-delay: calc(var(--i) * 110ms), calc(var(--i) * 180ms + .8s);
+  --dreh: calc((var(--i) - 1.5) * 11deg); --weg: calc((var(--i) - 1.5) * 52px);
+  transform: translateX(var(--weg)) rotate(var(--dreh));
+}
+.lk svg { width: 40px; height: 40px; fill: #22262A; filter: drop-shadow(0 1px 0 rgba(255,255,255,.6)); }
+.lk-karo svg, .lk-herz svg { fill: #C9463F; }
+.lk-ecke { position: absolute; left: 9px; top: 6px; font: 800 15px/1 var(--display); color: #22262A; }
+.lk-karo .lk-ecke, .lk-herz .lk-ecke { color: #C9463F; }
+.lk-ecke.unten { left: auto; top: auto; right: 9px; bottom: 6px; transform: rotate(180deg); }
+@keyframes lk-austeilen { from { opacity: 0; transform: translate(0, 60px) rotate(0deg) scale(.85); } }
+@keyframes lk-wippen { 0%, 100% { transform: translateX(var(--weg)) rotate(var(--dreh)); } 50% { transform: translateX(var(--weg)) translateY(-10px) rotate(calc(var(--dreh) * 1.25)); } }
+.lade-titel { margin: 0; font: 800 clamp(2.6rem, 6vw, 4.2rem)/.9 var(--display); letter-spacing: -.045em; color: #E4E7E4; text-align: center; animation: t-text .5s ease .25s backwards; }
+.lade-titel span { display: block; font-size: .32em; letter-spacing: 0; color: var(--sand); margin-bottom: 6px; }
+.lade-balken { width: 220px; height: 5px; border-radius: 99px; background: rgba(255,255,255,.08); overflow: hidden; }
+.lade-balken i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--salbei), var(--sand)); transform: scaleX(.06); transform-origin: left; transition: transform .35s ease; }
+.lade-text { margin: -8px 0 0; color: var(--text-3); font-size: .85rem; font-weight: 600; min-height: 1.3em; }
+/* unsichtbare Probebühne zum Vorwärmen der Effekte */
+.lade-probe { position: fixed; left: 0; top: 0; width: 320px; opacity: .01; pointer-events: none; z-index: -1; }
+.lade-probe .hochkarte { width: 300px; }
+@media (prefers-reduced-motion: reduce) { .lk { animation: none; } }

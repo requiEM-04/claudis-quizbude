@@ -7,9 +7,18 @@
 <meta name="description" content="Flaggen raten in der Pause, allein oder zusammen im Raum.">
 <meta name="theme-color" content="#1B1E21">
 <link rel="icon" href="bilder/icon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="css/stil.css?v=0.9.6">
+<link rel="stylesheet" href="css/stil.css?v=0.9.7">
 </head>
 <body>
+<!-- Ladebildschirm: steht sofort, bis Schriften, Bilder und Effekte bereit sind -->
+<div class="lade" id="lade" role="status" aria-label="Die Quizbude lädt">
+  <div class="lade-tisch">
+    <div class="lade-karten" aria-hidden="true"><span class="lk lk-karo" style="--i:0;--rang:#E39A63"><b class="lk-ecke">A</b><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1.5 20.5 12 12 22.5 3.5 12Z"/></svg><b class="lk-ecke unten">A</b></span><span class="lk lk-herz" style="--i:1;--rang:#F0A9C3"><b class="lk-ecke">A</b><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21.6s-8.7-5.4-10.3-10.5C.6 7.3 3 3.5 6.9 3.5c2.3 0 3.9 1.3 5.1 3.1 1.2-1.8 2.8-3.1 5.1-3.1 3.9 0 6.3 3.8 5.2 7.6C20.7 16.2 12 21.6 12 21.6Z"/></svg><b class="lk-ecke unten">A</b></span><span class="lk lk-pik" style="--i:2;--rang:#CFE6F3"><b class="lk-ecke">A</b><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1.6C9.5 5.6 2.5 9.4 2.5 14.3a4.7 4.7 0 0 0 8.1 3.2l-1.3 4.9h5.4l-1.3-4.9a4.7 4.7 0 0 0 8.1-3.2c0-4.9-7-8.7-9.5-12.7Z"/></svg><b class="lk-ecke unten">A</b></span><span class="lk lk-kreuz" style="--i:3;--rang:#EBC660"><b class="lk-ecke">A</b><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="6.6" r="4.7"/><circle cx="6.5" cy="13.4" r="4.7"/><circle cx="17.5" cy="13.4" r="4.7"/><path d="M10.6 12h2.8l1.4 10.4H9.2Z"/></svg><b class="lk-ecke unten">A</b></span></div>
+    <p class="lade-titel" aria-hidden="true"><span>Claudis</span>Quizbude</p>
+    <div class="lade-balken"><i id="lade-fuellung"></i></div>
+    <p class="lade-text" id="lade-text">Karten mischen …</p>
+  </div>
+</div>
 <div class="nachricht" id="nachricht" role="status" hidden>
   <svg class="nachricht-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>
   <p id="nachricht-text"></p>
@@ -24,8 +33,13 @@
     </div>
     <div class="anmelden-raster">
       <div class="anmelden-text">
-        <h1>Flaggen raten in der Pause, allein oder gegeneinander.</h1>
+        <h1>Quizzen in der Pause, allein oder gegeneinander.</h1>
         <p class="unterzeile" id="anmelden-claudi">Claudi hat die Flaggen schon aufgehängt.</p>
+        <ul class="anmelden-kats" id="anmelden-kats" aria-label="Was es zu spielen gibt"></ul>
+        <section class="karte anmelden-besten" id="anmelden-besten-box" aria-labelledby="ab-titel" hidden>
+          <div class="ab-kopf"><h2 id="ab-titel">Gerade vorne</h2><small id="ab-zeit"></small></div>
+          <ol class="ab-liste" id="anmelden-besten"></ol>
+        </section>
       </div>
       <div class="karte anmelde-karte">
         <div class="umschalter" role="tablist">
@@ -354,7 +368,7 @@
 </nav>
 <div class="toast" id="toast" role="status" hidden></div>
 
-<script src="vendor/supabase.js?v=0.9.6"></script>
-<script type="module" src="js/app.js?v=0.9.6"></script>
+<script src="vendor/supabase.js?v=0.9.7"></script>
+<script type="module" src="js/app.js?v=0.9.7"></script>
 </body>
 </html>

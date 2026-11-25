@@ -150,11 +150,11 @@ const verteilt = (n, f) => Array.from({ length: n }, (_, i) => f(i, ((i * 37) % 
 export function effektHtml(rangId) {
   if (!rangId) return '';
   let innen = '';
-  if (rangId === 'karo') innen = verteilt(16, (i, a, b) => `<i style="--x:${a * 100}%;--t:${(2.4 + b * 2.6).toFixed(2)}s;--d:${(-b * 4).toFixed(2)}s;--g:${(3 + (i % 3)).toFixed(0)}px"></i>`).join('');
-  if (rangId === 'herz') innen = verteilt(10, (i, a, b) => `<i style="--x:${a * 92}%;--t:${(7 + b * 5).toFixed(2)}s;--d:${(-b * 10).toFixed(2)}s;--r:${(a * 80 - 40).toFixed(0)}deg">${symbolSvg(['herz', 'karo', 'pik', 'kreuz'][i % 4], i % 4 < 2 ? 'rot' : 'schwarz')}</i>`).join('');
+  if (rangId === 'karo') innen = verteilt(11, (i, a, b) => `<i style="--x:${a * 100}%;--t:${(2.4 + b * 2.6).toFixed(2)}s;--d:${(-b * 4).toFixed(2)}s;--g:${(3 + (i % 3)).toFixed(0)}px"></i>`).join('');
+  if (rangId === 'herz') innen = verteilt(7, (i, a, b) => `<i style="--x:${a * 92}%;--t:${(7 + b * 5).toFixed(2)}s;--d:${(-b * 10).toFixed(2)}s;--r:${(a * 80 - 40).toFixed(0)}deg">${symbolSvg(['herz', 'karo', 'pik', 'kreuz'][i % 4], i % 4 < 2 ? 'rot' : 'schwarz')}</i>`).join('');
   if (rangId === 'kreuz') innen = '<b class="strahlen"></b><b class="schein"></b>';
-  if (rangId === 'pik') innen = '<b class="glanz"></b>' + verteilt(9, (i, a, b) => `<i style="--x:${6 + a * 88}%;--y:${8 + b * 84}%;--t:${(2 + b * 2).toFixed(2)}s;--d:${(-a * 3).toFixed(2)}s">${symbolSvg('stern')}</i>`).join('');
-  if (rangId === 'joker') innen = '<b class="holo"></b><b class="glanz"></b>' + verteilt(8, (i, a, b) => `<i style="--x:${a * 94}%;--y:${b * 90}%;--t:${(2.5 + b * 2).toFixed(2)}s;--d:${(-a * 3).toFixed(2)}s">${symbolSvg(['stern', 'herz', 'karo', 'pik', 'kreuz'][i % 5])}</i>`).join('');
+  if (rangId === 'pik') innen = '<b class="glanz"></b>' + verteilt(7, (i, a, b) => `<i style="--x:${6 + a * 88}%;--y:${8 + b * 84}%;--t:${(2 + b * 2).toFixed(2)}s;--d:${(-a * 3).toFixed(2)}s">${symbolSvg('stern')}</i>`).join('');
+  if (rangId === 'joker') innen = '<b class="holo"></b><b class="glanz"></b>' + verteilt(6, (i, a, b) => `<i style="--x:${a * 94}%;--y:${b * 90}%;--t:${(2.5 + b * 2).toFixed(2)}s;--d:${(-a * 3).toFixed(2)}s">${symbolSvg(['stern', 'herz', 'karo', 'pik', 'kreuz'][i % 5])}</i>`).join('');
   return `<div class="effekt e-${rangId}" aria-hidden="true">${innen}</div>`;
 }
 

@@ -1,5 +1,5 @@
-import { LAENDER } from './laender.js?v=0.9.6';
-import { kanon } from './kanon.js?v=0.9.6';
+import { LAENDER } from './laender.js?v=0.9.7';
+import { kanon } from './kanon.js?v=0.9.7';
 
 export const LAND = Object.fromEntries(LAENDER.map(l => [l.code, l]));
 const WEM = new Map();
