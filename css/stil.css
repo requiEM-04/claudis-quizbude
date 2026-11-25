@@ -335,6 +335,37 @@ kbd {
 .kategorien-kopf h2 { margin: 0; }
 .kategorien-text { color: var(--text-2); margin: 0 0 16px; }
 .kachel-rekord { color: var(--sand); font-weight: 700; font-size: .84rem; margin-top: 2px; }
+
+/* Sprint-Auswahl: höhere Karten, große Bilder, Rekord als Zahl */
+.sprint-karte {
+  grid-template-rows: 132px auto 1fr auto; justify-items: center; align-content: stretch; text-align: center;
+  padding: 22px 12px 16px; min-height: 340px;
+}
+.sprint-karte .kachel-bild { height: 132px; justify-content: center; }
+.sprint-karte .kachel-name { font-size: 1.05rem; margin-top: 6px; }
+.sprint-karte .kachel-text { max-width: 16ch; }
+.sprint-karte .kb-faecher { width: 120px; height: 84px; }
+.sprint-karte .kb-faecher img { width: 72px; top: 18px; }
+.sprint-karte .kb-faecher img:nth-child(1) { left: 0; }
+.sprint-karte .kb-faecher img:nth-child(2) { left: 24px; top: 6px; }
+.sprint-karte .kb-faecher img:nth-child(3) { left: 48px; }
+.sprint-karte .kb-umriss { height: 104px; }
+.sprint-karte .kb-text { font-size: 2.5rem; }
+.sprint-karte .kb-gross { font-size: 5.4rem; }
+.sprint-karte .kb-duell { flex-direction: column; gap: 5px; }
+.sprint-karte .kb-duell img, .sprint-karte .kb-duell img:first-child { max-width: none; }
+.sprint-karte .kb-duell img:first-child { height: 50px; }
+.sprint-karte .kb-duell img:last-child { height: 32px; }
+.sprint-karte .kb-emoji { font-size: 3.1rem; white-space: nowrap; letter-spacing: -.04em; }
+.sk-rekord {
+  width: 100%; display: grid; justify-items: center; gap: 4px; align-self: end;
+  margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--linie);
+}
+.sk-rekord b { font: 800 2.3rem/1 var(--display); color: var(--sand); letter-spacing: -.02em; }
+.sk-rekord small { color: var(--text-2); font-size: .8rem; font-weight: 600; }
+.sk-rekord.leer b { color: var(--text-3); }
+.sk-rekord.leer small { color: var(--text-3); }
+.sprint-karte:hover .sk-rekord { border-top-color: rgba(205,182,140,.35); }
 .besten-kategorie { display: flex; align-items: center; gap: 10px; margin: -4px 0 12px; }
 .besten-kategorie select { width: auto; padding-top: .45em; padding-bottom: .45em; }
 .verpasst .kurz-umriss { height: 60px; width: 60px; fill: var(--sand); }

@@ -1,8 +1,8 @@
-import { LAENDER } from './laender.js?v=0.4.3';
-import { WISSEN, WISSEN_THEMEN } from './wissen.js?v=0.4.3';
-import { EMOJI, EMOJI_THEMEN } from './emoji.js?v=0.4.3';
-import { kanon } from './kanon.js?v=0.4.3';
-import { LAND, AUSWAHL, pruefe, mischen, flaggeUrl, abgleichen } from './abgleich.js?v=0.4.3';
+import { LAENDER } from './laender.js?v=0.4.4';
+import { WISSEN, WISSEN_THEMEN } from './wissen.js?v=0.4.4';
+import { EMOJI, EMOJI_THEMEN } from './emoji.js?v=0.4.4';
+import { kanon } from './kanon.js?v=0.4.4';
+import { LAND, AUSWAHL, pruefe, mischen, flaggeUrl, abgleichen } from './abgleich.js?v=0.4.4';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const zahl = n => n.toLocaleString('de-DE');
@@ -12,7 +12,7 @@ let UMRISSE = null;
 let umrisseLaeuft = null;
 export function umrisseLaden() {
   if (UMRISSE) return Promise.resolve(UMRISSE);
-  umrisseLaeuft ||= import('./umrisse.js?v=0.4.3').then(m => { UMRISSE = m.UMRISSE; return UMRISSE; });
+  umrisseLaeuft ||= import('./umrisse.js?v=0.4.4').then(m => { UMRISSE = m.UMRISSE; return UMRISSE; });
   return umrisseLaeuft;
 }
 export const umrisseDa = () => !!UMRISSE;

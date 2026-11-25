@@ -1,18 +1,18 @@
-import { VERSION } from './config.js?v=0.4.3';
+import { VERSION } from './config.js?v=0.4.4';
 import {
   online, nameFehler, registrieren, anmelden, abmelden, sitzungHolen, profilLaden, profilSpeichern,
   bestenliste, letzteSpiele, sprintEintragen, sprintBestenliste, rangVon, spielerAnzahl, spieleVon, sb,
-} from './server.js?v=0.4.3';
-import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.4.3';
-import { Raum, codeNeu, STANDARD } from './raum.js?v=0.4.3';
-import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.4.3';
+} from './server.js?v=0.4.4';
+import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.4.4';
+import { Raum, codeNeu, STANDARD } from './raum.js?v=0.4.4';
+import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.4.4';
 import {
   KATEGORIEN, KATEGORIE_REIHE, kategorieVon, optionSchluessel, richtigeWahl, umrisseDa, umrisseLaden,
   sprintFrage, pruefeFrage, fragenVorladen, kanon,
-} from './kategorien.js?v=0.4.3';
-import { LAENDER } from './laender.js?v=0.4.3';
-import { auswahlfeld } from './auswahlfeld.js?v=0.4.3';
-import { KATEGORIE_SYMBOL } from './symbole.js?v=0.4.3';
+} from './kategorien.js?v=0.4.4';
+import { LAENDER } from './laender.js?v=0.4.4';
+import { auswahlfeld } from './auswahlfeld.js?v=0.4.4';
+import { KATEGORIE_SYMBOL } from './symbole.js?v=0.4.4';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -327,11 +327,11 @@ function kachelnHtml(mitRekord) {
   return KATEGORIE_REIHE.map(k => {
     const rekord = mitRekord ? sprintRekord(k) : 0;
     return `
-    <button class="kachel" data-k="${k}">
+    <button class="kachel${mitRekord ? ' sprint-karte' : ''}" data-k="${k}">
       <span class="kachel-bild" aria-hidden="true">${kachelBild(k)}</span>
       <span class="kachel-name">${esc(KATEGORIEN[k].name).replace('Allgemeinwissen', 'Allgemein&shy;wissen')}</span>
       <span class="kachel-text">${esc(KATEGORIEN[k].text)}</span>
-      ${mitRekord ? `<span class="kachel-rekord">${rekord ? `Dein Rekord: ${rekord}` : 'Noch kein Rekord'}</span>` : ''}
+      ${mitRekord ? `<span class="sk-rekord${rekord ? '' : ' leer'}"><b>${rekord || '–'}</b><small>${rekord ? 'dein Rekord' : 'noch kein Rekord'}</small></span>` : ''}
     </button>`;
   }).join('');
 }
