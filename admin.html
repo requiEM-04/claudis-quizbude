@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin · Claudis Quizbude</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#1B1E21">
+<link rel="icon" href="bilder/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="css/stil.css?v=0.9.3">
+<link rel="stylesheet" href="css/admin.css?v=0.9.3">
+</head>
+<body class="admin">
+
+<!-- Anmelden -->
+<section class="ad-login" id="ad-login" hidden>
+  <form class="karte ad-login-karte" id="ad-login-form" novalidate>
+    <img src="bilder/icon.svg" alt="" width="56" height="56">
+    <h1>Admin</h1>
+    <p>Hier geht es nur mit dem Admin-Konto rein.</p>
+    <input type="text" name="username" value="admin" autocomplete="username" hidden>
+    <label>Passwort <input name="passwort" type="password" autocomplete="current-password" required></label>
+    <p class="fehler" id="ad-login-fehler" role="alert"></p>
+    <button class="knopf haupt breit" type="submit">Anmelden</button>
+    <a class="ad-zurueck" href="./">Zur Quizbude</a>
+  </form>
+</section>
+
+<!-- Admin-Bereich -->
+<div class="ad-app" id="ad-app" hidden>
+  <header class="ad-kopf">
+    <a class="ad-marke" href="./"><img src="bilder/icon.svg" alt="" width="34" height="34"><span>Quizbude <b>Admin</b></span></a>
+    <nav class="ad-reiter" id="ad-reiter" role="tablist">
+      <button role="tab" data-tab="uebersicht" class="aktiv">Übersicht</button>
+      <button role="tab" data-tab="spieler">Spieler</button>
+      <button role="tab" data-tab="raeume">Räume</button>
+      <button role="tab" data-tab="nachricht">Nachricht</button>
+      <button role="tab" data-tab="server">Server</button>
+      <button role="tab" data-tab="protokoll">Protokoll</button>
+    </nav>
+    <button class="knopf zweit klein" id="ad-abmelden" type="button">Abmelden</button>
+  </header>
+
+  <main class="ad-main">
+    <section class="ad-tab" data-tab="uebersicht">
+      <h2>Übersicht</h2>
+      <div class="ad-zahlen" id="ad-zahlen"></div>
+      <div class="ad-zwei">
+        <div class="karte ad-block"><h3>Zuletzt aktiv</h3><ul class="ad-liste" id="ad-zuletzt"></ul></div>
+        <div class="karte ad-block"><h3>Zuletzt gemacht</h3><ul class="ad-liste" id="ad-zuletzt-log"></ul></div>
+      </div>
+    </section>
+
+    <section class="ad-tab" data-tab="spieler" hidden>
+      <div class="ad-tab-kopf">
+        <h2>Spieler</h2>
+        <input type="search" id="ad-suche" placeholder="Name suchen" autocomplete="off" aria-label="Spieler suchen">
+      </div>
+      <div class="ad-filter" id="ad-filter">
+        <button data-f="alle" class="aktiv">Alle</button>
+        <button data-f="gesperrt">Gesperrt</button>
+        <button data-f="versteckt">Nicht in der Bestenliste</button>
+        <button data-f="deaktiviert">Deaktiviert</button>
+      </div>
+      <div class="ad-kacheln" id="ad-kacheln"></div>
+    </section>
+
+    <section class="ad-tab" data-tab="raeume" hidden>
+      <h2>Offene Räume</h2>
+      <p class="ad-hinweis">Live aus der Lobby. Geschlossene Räume (nur mit Code) tauchen hier nicht auf.</p>
+      <div class="ad-raeume" id="ad-raeume"></div>
+    </section>
+
+    <section class="ad-tab" data-tab="nachricht" hidden>
+      <h2>Nachricht an alle</h2>
+      <p class="ad-hinweis">Erscheint oben auf der Seite, bei allen, bis sie sie wegklicken. Eine neue Nachricht taucht auch bei denen wieder auf, die die alte weggeklickt haben.</p>
+      <div class="karte ad-block ad-nachricht">
+        <label>Text <textarea id="ad-nachricht-text" maxlength="200" rows="3" placeholder="Zum Beispiel: Heute 12:30 großes Flaggen-Turnier, kommt alle in den Raum!"></textarea></label>
+        <div class="ad-zeile">
+          <span class="ad-zeichen" id="ad-nachricht-zeichen">0 / 200</span>
+          <label class="ad-schalter"><input type="checkbox" id="ad-nachricht-an"><span></span> Anzeigen</label>
+        </div>
+        <p class="ad-vorschau-titel">So sieht es aus</p>
+        <div class="ad-vorschau"><div class="nachricht ad-vorschau-pille"><p id="ad-nachricht-vorschau">…</p></div></div>
+        <button class="knopf haupt" id="ad-nachricht-speichern" type="button">Speichern</button>
+      </div>
+    </section>
+
+    <section class="ad-tab" data-tab="server" hidden>
+      <h2>Server</h2>
+      <div class="karte ad-block">
+        <div class="ad-einst">
+          <div><b>Neue Konten</b><p>Wenn aus, kann sich niemand neu registrieren. Wer schon ein Konto hat, kommt weiter rein.</p></div>
+          <label class="ad-schalter"><input type="checkbox" id="ad-neue-konten"><span></span></label>
+        </div>
+      </div>
+      <div class="karte ad-block">
+        <div class="ad-einst">
+          <div><b>Version</b><p id="ad-version">–</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="ad-tab" data-tab="protokoll" hidden>
+      <h2>Protokoll</h2>
+      <p class="ad-hinweis">Alles, was hier im Admin-Bereich gemacht wurde, die letzten 200 Einträge.</p>
+      <div class="karte ad-block"><ul class="ad-liste ad-protokoll" id="ad-protokoll"></ul></div>
+    </section>
+  </main>
+</div>
+
+<!-- Spieler im Detail -->
+<dialog class="ad-detail" id="ad-detail">
+  <div class="ad-detail-innen" id="ad-detail-innen"></div>
+</dialog>
+
+<!-- Nachfragen -->
+<dialog class="ad-frage" id="ad-frage">
+  <form method="dialog" id="ad-frage-form">
+    <h3 id="ad-frage-titel"></h3>
+    <p id="ad-frage-text"></p>
+    <label id="ad-frage-tippen" hidden>Zum Bestätigen den Namen tippen <input id="ad-frage-eingabe" autocomplete="off"></label>
+    <div class="ad-frage-knoepfe">
+      <button class="knopf zweit" value="nein" type="submit">Abbrechen</button>
+      <button class="knopf haupt" value="ja" type="submit" id="ad-frage-ja">Ausführen</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script src="vendor/supabase.js?v=0.9.3"></script>
+<script type="module" src="js/admin.js?v=0.9.3"></script>
+</body>
+</html>

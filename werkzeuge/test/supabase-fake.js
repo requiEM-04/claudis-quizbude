@@ -145,6 +145,29 @@
             : L.get('fake.profile', []).map(mitRuhm).filter(r => (r.rekorde?.[k] || 0) > 0).map(r => ({ id: r.id, name: r.name, avatar: r.avatar, farbe: r.farbe, ruhm: r.ruhm, stil: r.stil, wert: r.rekorde[k] })).sort((x, y) => y.wert - x.wert).slice(0, 15);
           return { data: rows, error: null };
         }
+        // Admin: wer in fake.admins steht, darf alles
+        const admin = L.get('fake.admins', []).includes(uid());
+        if (name === 'is_admin') return { data: admin, error: null };
+        if (name.startsWith('admin_')) {
+          if (!admin) return { data: null, error: { message: 'Kein Admin' } };
+          const log = (aktion, ziel, details = null) => L.set('fake.admin_log', [{ id: Date.now(), am: new Date().toISOString(), aktion, ziel, ziel_name: L.get('fake.profile', []).find(r => r.id === ziel)?.name, details }, ...L.get('fake.admin_log', [])]);
+          const setze = (id, f) => L.set('fake.profile', L.get('fake.profile', []).map(r => r.id === id ? f({ ...r }) : r));
+          const alle = L.get('fake.profile', []).map(mitRuhm);
+          switch (name) {
+            case 'admin_uebersicht': return { data: { spieler: alle.length, heute_aktiv: alle.length, woche_aktiv: alle.length, spiele_heute: L.get('fake.spiele', []).length, spiele_gesamt: L.get('fake.spiele', []).length, sprints_heute: L.get('fake.laeufe', []).length, sprints_gesamt: L.get('fake.laeufe', []).length, gesperrt: alle.filter(r => r.gesperrt_bis > new Date().toISOString()).length, versteckt: alle.filter(r => r.versteckt).length, deaktiviert: alle.filter(r => r.deaktiviert).length }, error: null };
+            case 'admin_spieler': return { data: alle.map(r => ({ ruhm_extra: 0, versteckt: false, deaktiviert: false, gesperrt_bis: null, sprint_treffer: 0, letzte_anmeldung: r.zuletzt, ...r })), error: null };
+            case 'admin_umbenennen': log('umbenennen', a.p_id, { alt: alle.find(r => r.id === a.p_id)?.name, neu: a.p_name }); setze(a.p_id, r => ({ ...r, name: a.p_name })); return { data: null, error: null };
+            case 'admin_passwort': log('passwort', a.p_id); return { data: null, error: null };
+            case 'admin_sperren': { const bis = a.p_stunden > 0 ? new Date(Date.now() + a.p_stunden * 3600e3).toISOString() : '9999-12-31T00:00:00Z'; setze(a.p_id, r => ({ ...r, gesperrt_bis: bis, sperr_grund: a.p_grund || null })); log('sperren', a.p_id, { bis, grund: a.p_grund }); return { data: null, error: null }; }
+            case 'admin_entsperren': setze(a.p_id, r => ({ ...r, gesperrt_bis: null, sperr_grund: null })); log('entsperren', a.p_id); return { data: null, error: null };
+            case 'admin_verstecken': setze(a.p_id, r => ({ ...r, versteckt: a.p_an })); log(a.p_an ? 'aus_bestenliste' : 'in_bestenliste', a.p_id); return { data: null, error: null };
+            case 'admin_deaktivieren': setze(a.p_id, r => ({ ...r, deaktiviert: a.p_an })); log(a.p_an ? 'deaktivieren' : 'aktivieren', a.p_id); return { data: null, error: null };
+            case 'admin_ruhm': { setze(a.p_id, r => ({ ...r, ruhm_extra: (r.ruhm_extra || 0) + a.p_menge })); const neu = L.get('fake.profile', []).map(mitRuhm).find(r => r.id === a.p_id).ruhm; log('ruhm', a.p_id, { menge: a.p_menge, neu }); return { data: neu, error: null }; }
+            case 'admin_config': { const k = L.get('fake.config', []).filter(z => z.schluessel !== a.p_schluessel); L.set('fake.config', [...k, { schluessel: a.p_schluessel, wert: a.p_wert }]); log('einstellung', null, { schluessel: a.p_schluessel, wert: a.p_wert }); return { data: null, error: null }; }
+            case 'admin_protokoll': return { data: L.get('fake.admin_log', []), error: null };
+          }
+          return { data: null, error: null };
+        }
         if (name === 'spiel_loggen') L.set('fake.spiele', [{ ...a.p, am: new Date().toISOString() }, ...L.get('fake.spiele', [])]);
         return { data: null, error: null };
       },

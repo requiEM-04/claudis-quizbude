@@ -1,24 +1,25 @@
-import { VERSION } from './config.js?v=0.9.2';
+import { VERSION } from './config.js?v=0.9.3';
 import {
   online, nameFehler, registrieren, anmelden, abmelden, sitzungHolen, profilLaden, profilSpeichern,
   bestenliste, spieleSeit, alleProfile, sprintEintragen, sprintBestenliste, rangVon, spielerAnzahl, spieleVon, sb,
-} from './server.js?v=0.9.2';
-import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.9.2';
-import { Raum, codeNeu, STANDARD, TIPPFEHLER_ABZUG } from './raum.js?v=0.9.2';
-import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.9.2';
+  adminAnmelden, istAdminName, konfigLaden,
+} from './server.js?v=0.9.3';
+import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.9.3';
+import { Raum, codeNeu, STANDARD, TIPPFEHLER_ABZUG } from './raum.js?v=0.9.3';
+import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.9.3';
 import {
   KATEGORIEN, KATEGORIE_REIHE, SPRINT_REIHE, kategorieVon, optionSchluessel, richtigeWahl, umrisseDa, umrisseLaden,
   sprintFrage, pruefeFrage, fragenVorladen, kanon,
-} from './kategorien.js?v=0.9.2';
-import { LAENDER } from './laender.js?v=0.9.2';
-import { auswahlfeld } from './auswahlfeld.js?v=0.9.2';
-import { KATEGORIE_SYMBOL } from './symbole.js?v=0.9.2';
-import { konfetti } from './konfetti.js?v=0.9.2';
-import { karteBauen, karteLaden, auswerten } from './weltkarte.js?v=0.9.2';
+} from './kategorien.js?v=0.9.3';
+import { LAENDER } from './laender.js?v=0.9.3';
+import { auswahlfeld } from './auswahlfeld.js?v=0.9.3';
+import { KATEGORIE_SYMBOL } from './symbole.js?v=0.9.3';
+import { konfetti } from './konfetti.js?v=0.9.3';
+import { karteBauen, karteLaden, auswerten } from './weltkarte.js?v=0.9.3';
 import {
   RAENGE, BILDER, ARTEN, JOKER, ruhmInfo, stufeVon, stufeInfo, wappen, effektHtml, rahmenDeko, stilVon, istFrei, freiAb, neuFrei,
   belohnungName, rangVonId, symbol, symbolSvg, SCHWELLEN,
-} from './ruhm.js?v=0.9.2';
+} from './ruhm.js?v=0.9.3';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -227,12 +228,21 @@ function anmeldenAufbauen() {
     const passwort = f.passwort.value;
     const fehler = $('anmelde-fehler');
     fehler.textContent = '';
-    const nf = nameFehler(name);
+    const neu = anmeldeModus === 'neu';
+    const nf = nameFehler(name, neu);
     if (nf) { fehler.textContent = nf; return; }
     if (passwort.length < 4) { fehler.textContent = 'Das Passwort braucht mindestens 4 Zeichen.'; return; }
     const knopf = $('anmelde-knopf');
     knopf.disabled = true;
+    // „admin“ führt in den Admin-Bereich, das normale Konto bleibt dabei angemeldet
+    if (!neu && istAdminName(name)) {
+      try { await adminAnmelden(passwort); f.passwort.value = ''; location.href = 'admin.html'; }
+      catch (err) { fehler.textContent = err.message; }
+      finally { knopf.disabled = false; }
+      return;
+    }
     try {
+      if (neu && (await konfigLaden()).neue_konten?.an === false) throw new Error('Gerade können keine neuen Konten angelegt werden.');
       const user = anmeldeModus === 'neu'
         ? await registrieren(name, passwort, auswahl.avatar, auswahl.farbe)
         : await anmelden(name, passwort);
@@ -289,6 +299,15 @@ function anmeldenZeigen() {
 async function profilHolen(user) {
   const p = await profilLaden(user.id);
   if (!p) throw new Error('Zu deinem Konto fehlt das Profil. Melde dich nochmal an.');
+  const gesperrt = p.gesperrt_bis && new Date(p.gesperrt_bis) > new Date();
+  if (p.deaktiviert || gesperrt) {
+    await abmelden();
+    const bis = gesperrt && new Date(p.gesperrt_bis).getFullYear() < 9000
+      ? ` bis ${new Date(p.gesperrt_bis).toLocaleString('de-DE', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })} Uhr` : '';
+    const e = new Error(p.deaktiviert ? 'Dieses Konto ist deaktiviert.' : `Dein Konto ist gesperrt${bis || ' (ohne Enddatum)'}.${p.sperr_grund ? ' Grund: ' + p.sperr_grund : ''}`);
+    e.sichtbar = true;
+    throw e;
+  }
   ich = p;
   chipZeichnen();
   lobbyStart();
@@ -1286,7 +1305,20 @@ let neueVersion = null;
 const ZURUECK = 'quizbude.zurueck';
 const VERSUCH = 'quizbude.update';
 
+// Nachricht an alle (kommt aus dem Admin-Bereich), lässt sich wegklicken
+async function nachrichtPruefen() {
+  if (!online()) return;
+  const n = (await konfigLaden()).nachricht;
+  const el = $('nachricht');
+  let weg = null; try { weg = localStorage.getItem('quizbude.nachricht.weg'); } catch { /* egal */ }
+  const zeigen = !!(n?.an && n.text && n.text !== weg);
+  if (zeigen) $('nachricht-text').textContent = n.text;
+  el.hidden = !zeigen;
+  $('nachricht-zu').onclick = () => { el.hidden = true; try { localStorage.setItem('quizbude.nachricht.weg', n?.text || ''); } catch { /* egal */ } };
+}
+
 async function versionPruefen() {
+  nachrichtPruefen();
   if (!neueVersion) {
     try {
       const antwort = await fetch(`version.json?t=${Date.now()}`, { cache: 'no-store' });
@@ -1768,7 +1800,9 @@ async function los() {
       if (!ich && gast) lobbyStart(); // Gäste sehen die offenen Räume auch
     } catch (e) {
       console.warn('[Quizbude] Sitzung nicht wiederhergestellt', e);
+      if (e.sichtbar) setTimeout(() => { $('anmelde-fehler').textContent = e.message; }, 50);
     }
+    nachrichtPruefen();
     sb.auth.onAuthStateChange(ereignis => {
       if (ereignis === 'SIGNED_OUT' && ich) { ich = null; chipZeichnen(); route(true); }
     });

@@ -11,12 +11,12 @@ for f in (root / 'js').glob('*.js'):
     s2 = re.sub(r"(from '\./[\w-]+\.js)(\?v=[^']*)?'", rf"\1?v={v}'", s)
     s2 = re.sub(r"(import\('\./[\w-]+\.js)(\?v=[^']*)?'\)", rf"\1?v={v}')", s2)
     if s2 != s: f.write_text(s2)
-idx = root / 'index.html'
-s = idx.read_text()
-s = re.sub(r'(href="css/stil\.css)(\?v=[^"]*)?"', rf'\1?v={v}"', s)
-s = re.sub(r'(src="js/app\.js)(\?v=[^"]*)?"', rf'\1?v={v}"', s)
-s = re.sub(r'(src="vendor/supabase\.js)(\?v=[^"]*)?"', rf'\1?v={v}"', s)
-idx.write_text(s)
+for seite in ('index.html', 'admin.html'):
+    idx = root / seite
+    if not idx.exists(): continue
+    s = idx.read_text()
+    s = re.sub(r'((?:href|src)="(?:css|js|vendor)/[\w-]+\.(?:css|js))(\?v=[^"]*)?"', rf'\1?v={v}"', s)
+    idx.write_text(s)
 # Die Seite fragt diese Datei regelmäßig ab und lädt bei einer neuen Version von selbst neu
 (root / 'version.json').write_text('{"version": "%s"}\n' % v)
 print('Version', v)

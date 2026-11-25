@@ -2,7 +2,7 @@
 
 ## Aktuell (25.11.2026)
 
-- **Version:** 0.9.2
+- **Version:** 0.9.3
 - **Live:** https://requiem-04.github.io/claudis-quizbude/ (Repo `requiEM-04/claudis-quizbude`, Branch `main`, GitHub Pages)
 - **Server:** Supabase-Projekt `quizbude` (Ref `jgvjjjiwfjxynbzjaxsg`, Frankfurt), E-Mail-Bestätigung aus, Realtime mit öffentlichen Kanälen.
 - **Inhalt:** Konten (Name + Passwort ab 4 Zeichen), Räume mit 4-Buchstaben-Code (live über Realtime), Flaggenraten (tippen oder 4 zur Auswahl), Flaggen-Sprint (60 s), Bestenliste (Siege, Punkte, Sprint), „Zuletzt gespielt".
@@ -95,6 +95,12 @@
   - Weltkarte: kein Rechtsklick-Menü, flüssigeres Ziehen und Zoomen, keine Pin-Zeilen im Raum-Chat.
   - Nichts mehr markierbar oder als Bild ziehbar (außer Eingabefelder und Chat).
   - Flaggen-Fächer oben in der Bude: geht beim Drüberfahren auf, Flagge hebt sich und weht, Klick mischt neue Flaggen. Kategorie-Kacheln haben eigene kleine Hover-Bewegungen.
+
+- **Neu in 0.9.3:**
+  - Admin-Bereich (admin.html): Anmelden auf der Seite mit Namen „admin“, eigene Sitzung (quizbude.admin), normales Konto bleibt angemeldet.
+  - Admin-Konto requiem-admin@quizbude.app legt Colin selbst im Supabase-Dashboard an (Passwort + „#qb26“), der Trigger trägt es in admins ein.
+  - Reiter: Übersicht, Spieler (umbenennen, Passwort, Ruhm schenken, sperren, aus Bestenliste, deaktivieren), Räume (live), Nachricht an alle, Server (neue Konten an/aus), Protokoll.
+  - Migration werkzeuge/migrationen/001_admin.sql (läuft mehrfach). Namen mit „admin“ sind reserviert.
 
 ## Als Nächstes (mit Colin besprochen)
 
