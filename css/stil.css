@@ -82,7 +82,7 @@ main { width: 100%; max-width: var(--breite); margin: 0 auto; padding: 28px 24px
   position: absolute; right: 0; top: 54%;
   width: clamp(180px, 25vw, 330px); aspect-ratio: 1.5;
   transform: translateY(-50%);
-  pointer-events: none;
+  cursor: pointer;
 }
 .faecher img {
   position: absolute; left: 50%; top: 50%;
@@ -90,9 +90,34 @@ main { width: 100%; max-width: var(--breite); margin: 0 auto; padding: 28px 24px
   border-radius: 6px;
   filter: drop-shadow(0 18px 22px rgba(0,0,0,.55));
   transform: translate(-50%, -50%) translate(var(--x), var(--y)) rotate(var(--dreh));
-  animation: faechern .8s cubic-bezier(.2, .8, .2, 1) both;
+  animation: faechern .8s cubic-bezier(.2, .8, .2, 1) backwards;
   animation-delay: calc(var(--i) * 90ms + 120ms);
+  transition: translate .45s cubic-bezier(.2, 1.3, .4, 1), rotate .45s cubic-bezier(.2, 1.3, .4, 1), scale .35s ease, filter .3s ease;
 }
+/* Maus drüber: der Fächer geht auf, die Flagge unter der Maus hebt sich und weht */
+.faecher:hover img { translate: var(--sx) var(--sy); rotate: var(--sdreh); }
+.faecher img:hover { translate: var(--sx) calc(var(--sy) - 14%); rotate: 0deg; scale: 1.13; z-index: 4; filter: drop-shadow(0 28px 30px rgba(0,0,0,.6)) brightness(1.06); animation: wehen 2.4s ease-in-out infinite; }
+@keyframes wehen { 0%, 100% { rotate: -2.5deg; } 50% { rotate: 2.5deg; } }
+/* Klick: neue Flaggen kommen umgedreht rein */
+.faecher.neu img { animation: umdrehen .6s cubic-bezier(.2, .9, .3, 1.2) backwards; animation-delay: calc(var(--i) * 70ms); }
+@keyframes umdrehen { from { opacity: 0; scale: .6; rotate: -25deg; } }
+
+/* Kategorie-Kacheln: jede Kachel bekommt eine eigene kleine Bewegung beim Drüberfahren */
+.kachel .kachel-bild > * { transition: transform .4s cubic-bezier(.2, 1.4, .4, 1), filter .3s ease; }
+.kb-faecher img { transition: transform .4s cubic-bezier(.2, 1.4, .4, 1); }
+.kachel:hover .kb-faecher img:nth-child(1) { transform: rotate(-20deg) translate(-8px, 2px); }
+.kachel:hover .kb-faecher img:nth-child(2) { transform: rotate(0deg) translateY(-6px); }
+.kachel:hover .kb-faecher img:nth-child(3) { transform: rotate(22deg) translate(8px, 2px); }
+.kachel:hover .kb-karte { transform: scale(1.14); filter: drop-shadow(0 8px 12px rgba(0,0,0,.5)) brightness(1.15); }
+.kachel:hover .kb-umriss { transform: rotate(-8deg) scale(1.1); }
+.kachel:hover .kb-text:not(.kb-gross) { animation: wackeln-frage .6s ease; }
+.kachel:hover .kb-gross { animation: huepfen .7s cubic-bezier(.3, 1.6, .5, 1); }
+.kachel:hover .kb-duell { animation: tauschen .7s ease; }
+.kachel:hover .kb-emoji { animation: wuerfeln .7s cubic-bezier(.3, 1.4, .5, 1); }
+@keyframes wackeln-frage { 0%, 100% { transform: none; } 25% { transform: rotate(-6deg); } 50% { transform: rotate(5deg); } 75% { transform: rotate(-3deg); } }
+@keyframes huepfen { 0%, 100% { transform: none; } 40% { transform: translateY(-10px) scale(1.1); } 70% { transform: translateY(2px) scale(.97); } }
+@keyframes tauschen { 0%, 100% { transform: none; } 50% { transform: scale(1.08) rotate(-3deg); } }
+@keyframes wuerfeln { from { transform: rotate(0) scale(1); } 60% { transform: rotate(320deg) scale(1.15); } to { transform: rotate(360deg) scale(1); } }
 @keyframes faechern {
   from { opacity: 0; transform: translate(-50%, -50%) translateY(30px) rotate(0deg) scale(.92); }
 }
@@ -981,7 +1006,6 @@ body[data-hg="joker"]::before, .hgf-joker {
 /* Polarlicht bewegt sich über eine größere Ebene per transform (kein Neuzeichnen beim Scrollen) */
 body[data-hg="joker"]::before { inset: -20%; animation: polarlicht-zug 26s ease-in-out infinite alternate; }
 @keyframes polarlicht-zug { from { transform: translate3d(-4%, -3%, 0) rotate(0deg); } to { transform: translate3d(4%, 3%, 0) rotate(3deg); } }
- }
 
 /* ---------- Spielerkarte (Profil) ---------- */
 .spielerkarte {
@@ -1286,15 +1310,17 @@ body[data-hg="joker"]::before { inset: -20%; animation: polarlicht-zug 26s ease-
 .kb-karte { width: 96px; height: auto; filter: drop-shadow(0 6px 10px rgba(0,0,0,.5)); }
 #kachel-raster .kb-karte { width: 74px; }
 .sprint-karte .kb-karte { width: 128px; }
-.weltkarte { position: relative; width: 100%; height: min(64vh, 640px); min-height: 340px; border-radius: 18px; overflow: hidden; background: #141C24; border: 1px solid var(--linie-stark); box-shadow: inset 0 0 60px rgba(0,0,0,.45); }
+.weltkarte { user-select: none; -webkit-user-select: none; position: relative; width: 100%; height: min(64vh, 640px); min-height: 340px; border-radius: 18px; overflow: hidden; background: #141C24; border: 1px solid var(--linie-stark); box-shadow: inset 0 0 60px rgba(0,0,0,.45); }
 .weltkarte[hidden] { display: none; }
 .wk-svg { display: block; width: 100%; height: 100%; touch-action: none; cursor: crosshair; user-select: none; -webkit-user-select: none; }
 .weltkarte.zieht .wk-svg { cursor: grabbing; }
 .wk-meer { fill: #16212B; }
-.wk-gitter { fill: none; stroke: rgba(255,255,255,.045); stroke-width: 1px; vector-effect: non-scaling-stroke; }
-.wk-laender path { fill: #3B434A; stroke: #1A2026; stroke-width: .8px; vector-effect: non-scaling-stroke; stroke-linejoin: round; fill-rule: evenodd; transition: fill .12s; }
+.wk-gitter { fill: none; stroke: rgba(255,255,255,.045); }
+.wk-laender { stroke: #1A2026; stroke-linejoin: round; }
+.wk-laender path { fill: #3B434A; fill-rule: evenodd; }
 .wk-laender path:hover { fill: #4A545C; }
-.wk-laender path.ziel { fill: var(--sand); stroke: #FFF1CF; stroke-width: 1.5px; animation: wk-ziel 1s ease-in-out infinite alternate; }
+.weltkarte.zieht .wk-laender { pointer-events: none; } /* beim Ziehen keine Hover-Prüfung */
+.wk-laender path.ziel { fill: var(--sand); animation: wk-ziel 1s ease-in-out infinite alternate; }
 @keyframes wk-ziel { from { fill: #CDB68C; } to { fill: #F2D9A2; } }
 .wk-linie { stroke: var(--f, var(--sand)); stroke-width: 2px; stroke-dasharray: 6 5; vector-effect: non-scaling-stroke; opacity: .9; animation: wk-strich 1.2s linear infinite; }
 @keyframes wk-strich { to { stroke-dashoffset: -22; } }
@@ -1320,10 +1346,59 @@ body[data-hg="joker"]::before { inset: -20%; animation: polarlicht-zug 26s ease-
 body.kartenmodus main { max-width: none; padding-bottom: 24px; }
 body.kartenmodus .sprint { max-width: none; }
 body.kartenmodus .buehne { min-height: 0; }
-body.kartenmodus .phase { gap: 12px; }
+body.kartenmodus .phase { gap: 12px; user-select: none; -webkit-user-select: none; }
 body.kartenmodus .weltkarte { height: calc(100vh - 270px); }
 @media (min-width: 900px) { body.spielt { padding-left: 0; } }
 @media (max-width: 700px) { .weltkarte, body.kartenmodus .weltkarte { height: calc(100vh - 300px); min-height: 300px; } .wk-hilfe { display: none; } .wk-flagge { height: 40px; } }
+
+/* =====================================================================
+   Nichts markieren oder wegziehen (außer in Eingabefeldern und im Chat)
+   ===================================================================== */
+body { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+input, textarea, [contenteditable], .chat-liste, .chat-liste * { -webkit-user-select: text; user-select: text; }
+img, svg, a { -webkit-user-drag: none; user-drag: none; }
+
+/* =====================================================================
+   Profil: links die Spielerkarte (fest im Blick), rechts Kopf und Reiter
+   ===================================================================== */
+.profil-layout { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 36px; align-items: start; }
+.profil-seite { position: sticky; top: 24px; display: grid; gap: 14px; justify-items: center; }
+.profil-seite .hochkarte { width: 290px; }
+.profil-seite .profil-editor { width: 100%; padding: 16px; }
+.profil-seite .avatar-wahl { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.profil-haupt { display: grid; gap: 22px; min-width: 0; }
+.profil-haupt .profil-kopf { display: block; margin: 0; }
+.profil-kopf h1 { font-size: clamp(2.4rem, 4.6vw, 3.8rem); letter-spacing: -.035em; line-height: 1; }
+.profil-unter { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; margin: 8px 0 18px; color: var(--text-2); }
+.profil-unter .karten-titel { font-weight: 800; }
+.profil-unter .karten-titel[hidden] { display: none; }
+.profil-rang { --rang: #8E969C; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 18px; align-items: center; padding: 14px 20px 14px 16px; border-radius: 20px; background: rgba(24,27,31,.86); border: 1px solid var(--linie); box-shadow: var(--schatten); }
+.pr-mitte { display: grid; gap: 8px; min-width: 0; }
+.pr-zeile { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; color: var(--text-2); font-size: .88rem; }
+.pr-zeile > b { font: 800 1.1rem var(--display); }
+.pr-zeile span b { color: var(--text); }
+.profil-rang .ruhm-balken { height: 10px; }
+.pr-zahl { display: grid; justify-items: end; line-height: 1.1; }
+.pr-zahl b { font: 800 1.6rem var(--display); color: var(--rang); font-variant-numeric: tabular-nums; }
+.pr-zahl small { color: var(--text-3); font-size: .75rem; }
+.profil-reiter { justify-self: start; background: rgba(24,27,31,.86); }
+.profil-reiter[hidden] { display: none; }
+.profil-tab { display: grid; gap: 20px; }
+.profil-tab[hidden] { display: none; }
+#anpassen.profil-tab, #ruhm-karte.profil-tab { gap: 14px; padding: 22px 24px 24px; border-radius: var(--r-gross); border: 1px solid var(--linie); background: linear-gradient(180deg, #262A2E, #212528); box-shadow: var(--schatten); }
+#anpassen .anpassen-info { margin: 0; }
+.ruhm-erklaerung { margin: 0; color: var(--text-2); max-width: 70ch; }
+.ruhm-quellen { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.ruhm-quellen li { padding: 6px 12px; border-radius: 99px; background: rgba(255,255,255,.05); color: var(--text-2); font-size: .84rem; }
+.ruhm-quellen b { color: var(--sand); font-family: var(--display); margin-right: 4px; }
+#ruhm-karte .ruhmesweg { margin-top: 6px; }
+@media (max-width: 1100px) { .profil-layout { grid-template-columns: 260px minmax(0, 1fr); gap: 24px; } .profil-seite .hochkarte { width: 250px; } }
+@media (max-width: 860px) {
+  .profil-layout { grid-template-columns: 1fr; }
+  .profil-seite { position: static; }
+  .profil-rang { grid-template-columns: auto 1fr; }
+  .pr-zahl { display: none; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; }

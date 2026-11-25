@@ -2,7 +2,7 @@
 
 ## Aktuell (25.11.2026)
 
-- **Version:** 0.9.1
+- **Version:** 0.9.2
 - **Live:** https://requiem-04.github.io/claudis-quizbude/ (Repo `requiEM-04/claudis-quizbude`, Branch `main`, GitHub Pages)
 - **Server:** Supabase-Projekt `quizbude` (Ref `jgvjjjiwfjxynbzjaxsg`, Frankfurt), E-Mail-Bestätigung aus, Realtime mit öffentlichen Kanälen.
 - **Inhalt:** Konten (Name + Passwort ab 4 Zeichen), Räume mit 4-Buchstaben-Code (live über Realtime), Flaggenraten (tippen oder 4 zur Auswahl), Flaggen-Sprint (60 s), Bestenliste (Siege, Punkte, Sprint), „Zuletzt gespielt".
@@ -88,6 +88,13 @@
   - Hintergründe mit richtigen Mustern: Spieltisch (Filz unter Lampenlicht, Karo-Prägung), Roter Samt (Glanzbahnen, Herzen), Mitternacht (Sternenhimmel, Pik), Goldbrokat (Ornament), Schillernde Nacht (Sterne, wanderndes Polarlicht).
   - Das Polarlicht bewegt sich per transform, damit beim Scrollen nichts neu gezeichnet wird.
   - Der große Schriftzug wirkt auf farbigem Hintergrund durchscheinend.
+
+- **Neu in 0.9.2:**
+  - Profil neu: Karte links, rechts Kopf mit Rang und Reitern Übersicht, Anpassen, Ruhmesweg. Anpassen ändert nur per Klick, kein Hover-Wechsel mehr.
+  - Letzte Spiele lädt wieder (Abfrage auf spieler-JSON korrigiert).
+  - Weltkarte: kein Rechtsklick-Menü, flüssigeres Ziehen und Zoomen, keine Pin-Zeilen im Raum-Chat.
+  - Nichts mehr markierbar oder als Bild ziehbar (außer Eingabefelder und Chat).
+  - Flaggen-Fächer oben in der Bude: geht beim Drüberfahren auf, Flagge hebt sich und weht, Klick mischt neue Flaggen. Kategorie-Kacheln haben eigene kleine Hover-Bewegungen.
 
 ## Als Nächstes (mit Colin besprochen)
 

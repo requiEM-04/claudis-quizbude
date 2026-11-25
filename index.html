@@ -7,7 +7,7 @@
 <meta name="description" content="Flaggen raten in der Pause, allein oder zusammen im Raum.">
 <meta name="theme-color" content="#1B1E21">
 <link rel="icon" href="bilder/icon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="css/stil.css?v=0.9.1">
+<link rel="stylesheet" href="css/stil.css?v=0.9.2">
 </head>
 <body>
 <main>
@@ -105,60 +105,69 @@
 
   <!-- Profil -->
   <section class="screen" id="s-profil" hidden>
-    <div class="spielerkarte" id="spielerkarte">
-      <span class="avatar riesig" id="profil-avatar"></span>
-      <div class="profil-titel">
-        <h1 id="profil-name"></h1>
-        <p class="karten-titel" id="profil-titel"></p>
-        <p class="unterzeile" id="profil-seit"></p>
+    <div class="profil-layout">
+      <!-- links: die Spielerkarte, so wie andere sie sehen (zugleich Vorschau beim Anpassen) -->
+      <aside class="profil-seite">
+        <div id="hochkarte"></div>
         <button class="knopf zweit klein" id="profil-bearbeiten" hidden>Avatar ändern</button>
-      </div>
-      <div class="karten-wappen" id="profil-wappen"></div>
-      <div class="ruhm-leiste" id="profil-ruhm"></div>
-    </div>
-    <div class="karte profil-editor" id="profil-editor" hidden>
-      <div class="avatar-wahl" id="profil-avatar-wahl"></div>
-      <div class="farb-wahl" id="profil-farb-wahl"></div>
-      <div class="zeile">
-        <button class="knopf haupt klein" id="profil-speichern">Speichern</button>
-        <button class="knopf zweit klein" id="profil-abbrechen">Abbrechen</button>
-      </div>
-    </div>
-    <section class="karte anpassen" id="anpassen" hidden>
-      <div class="anpassen-raster">
-        <div class="anpassen-links">
-          <div id="hochkarte"></div>
+        <div class="karte profil-editor" id="profil-editor" hidden>
+          <div class="avatar-wahl" id="profil-avatar-wahl"></div>
+          <div class="farb-wahl" id="profil-farb-wahl"></div>
+          <div class="zeile">
+            <button class="knopf haupt klein" id="profil-speichern">Speichern</button>
+            <button class="knopf zweit klein" id="profil-abbrechen">Abbrechen</button>
+          </div>
         </div>
-        <div class="anpassen-rechts">
-          <h2>Anpassen</h2>
+      </aside>
+
+      <div class="profil-haupt">
+        <header class="profil-kopf">
+          <h1 id="profil-name"></h1>
+          <p class="profil-unter"><span class="karten-titel" id="profil-titel"></span><span id="profil-seit"></span></p>
+          <div class="profil-rang" id="profil-ruhm"></div>
+        </header>
+
+        <div class="umschalter profil-reiter" role="tablist" id="profil-reiter">
+          <button role="tab" class="umschalter-knopf aktiv" data-tab="uebersicht" aria-selected="true">Übersicht</button>
+          <button role="tab" class="umschalter-knopf" data-tab="anpassen" aria-selected="false">Anpassen</button>
+          <button role="tab" class="umschalter-knopf" data-tab="ruhm" aria-selected="false">Ruhmesweg</button>
+        </div>
+
+        <div class="profil-tab" data-tab="uebersicht">
+          <dl class="werte" id="profil-werte"></dl>
+          <div class="profil-raster">
+            <section class="karte">
+              <h2>Platzierungen</h2>
+              <ul class="profil-liste" id="profil-raenge"></ul>
+              <h2 class="abstand">Sprint-Rekorde</h2>
+              <ul class="profil-liste" id="profil-rekorde"></ul>
+            </section>
+            <section class="karte">
+              <h2>Nach Kategorie</h2>
+              <ul class="profil-liste" id="profil-kategorien"></ul>
+            </section>
+          </div>
+          <section class="karte">
+            <h2>Letzte Spiele</h2>
+            <ul class="profil-liste" id="profil-spiele"></ul>
+          </section>
+        </div>
+
+        <div class="profil-tab" data-tab="anpassen" id="anpassen" hidden>
           <div class="umschalter klein voll" role="tablist" id="anpassen-reiter"></div>
-          <p class="anpassen-info">Klick legt es direkt an. Fahr über Gesperrtes, um es auf deiner Karte auszuprobieren.</p>
+          <p class="anpassen-info">Ein Klick legt es an, links siehst du sofort das Ergebnis.</p>
           <div class="stil-kacheln" id="stil-kacheln"></div>
         </div>
+
+        <div class="profil-tab" data-tab="ruhm" id="ruhm-karte" hidden>
+          <p class="ruhm-erklaerung">Du spielst dich durch die Kartenfarben Karo, Herz, Pik und Kreuz, in jeder Farbe vom Bube bis zum Ass. Ganz oben wartet der Joker. Jede Karte schaltet etwas frei.</p>
+          <ul class="ruhm-quellen">
+            <li><b>10</b> fürs Mitspielen</li><li><b>3</b> je richtige Antwort</li><li><b>20</b> je Sieg</li><li><b>4</b> je Sprint</li><li><b>1</b> je Sprint-Treffer</li><li><b>+</b> jeder neue Rekord-Treffer</li>
+          </ul>
+          <div class="ruhmesweg" id="ruhmesweg"></div>
+        </div>
       </div>
-    </section>
-    <section class="karte ruhm-karte" id="ruhm-karte" hidden>
-      <h2>Ruhmesweg</h2>
-      <p class="unterzeile">Du spielst dich durch die Kartenfarben Karo, Herz, Pik und Kreuz, in jeder Farbe vom Bube bis zum Ass, ganz oben wartet der Joker. Jede Karte schaltet etwas frei, die Zahl ist der Ruhm, den du dafür brauchst. Ruhm gibt es fürs Mitspielen (10), für jede richtige Antwort im Raum (3), für Siege (20), für jeden Sprint (4) und jeden Sprint-Treffer (1). Verbesserst du einen Sprint-Rekord, zählt jeder Treffer mehr noch einmal extra.</p>
-      <div class="ruhmesweg" id="ruhmesweg"></div>
-    </section>
-    <dl class="werte" id="profil-werte"></dl>
-    <div class="profil-raster">
-      <section class="karte">
-        <h2>Platzierungen</h2>
-        <ul class="profil-liste" id="profil-raenge"></ul>
-        <h2 class="abstand">Sprint-Rekorde</h2>
-        <ul class="profil-liste" id="profil-rekorde"></ul>
-      </section>
-      <section class="karte">
-        <h2>Nach Kategorie</h2>
-        <ul class="profil-liste" id="profil-kategorien"></ul>
-      </section>
     </div>
-    <section class="karte profil-spiele">
-      <h2>Letzte Spiele</h2>
-      <ul class="profil-liste" id="profil-spiele"></ul>
-    </section>
   </section>
 
   <!-- Nachschlagen -->
@@ -339,7 +348,7 @@
 </nav>
 <div class="toast" id="toast" role="status" hidden></div>
 
-<script src="vendor/supabase.js?v=0.9.1"></script>
-<script type="module" src="js/app.js?v=0.9.1"></script>
+<script src="vendor/supabase.js?v=0.9.2"></script>
+<script type="module" src="js/app.js?v=0.9.2"></script>
 </body>
 </html>

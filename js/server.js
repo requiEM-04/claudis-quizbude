@@ -1,5 +1,5 @@
-import { CONFIG } from './config.js?v=0.9.1';
-import { textPruefen } from './filter.js?v=0.9.1';
+import { CONFIG } from './config.js?v=0.9.2';
+import { textPruefen } from './filter.js?v=0.9.2';
 
 // ?sitzung=2 in der Adresse = zweites Konto im selben Browser (zum Testen mit zwei Tabs)
 const sitzung = new URLSearchParams(location.search).get('sitzung');
@@ -128,7 +128,8 @@ export async function spielerAnzahl() {
 }
 
 export async function spieleVon(name) {
-  const { data, error } = await sb.from('spiele').select('*').contains('spieler', [{ name }])
+  // jsonb-Spalte: Filter als JSON-Text schicken (contains() würde ein Array als Postgres-Array senden)
+  const { data, error } = await sb.from('spiele').select('*').filter('spieler', 'cs', JSON.stringify([{ name }]))
     .order('am', { ascending: false }).limit(60);
   if (error) throw new Error(uebersetzen(error));
   return data;

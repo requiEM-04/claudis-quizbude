@@ -3,7 +3,7 @@
 let RINGE = null, STAEDTE = null;
 let laden = null;
 export function karteLaden() {
-  if (!laden) laden = import('./weltkarte-daten.js?v=0.9.1').then(m => { RINGE = m.LAENDER_RINGE; STAEDTE = m.STAEDTE; });
+  if (!laden) laden = import('./weltkarte-daten.js?v=0.9.2').then(m => { RINGE = m.LAENDER_RINGE; STAEDTE = m.STAEDTE; });
   return laden;
 }
 export const karteDa = () => !!RINGE;
@@ -62,7 +62,7 @@ export function auswerten(code, art, lon, lat) {
   }
   if (imLand(code, lon, lat)) return { km: 0, ziel: null, treffer: true, pkt: 150 };
   const n = naechsterPunkt(code, lon, lat);
-  const d = n.d <= (istKlein(code) ? 60 : 8) ? 0 : n.d;
+  const d = n.d <= (istKlein(code) ? 60 : 25) ? 0 : n.d; // vereinfachte Küsten: knapp daneben zählt
   return { km: Math.round(d), ziel: n.p, treffer: d === 0, pkt: d === 0 ? 150 : Math.min(120, Math.round(150 * Math.exp(-d / 650))) };
 }
 
@@ -104,11 +104,15 @@ export function karteBauen(el, beiPin) {
     <div class="wk-knoepfe"><button type="button" data-z="1.6" aria-label="Hineinzoomen">+</button><button type="button" data-z="0.625" aria-label="Herauszoomen">−</button><button type="button" data-z="0" aria-label="Ganze Karte">⌂</button></div>
     <p class="wk-hilfe">Doppelklick setzt deinen Pin · Mausrad zoomt · Ziehen verschiebt</p>`;
   const svg = el.querySelector('svg'), oben = el.querySelector('.wk-oben');
+  const laenderG = el.querySelector('.wk-laender'), gitterP = el.querySelector('.wk-gitter');
+  // Rechtsklick: kein Browser-Menü, rechts ziehen verschiebt genauso
+  el.addEventListener('contextmenu', e => e.preventDefault());
   let vb = { x: 0, y: 0, w: B, h: H }, gesperrt = false, start = null;
   const ptr = new Map();
   let ziehen = null, pinch = null, letzterTipp = null, bewegt = 0;
 
-  const masse = () => svg.getBoundingClientRect();
+  let rechteck = null;
+  const masse = () => rechteck || (rechteck = svg.getBoundingClientRect());
   const verhaeltnis = () => { const r = masse(); return r.height && r.width ? r.height / r.width : H / B; };
   function begrenzen() {
     const v = verhaeltnis();
@@ -118,12 +122,22 @@ export function karteBauen(el, beiPin) {
     vb.x = vb.w >= B ? (B - vb.w) / 2 : Math.max(-rx - vb.w * .1, Math.min(B - vb.w + vb.w * .1, vb.x));
     vb.y = vb.h >= H ? (H - vb.h) / 2 : Math.max(-ry - vb.h * .1, Math.min(H - vb.h + vb.h * .1, vb.y));
   }
-  function setzen() {
+  function zeichnen() {
     begrenzen();
     svg.setAttribute('viewBox', `${vb.x.toFixed(2)} ${vb.y.toFixed(2)} ${vb.w.toFixed(2)} ${vb.h.toFixed(2)}`);
-    // Pins und Linien bleiben auf dem Bildschirm gleich groß
-    svg.style.setProperty('--px', (vb.w / Math.max(1, masse().width)).toFixed(4));
-    oben.querySelectorAll('[data-lon]').forEach(g => g.setAttribute('transform', `translate(${px(+g.dataset.lon).toFixed(2)} ${py(+g.dataset.lat).toFixed(2)}) scale(${(vb.w / Math.max(1, masse().width)).toFixed(4)})`));
+    // Linien und Pins bleiben auf dem Bildschirm gleich dick bzw. groß (statt teurem non-scaling-stroke auf allen Ländern)
+    const proPx = vb.w / Math.max(1, masse().width);
+    laenderG.setAttribute('stroke-width', (proPx * .8).toFixed(4));
+    gitterP.setAttribute('stroke-width', proPx.toFixed(4));
+    oben.querySelectorAll('[data-lon]').forEach(g => g.setAttribute('transform', `translate(${px(+g.dataset.lon).toFixed(2)} ${py(+g.dataset.lat).toFixed(2)}) scale(${proPx.toFixed(4)})`));
+  }
+  // höchstens einmal pro Bild neu zeichnen
+  let geplant = false;
+  function setzen(sofort = false) {
+    if (sofort) { zeichnen(); return; }
+    if (geplant) return;
+    geplant = true;
+    requestAnimationFrame(() => { geplant = false; zeichnen(); });
   }
   function zeigeBox([w, s, o, n], rand = .08) {
     const x1 = px(w), x2 = px(o), y1 = py(n), y2 = py(s);
@@ -131,9 +145,9 @@ export function karteBauen(el, beiPin) {
     let bw = (x2 - x1) * (1 + rand * 2), bh = (y2 - y1) * (1 + rand * 2);
     if (bh / bw > v) bw = bh / v; else bh = bw * v;
     vb = { x: (x1 + x2) / 2 - bw / 2, y: (y1 + y2) / 2 - bh / 2, w: bw, h: bh };
-    setzen();
+    setzen(true);
   }
-  function ganz() { start ? zeigeBox(start, .02) : (vb = { x: 0, y: 0, w: B, h: H }, setzen()); }
+  function ganz() { rechteck = null; start ? zeigeBox(start, .02) : (vb = { x: 0, y: 0, w: B, h: H }, setzen(true)); }
   function zoom(f, cx, cy) {
     const r = masse();
     const mx = vb.x + (cx - r.left) / r.width * vb.w, my = vb.y + (cy - r.top) / r.height * vb.h;
@@ -154,6 +168,8 @@ export function karteBauen(el, beiPin) {
 
   svg.addEventListener('wheel', e => { e.preventDefault(); zoom(Math.pow(1.0018, -e.deltaY), e.clientX, e.clientY); }, { passive: false });
   svg.addEventListener('pointerdown', e => {
+    rechteck = null;
+    if (e.button === 1) e.preventDefault();
     svg.setPointerCapture(e.pointerId);
     ptr.set(e.pointerId, [e.clientX, e.clientY]);
     bewegt = 0;
@@ -201,7 +217,8 @@ export function karteBauen(el, beiPin) {
     const z = +b.dataset.z, r = masse();
     if (!z) ganz(); else zoom(z, r.left + r.width / 2, r.top + r.height / 2);
   };
-  new ResizeObserver(() => setzen()).observe(svg);
+  new ResizeObserver(() => { rechteck = null; setzen(true); }).observe(svg);
+  addEventListener('scroll', () => { rechteck = null; }, { passive: true });
 
   const marke = (lon, lat, html, klasse) => {
     const g = document.createElementNS(ns, 'g');
@@ -226,7 +243,7 @@ export function karteBauen(el, beiPin) {
     pin(lon, lat, farbe = 'var(--sand)') {
       oben.querySelectorAll('.wk-ich').forEach(g => g.remove());
       const g = marke(lon, lat, PIN, 'wk-pin wk-ich'); g.style.setProperty('--f', farbe);
-      setzen();
+      setzen(true);
     },
     // Auflösung: Ziel markieren, alle Pins mit Linie zum Ziel, Ansicht auf alles
     loesung(code, art, pins = []) {
@@ -258,7 +275,7 @@ export function karteBauen(el, beiPin) {
         if (o - w < minSpan) { const m = (o + w) / 2; w = m - minSpan / 2; o = m + minSpan / 2; }
         if (n - sd < minSpan / 2) { const m = (n + sd) / 2; sd = m - minSpan / 4; n = m + minSpan / 4; }
         zeigeBox([w, sd, o, n], .25);
-      } else setzen();
+      } else setzen(true);
     },
   };
 }

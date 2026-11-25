@@ -1,24 +1,24 @@
-import { VERSION } from './config.js?v=0.9.1';
+import { VERSION } from './config.js?v=0.9.2';
 import {
   online, nameFehler, registrieren, anmelden, abmelden, sitzungHolen, profilLaden, profilSpeichern,
   bestenliste, spieleSeit, alleProfile, sprintEintragen, sprintBestenliste, rangVon, spielerAnzahl, spieleVon, sb,
-} from './server.js?v=0.9.1';
-import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.9.1';
-import { Raum, codeNeu, STANDARD, TIPPFEHLER_ABZUG } from './raum.js?v=0.9.1';
-import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.9.1';
+} from './server.js?v=0.9.2';
+import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.9.2';
+import { Raum, codeNeu, STANDARD, TIPPFEHLER_ABZUG } from './raum.js?v=0.9.2';
+import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.9.2';
 import {
   KATEGORIEN, KATEGORIE_REIHE, SPRINT_REIHE, kategorieVon, optionSchluessel, richtigeWahl, umrisseDa, umrisseLaden,
   sprintFrage, pruefeFrage, fragenVorladen, kanon,
-} from './kategorien.js?v=0.9.1';
-import { LAENDER } from './laender.js?v=0.9.1';
-import { auswahlfeld } from './auswahlfeld.js?v=0.9.1';
-import { KATEGORIE_SYMBOL } from './symbole.js?v=0.9.1';
-import { konfetti } from './konfetti.js?v=0.9.1';
-import { karteBauen, karteLaden, auswerten } from './weltkarte.js?v=0.9.1';
+} from './kategorien.js?v=0.9.2';
+import { LAENDER } from './laender.js?v=0.9.2';
+import { auswahlfeld } from './auswahlfeld.js?v=0.9.2';
+import { KATEGORIE_SYMBOL } from './symbole.js?v=0.9.2';
+import { konfetti } from './konfetti.js?v=0.9.2';
+import { karteBauen, karteLaden, auswerten } from './weltkarte.js?v=0.9.2';
 import {
   RAENGE, BILDER, ARTEN, JOKER, ruhmInfo, stufeVon, stufeInfo, wappen, effektHtml, rahmenDeko, stilVon, istFrei, freiAb, neuFrei,
   belohnungName, rangVonId, symbol, symbolSvg, SCHWELLEN,
-} from './ruhm.js?v=0.9.1';
+} from './ruhm.js?v=0.9.2';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -263,10 +263,17 @@ function faecherFuellen() {
   const pool = LAENDER.filter(l => l.bekannt);
   const drei = [];
   while (drei.length < 3) { const c = zufall(pool).code; if (!drei.includes(c)) drei.push(c); }
-  const lage = [{ x: '-34%', y: '6%', dreh: '-11deg' }, { x: '0%', y: '-6%', dreh: '2deg' }, { x: '34%', y: '8%', dreh: '13deg' }];
+  // Grundlage plus Auffächern beim Drüberfahren (--sx/--sy/--sdreh kommen obendrauf)
+  const lage = [
+    { x: '-34%', y: '6%', dreh: '-11deg', sx: '-24%', sy: '6%', sdreh: '-8deg' },
+    { x: '0%', y: '-6%', dreh: '2deg', sx: '0%', sy: '-8%', sdreh: '0deg' },
+    { x: '34%', y: '8%', dreh: '13deg', sx: '24%', sy: '6%', sdreh: '8deg' },
+  ];
   document.querySelectorAll('[data-faecher]').forEach(f => {
     if (f.closest('.screen')?.hidden) return;
-    f.innerHTML = drei.map((c, i) => `<img src="${flaggeUrl(c)}" alt="" style="--i:${i};--x:${lage[i].x};--y:${lage[i].y};--dreh:${lage[i].dreh}">`).join('');
+    f.innerHTML = drei.map((c, i) => { const l = lage[i]; return `<img src="${flaggeUrl(c)}" alt="" draggable="false" style="--i:${i};--x:${l.x};--y:${l.y};--dreh:${l.dreh};--sx:${l.sx};--sy:${l.sy};--sdreh:${l.sdreh}">`; }).join('');
+    // Klick mischt neue Flaggen
+    f.onclick = () => { f.classList.remove('neu'); faecherFuellen(); void f.offsetWidth; f.classList.add('neu'); };
   });
 }
 
@@ -708,22 +715,24 @@ function lernenDetail(code) {
 }
 
 // ---------- Spielerkarte, Anpassen, Ruhmesweg ----------
+// Kopf rechts: Name (in Namensfarbe), Titel, seit wann dabei, Rang mit Fortschritt
+let profilP = null; // gerade angezeigtes Profil
 function karteZeichnen(p) {
-  const info = ruhmInfo(p.ruhm || 0), st = stilVon(p), k = $('spielerkarte');
-  k.className = 'spielerkarte' + (st.rahmen ? ` rahmen-${st.rahmen}` : '');
-  k.style.setProperty('--rang', info.rang.farbe);
-  k.querySelectorAll('.effekt, .rahmen-deko').forEach(e => e.remove());
-  k.insertAdjacentHTML('afterbegin', effektHtml(st.effekt) + rahmenDeko(st.rahmen));
+  profilP = p;
+  const info = ruhmInfo(p.ruhm || 0), st = stilVon(p), zahl = n => n.toLocaleString('de-DE');
   $('profil-name').className = st.farbe ? `nf-${st.farbe}` : '';
   const t = titelVon(p);
   $('profil-titel').textContent = t ? t.text : '';
   $('profil-titel').className = 'karten-titel' + (t ? ` nf-${t.rang}` : '');
   $('profil-titel').hidden = !t;
-  const zahl = n => n.toLocaleString('de-DE');
-  $('profil-wappen').innerHTML = `${wappen(info.ruhm, { groesse: 72 })}<b class="nf-${info.rang.id}">${info.name}</b><small>${info.bild ? `Rang ${info.rang.name}, Stufe ${info.i % 4 + 1} von 4` : 'Höchster Rang'}</small><small>${zahl(info.ruhm)} Ruhm</small>`;
-  $('profil-ruhm').innerHTML = info.bis
-    ? `<div class="zeile-text"><span>Noch <b>${zahl(info.fehlt)}</b> Ruhm bis ${stufeInfo(info.i + 1).name}</span><span><b>${zahl(info.ruhm)}</b> / ${zahl(info.bis)}</span></div><div class="ruhm-balken" style="--anteil:${info.anteil.toFixed(3)}"><i></i></div>`
-    : `<div class="zeile-text"><span>Ganz oben angekommen. Mehr Joker geht nicht.</span><span><b>${zahl(info.ruhm)}</b> Ruhm</span></div><div class="ruhm-balken" style="--anteil:1"><i></i></div>`;
+  $('profil-ruhm').style.setProperty('--rang', info.rang.farbe);
+  $('profil-ruhm').innerHTML = `${wappen(info.ruhm, { groesse: 46 })}
+    <div class="pr-mitte">
+      <div class="pr-zeile"><b class="nf-${info.rang.id}">${info.name}</b><span>${info.bis ? `noch <b>${zahl(info.fehlt)}</b> bis ${stufeInfo(info.i + 1).name}` : 'ganz oben angekommen'}</span></div>
+      <div class="ruhm-balken" style="--anteil:${info.anteil.toFixed(3)}"><i></i></div>
+    </div>
+    <div class="pr-zahl"><b>${zahl(info.ruhm)}</b><small>Ruhm</small></div>`;
+  hochkarteZeichnen();
 }
 
 // ---------- Anpassen: Spielerkarte im Hochformat als Live-Vorschau, rechts Reiter mit Kacheln ----------
@@ -752,8 +761,10 @@ function hochkarteHtml(p, st) {
 const stilGleich = (a, b) => ARTEN.every(x => (a[x.id] || '') === (b[x.id] || ''));
 const stilAllesFrei = st => ARTEN.every(x => !st[x.id] || istFrei(x.id, st[x.id], ich.ruhm || 0));
 function hochkarteZeichnen() {
-  if (!ich || !$('hochkarte')) return;
-  $('hochkarte').innerHTML = hochkarteHtml(ich, vorschauStil || stilVon(ich));
+  const p = profilP && ich && profilP.id === ich.id ? { ...profilP, ...ich } : profilP;
+  if (!p || !$('hochkarte')) return;
+  const eigen = ich && p.id === ich.id;
+  $('hochkarte').innerHTML = hochkarteHtml(p, (eigen && vorschauStil) || stilVon(p));
 }
 
 const ART_NAME = { farbe: 'Namensfarbe', titel: 'Titel', effekt: 'Effekt', rahmen: 'Rahmen', hintergrund: 'Hintergrund' };
@@ -794,7 +805,7 @@ async function stilAnlegen(neu, meldung = 'Angelegt.') {
     await profilSpeichern(ich.id, { stil });
     ich = { ...ich, stil };
     chipZeichnen();
-    if (!$('s-profil').hidden) { karteZeichnen(ich); anpassenZeichnen(); ruhmeswegZeichnen(); }
+    if (!$('s-profil').hidden && profilP?.id === ich.id) { karteZeichnen({ ...profilP, ...ich }); anpassenZeichnen(); ruhmeswegZeichnen(); }
     if (!$('s-bude').hidden) bestenLaden();
     toast(meldung);
   } catch (e) { toast(e.message); }
@@ -887,20 +898,18 @@ function profilAufbauen() {
     $('profil-editor').hidden = false;
   };
   $('profil-abbrechen').onclick = () => { $('profil-editor').hidden = true; };
+  $('profil-reiter').onclick = e => { const b = e.target.closest('[data-tab]'); if (b) profilTab(b.dataset.tab); };
   $('anpassen-reiter').onclick = e => {
     const b = e.target.closest('[data-art]');
     if (!b) return;
     anpassenArt = b.dataset.art; vorschauStil = null;
     anpassenZeichnen();
   };
-  const probieren = b => { vorschauStil = { ...stilVon(ich), [anpassenArt]: b.dataset.rang || undefined }; hochkarteZeichnen(); };
-  $('stil-kacheln').addEventListener('mouseover', e => { const b = e.target.closest('.stil-kachel'); if (b) probieren(b); });
-  $('stil-kacheln').addEventListener('mouseleave', () => { vorschauStil = null; hochkarteZeichnen(); });
   // Klick legt Freigeschaltetes sofort an; Gesperrtes bleibt eine Probe auf der Karte
   $('stil-kacheln').onclick = e => {
     const b = e.target.closest('.stil-kachel');
     if (!b) return;
-    if (b.classList.contains('gesperrt')) { probieren(b); toast(`Frei ab ${stufeInfo(freiAb(anpassenArt, b.dataset.rang)).name}.`); return; }
+    if (b.classList.contains('gesperrt')) { toast(`Noch gesperrt, frei ab ${stufeInfo(freiAb(anpassenArt, b.dataset.rang)).name}.`); return; }
     if (b.getAttribute('aria-pressed') === 'true') return;
     vorschauStil = null;
     stilAnlegen({ ...stilVon(ich), [anpassenArt]: b.dataset.rang }, 'Angelegt.');
@@ -911,10 +920,18 @@ function profilAufbauen() {
       ich = { ...ich, avatar: profilWahl.avatar, farbe: profilWahl.farbe };
       chipZeichnen();
       $('profil-editor').hidden = true;
-      $('profil-avatar').outerHTML = avatarHtml(ich).replace('class="avatar"', 'class="avatar riesig" id="profil-avatar"');
+      hochkarteZeichnen();
       toast('Avatar gespeichert.');
     } catch (e) { toast(e.message); }
   };
+}
+
+let profilTabJetzt = 'uebersicht';
+function profilTab(t) {
+  profilTabJetzt = t;
+  document.querySelectorAll('#profil-reiter [data-tab]').forEach(b => { const an = b.dataset.tab === t; b.classList.toggle('aktiv', an); b.setAttribute('aria-selected', an); });
+  document.querySelectorAll('.profil-tab').forEach(d => { d.hidden = d.dataset.tab !== t; });
+  if (t !== 'anpassen' && vorschauStil) { vorschauStil = null; hochkarteZeichnen(); }
 }
 
 async function profilZeigen(id) {
@@ -931,12 +948,14 @@ async function profilZeigen(id) {
   if (!p) { $('profil-name').textContent = 'Profil nicht gefunden'; $('profil-seit').textContent = ''; return; }
   if (eigenes) { ich = { ...ich, ...p }; chipZeichnen(); }
 
-  $('profil-avatar').outerHTML = avatarHtml(p).replace('class="avatar"', 'class="avatar riesig" id="profil-avatar"');
   $('profil-name').textContent = p.name;
   $('profil-seit').textContent = `Dabei seit ${datum(p.erstellt)}, zuletzt aktiv ${wann(p.zuletzt)}`;
+  vorschauStil = null;
   karteZeichnen(p);
-  $('anpassen').hidden = !eigenes; $('ruhm-karte').hidden = !eigenes;
-  if (eigenes) { auswahlStil = null; vorschauStil = null; anpassenZeichnen(); ruhmeswegZeichnen(); }
+  // Anpassen und Ruhmesweg gibt es nur im eigenen Profil
+  $('profil-reiter').hidden = !eigenes;
+  profilTab(eigenes ? profilTabJetzt : 'uebersicht');
+  if (eigenes) { anpassenZeichnen(); ruhmeswegZeichnen(); }
 
   const schnitt = p.spiele ? Math.round(p.punkte / p.spiele) : 0;
   const werte = [
@@ -1759,6 +1778,9 @@ async function los() {
 }
 
 // Für die Fehlersuche in der Konsole: quizbude.raum
+// Bilder und Links nicht wegziehen lassen
+document.addEventListener('dragstart', e => { if (e.target.closest?.('img, svg, a')) e.preventDefault(); });
+
 window.quizbude = { get raum() { return raum; }, get sprint() { return sprint; }, versionPruefen };
 
 los();
