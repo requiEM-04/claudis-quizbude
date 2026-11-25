@@ -42,6 +42,8 @@ async def registrieren(pg, name, avatar):
 
 async def waehle(pg, sel, wert):
     # eigene Klappliste: Knopf öffnen, dann den Eintrag mit dem passenden Index anklicken
+    # ein Aufstiegsfenster (Testkonto steigt beim Spielen auf) erst schließen
+    if await pg.evaluate("document.getElementById('aufstieg').open"): await pg.click('#aufstieg-weiter')
     i = await pg.eval_on_selector(sel, '(e, w) => [...e.options].findIndex(o => o.value === w)', wert)
     assert i >= 0, (sel, wert)
     await pg.click(f'{sel} + .feld .feld-knopf')
@@ -52,6 +54,8 @@ async def main():
         b = await p.chromium.launch()
         ctx = await b.new_context(viewport={'width': 1440, 'height': 900})
         await ctx.route('**/vendor/supabase.js*', lambda r: r.fulfill(status=200, content_type='application/javascript', body=FAKE))
+        # Testkonten steigen beim Spielen im Ruhm auf: das Aufstiegsfenster sofort wieder schließen, sonst blockiert es Klicks
+        await ctx.add_init_script("setInterval(() => { const d = document.getElementById('aufstieg'); if (d && d.open) d.close(); }, 150)")
         A = await neu(ctx, BASIS, 'A'); await registrieren(A, 'Colin', '🦊')
         B = await neu(ctx, BASIS + '?sitzung=2', 'B'); await registrieren(B, 'Leonie', '🐸')
         await A.screenshot(path=f'{BILDER}/k_bude.png', full_page=True)

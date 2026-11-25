@@ -1,23 +1,23 @@
-import { VERSION } from './config.js?v=0.8.1';
+import { VERSION } from './config.js?v=0.8.2';
 import {
   online, nameFehler, registrieren, anmelden, abmelden, sitzungHolen, profilLaden, profilSpeichern,
   bestenliste, spieleSeit, alleProfile, sprintEintragen, sprintBestenliste, rangVon, spielerAnzahl, spieleVon, sb,
-} from './server.js?v=0.8.1';
-import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.8.1';
-import { Raum, codeNeu, STANDARD, TIPPFEHLER_ABZUG } from './raum.js?v=0.8.1';
-import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.8.1';
+} from './server.js?v=0.8.2';
+import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.8.2';
+import { Raum, codeNeu, STANDARD, TIPPFEHLER_ABZUG } from './raum.js?v=0.8.2';
+import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.8.2';
 import {
   KATEGORIEN, KATEGORIE_REIHE, SPRINT_REIHE, kategorieVon, optionSchluessel, richtigeWahl, umrisseDa, umrisseLaden,
   sprintFrage, pruefeFrage, fragenVorladen, kanon,
-} from './kategorien.js?v=0.8.1';
-import { LAENDER } from './laender.js?v=0.8.1';
-import { auswahlfeld } from './auswahlfeld.js?v=0.8.1';
-import { KATEGORIE_SYMBOL } from './symbole.js?v=0.8.1';
-import { konfetti } from './konfetti.js?v=0.8.1';
+} from './kategorien.js?v=0.8.2';
+import { LAENDER } from './laender.js?v=0.8.2';
+import { auswahlfeld } from './auswahlfeld.js?v=0.8.2';
+import { KATEGORIE_SYMBOL } from './symbole.js?v=0.8.2';
+import { konfetti } from './konfetti.js?v=0.8.2';
 import {
   RAENGE, BILDER, ARTEN, JOKER, ruhmInfo, stufeVon, stufeInfo, wappen, effektHtml, rahmenDeko, stilVon, istFrei, freiAb, neuFrei,
   belohnungName, rangVonId, symbol, symbolSvg, SCHWELLEN,
-} from './ruhm.js?v=0.8.1';
+} from './ruhm.js?v=0.8.2';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -58,15 +58,19 @@ function zeige(name) {
 function ruhmMiniZeichnen() {
   const el = $('ruhm-mini');
   if (!el) return;
-  const zeigen = !!ich && ['bude', 'sprintwahl', 'lernen'].includes(aktuellerScreen);
-  el.hidden = !zeigen;
-  if (!zeigen) return;
+  el.hidden = !ich;
+  if (!ich) return;
   const info = ruhmInfo(ich.ruhm || 0), zahl = n => n.toLocaleString('de-DE');
+  const rest = info.bis ? `noch ${zahl(info.fehlt)} bis ${stufeInfo(info.i + 1).name}` : 'ganz oben';
   el.style.setProperty('--rang', info.rang.farbe);
-  el.innerHTML = `${wappen(info.ruhm, { groesse: 24, titel: false })}
-    <span class="rm-text"><b class="nf-${info.rang.id}">${info.name}</b><small>${info.bis ? `noch ${zahl(info.fehlt)} bis ${stufeInfo(info.i + 1).name}` : 'ganz oben'}</small></span>
-    <span class="ruhm-balken"><i style="--anteil:${info.anteil.toFixed(3)}"></i></span>
-    <span class="rm-zahl">${zahl(info.ruhm)}<small>Ruhm</small></span>`;
+  el.style.setProperty('--anteil', info.anteil.toFixed(3));
+  el.title = `${info.name}, ${zahl(info.ruhm)} Ruhm: ${rest}`;
+  el.setAttribute('aria-label', `Ruhm: ${info.name}, ${rest}. Zum Profil`);
+  // senkrechte Säule in der Leiste links, füllt sich von unten nach oben (am Handy: dünne Linie über der Leiste)
+  el.innerHTML = `${wappen(info.ruhm, { groesse: 26, titel: false })}
+    <span class="rm-saeule" aria-hidden="true"><i></i></span>
+    <span class="rm-zahl">${zahl(info.ruhm)}</span>
+    <span class="rm-rest">${rest}</span>`;
 }
 
 // kleine Effekte
@@ -481,12 +485,12 @@ async function bestenLaden() {
     if (besteSpalte !== spalte) return; // inzwischen anderer Reiter
     const feld = (p, platz) => {
       const [zahl, einheit] = SPALTE[spalte](p.wert);
-      const sub = unter(p), titel = titelVon(p), rahmen = hatRuhm(p) && stilVon(p).rahmen;
+      const titel = titelVon(p), rahmen = hatRuhm(p) && stilVon(p).rahmen;
       return `<li class="besten-feld${platz <= 3 ? ` top p${platz}` : ''}${ich && p.id === ich.id ? ' ich' : ''}${rahmen ? ` lr-${rahmen}` : ''}" style="--i:${platz - 1}">
         <a href="#/profil/${esc(p.id)}">
           <span class="rang">${platz}</span>
           <span class="bf-avatar">${platz === 1 ? '<span class="krone" aria-hidden="true">👑</span>' : ''}${avatarMitWappen(p, 14)}</span>
-          <span class="bf-mitte"><span class="bf-name${nameKlasse(p)}">${esc(p.name)}</span>${titel ? `<span class="bf-titel titel-zeile nf-${titel.rang}">${esc(titel.text)}</span>` : ''}${sub ? `<span class="bf-unter">${esc(sub)}</span>` : ''}</span>
+          <span class="bf-mitte"><span class="bf-name${nameKlasse(p)}">${esc(p.name)}</span>${titel ? `<span class="bf-titel titel-zeile nf-${titel.rang}">${esc(titel.text)}</span>` : ''}</span>
           <span class="bf-wert">${zahl}<small>${einheit}</small></span>
         </a></li>`;
     };

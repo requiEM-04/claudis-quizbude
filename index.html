@@ -7,11 +7,10 @@
 <meta name="description" content="Flaggen raten in der Pause, allein oder zusammen im Raum.">
 <meta name="theme-color" content="#1B1E21">
 <link rel="icon" href="bilder/icon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="css/stil.css?v=0.8.1">
+<link rel="stylesheet" href="css/stil.css?v=0.8.2">
 </head>
 <body>
 <main>
-  <a class="ruhm-mini" id="ruhm-mini" href="#/profil" hidden aria-label="Dein Ruhm, zum Profil"></a>
   <!-- Anmelden -->
   <section class="screen" id="s-anmelden" hidden>
     <div class="buehnenbild">
@@ -338,10 +337,11 @@
   <a class="dock-link" href="#/lernen" data-nav="lernen"><svg class="dock-icon" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/></svg><span>Lernen</span></a>
   <span class="dock-trenner" aria-hidden="true"></span>
   <span class="dock-profil" id="profil-chip"></span>
+  <a class="ruhm-mini" id="ruhm-mini" href="#/profil" hidden></a>
 </nav>
 <div class="toast" id="toast" role="status" hidden></div>
 
-<script src="vendor/supabase.js?v=0.8.1"></script>
-<script type="module" src="js/app.js?v=0.8.1"></script>
+<script src="vendor/supabase.js?v=0.8.2"></script>
+<script type="module" src="js/app.js?v=0.8.2"></script>
 </body>
 </html>

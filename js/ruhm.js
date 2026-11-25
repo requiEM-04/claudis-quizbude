@@ -5,11 +5,11 @@
 export const SCHWELLEN = [0, 100, 250, 450, 700, 1000, 1350, 1750, 2200, 2700, 3250, 3850, 4500, 5200, 5950, 6750, 8000];
 
 export const RAENGE = [
-  { id: 'karo', name: 'Karo', rot: true, farbe: '#E39A63', hell: '#F7C9A2', dunkel: '#94532A', titel: 'Gute Karten', effekt: 'Kupferfunken', rahmen: 'Kupferrand', hintergrund: 'Spieltisch' },
-  { id: 'herz', name: 'Herz', rot: true, farbe: '#F0A9C3', hell: '#FCDCE7', dunkel: '#A45A79', titel: 'Pokerface', effekt: 'Kartenwirbel', rahmen: 'Herzecken', hintergrund: 'Roter Samt' },
-  { id: 'pik', name: 'Pik', rot: false, farbe: '#CFE6F3', hell: '#FFFFFF', dunkel: '#6F8A9B', titel: 'Ass im Ärmel', effekt: 'Funkelglanz', rahmen: 'Pik-Ecken', hintergrund: 'Mitternacht' },
-  { id: 'kreuz', name: 'Kreuz', rot: false, farbe: '#EBC660', hell: '#FDEBB0', dunkel: '#9E7520', titel: 'Sticht alles', effekt: 'Lichtstrahlen', rahmen: 'Goldkrone', hintergrund: 'Goldbrokat' },
-  { id: 'joker', name: 'Joker', rot: false, farbe: '#C9A8FF', hell: '#FFFFFF', dunkel: '#7B5BC4', titel: 'Unberechenbar', effekt: 'Holo', rahmen: 'Regenbogen', hintergrund: 'Schillernde Nacht' },
+  { id: 'karo', name: 'Karo', rot: true, farbe: '#E39A63', hell: '#F7C9A2', dunkel: '#94532A', titel: 'Flaggenflüsterer', effekt: 'Kupferfunken', rahmen: 'Kupferrand', hintergrund: 'Spieltisch' },
+  { id: 'herz', name: 'Herz', rot: true, farbe: '#F0A9C3', hell: '#FCDCE7', dunkel: '#A45A79', titel: 'Grenzgänger', effekt: 'Kartenwirbel', rahmen: 'Herzecken', hintergrund: 'Roter Samt' },
+  { id: 'pik', name: 'Pik', rot: false, farbe: '#CFE6F3', hell: '#FFFFFF', dunkel: '#6F8A9B', titel: 'Lebendes Lexikon', effekt: 'Funkelglanz', rahmen: 'Pik-Ecken', hintergrund: 'Mitternacht' },
+  { id: 'kreuz', name: 'Kreuz', rot: false, farbe: '#EBC660', hell: '#FDEBB0', dunkel: '#9E7520', titel: 'Wandelnder Atlas', effekt: 'Lichtstrahlen', rahmen: 'Goldkrone', hintergrund: 'Goldbrokat' },
+  { id: 'joker', name: 'Joker', rot: false, farbe: '#C9A8FF', hell: '#FFFFFF', dunkel: '#7B5BC4', titel: 'Quizgott', effekt: 'Holo', rahmen: 'Regenbogen', hintergrund: 'Schillernde Nacht' },
 ];
 export const rangVonId = id => RAENGE.find(r => r.id === id);
 

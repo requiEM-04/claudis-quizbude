@@ -2,7 +2,7 @@
 
 ## Aktuell (25.11.2026)
 
-- **Version:** 0.8.1
+- **Version:** 0.8.2
 - **Live:** https://requiem-04.github.io/claudis-quizbude/ (Repo `requiEM-04/claudis-quizbude`, Branch `main`, GitHub Pages)
 - **Server:** Supabase-Projekt `quizbude` (Ref `jgvjjjiwfjxynbzjaxsg`, Frankfurt), E-Mail-Bestätigung aus, Realtime mit öffentlichen Kanälen.
 - **Inhalt:** Konten (Name + Passwort ab 4 Zeichen), Räume mit 4-Buchstaben-Code (live über Realtime), Flaggenraten (tippen oder 4 zur Auswahl), Flaggen-Sprint (60 s), Bestenliste (Siege, Punkte, Sprint), „Zuletzt gespielt".
@@ -67,6 +67,8 @@
   - **Spielansicht** auf großen Bildschirmen deutlich größer (Fragen, Bilder, Antwortknöpfe).
   - **„Lernen“ scrollt flüssig:** keine Schatten-Filter auf 200 Flaggen, Karten außerhalb des Bildes werden nicht gezeichnet, kein `background-attachment: fixed` mehr.
   - „Zuletzt gespielt“ in der Bude entfernt.
+
+- **Neu in 0.8.2:** Neue Titel (Karo Flaggenflüsterer, Herz Grenzgänger, Pik Lebendes Lexikon, Kreuz Wandelnder Atlas, Joker Quizgott). Zusatzzeilen wie „2 Siege in 5“ in der Bestenliste entfernt. Ruhm-Fortschritt als senkrechte Säule in der Leiste links, füllt sich von unten nach oben; am Handy als dünne Linie über der unteren Leiste.
 
 ## Als Nächstes (mit Colin besprochen)
 

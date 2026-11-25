@@ -1131,22 +1131,19 @@ body[data-hg="joker"]::before, .hgf-joker { background: radial-gradient(700px 42
   .hochkarte { width: min(260px, 80vw); }
 }
 
-/* ---------- Ruhm-Leiste oben in den Menüs ---------- */
-.ruhm-mini {
-  --rang: #8E969C; display: grid; grid-template-columns: auto auto minmax(80px, 1fr) auto; align-items: center; gap: 12px;
-  width: min(100%, 520px); margin: 0 0 18px; padding: 8px 16px 8px 10px; border-radius: 16px;
-  background: rgba(255,255,255,.035); border: 1px solid var(--linie); color: var(--text); text-decoration: none;
-  transition: border-color .15s, background-color .15s;
-}
+/* ---------- Ruhm-Säule in der Navigation ---------- */
+.ruhm-mini { --rang: #8E969C; --anteil: 0; color: var(--text); text-decoration: none; }
 .ruhm-mini[hidden] { display: none; }
-.ruhm-mini:hover { border-color: color-mix(in srgb, var(--rang) 55%, transparent); background: rgba(255,255,255,.055); }
-.rm-text { display: grid; line-height: 1.2; white-space: nowrap; }
-.rm-text b { font-weight: 800; font-size: .9rem; }
-.rm-text small { color: var(--text-3); font-size: .72rem; }
-.ruhm-mini .ruhm-balken { height: 8px; }
-.rm-zahl { font: 800 .95rem var(--display); font-variant-numeric: tabular-nums; white-space: nowrap; }
-.rm-zahl small { font: 600 .7rem var(--schrift); color: var(--text-3); margin-left: 4px; }
-@media (max-width: 520px) { .ruhm-mini { grid-template-columns: auto 1fr auto; } .ruhm-mini .ruhm-balken { grid-column: 1 / -1; order: 5; } }
+.rm-saeule i { display: block; border-radius: inherit; background: linear-gradient(0deg, color-mix(in srgb, var(--rang) 70%, #000 0%), var(--rang)); box-shadow: 0 0 12px -2px var(--rang); transition: height .9s cubic-bezier(.2, .8, .2, 1), width .9s cubic-bezier(.2, .8, .2, 1); }
+.rm-zahl { font: 800 .8rem var(--display); font-variant-numeric: tabular-nums; }
+.rm-rest { display: none; }
+/* Handy / schmal: dünne Fortschrittslinie an der Oberkante der unteren Leiste */
+@media (max-width: 899px) {
+  .ruhm-mini { position: absolute; left: 18px; right: 18px; top: -7px; height: 5px; }
+  .ruhm-mini .wappen, .ruhm-mini .rm-zahl { display: none; }
+  .rm-saeule { position: absolute; inset: 0; border-radius: 99px; background: rgba(255,255,255,.1); overflow: hidden; }
+  .rm-saeule i { height: 100%; width: calc(var(--anteil) * 100%); }
+}
 
 /* ---------- Sprint-Ende ---------- */
 .sprint-ende { gap: 14px; }
@@ -1253,6 +1250,13 @@ body[data-hg="joker"]::before, .hgf-joker { background: radial-gradient(700px 42
 }
 @media (min-width: 900px) and (max-width: 1299px) { :root { --breite: 1080px; } }
 
+@media (min-width: 900px) {
+  .ruhm-mini { display: grid; justify-items: center; gap: 6px; width: 72px; padding: 10px 4px 8px; margin-top: 4px; border-radius: 18px; border-top: 1px solid var(--linie); transition: background-color .15s; }
+  .ruhm-mini:hover { background: var(--flaeche-aktiv); }
+  .rm-saeule { position: relative; width: 12px; height: 110px; border-radius: 99px; background: rgba(255,255,255,.07); overflow: hidden; box-shadow: inset 0 0 0 1px rgba(255,255,255,.05); }
+  .rm-saeule i { position: absolute; left: 0; right: 0; bottom: 0; height: calc(var(--anteil) * 100%); min-height: 4px; }
+  .rm-zahl { color: var(--rang); }
+}
 @media (max-width: 460px) {
   .dock-link span { display: none; }
   .dock-link { padding: .6em .75em; }
