@@ -2,7 +2,7 @@
 
 ## Aktuell (25.11.2026)
 
-- **Version:** 0.13.2
+- **Version:** 0.14.0
 - **Live:** https://requiem-04.github.io/claudis-quizbude/ (Repo `requiEM-04/claudis-quizbude`, Branch `main`, GitHub Pages)
 - **Server:** Supabase-Projekt `quizbude` (Ref `jgvjjjiwfjxynbzjaxsg`, Frankfurt), E-Mail-Bestätigung aus, Realtime mit öffentlichen Kanälen.
 - **Inhalt:** Konten (Name + Passwort ab 4 Zeichen), Räume mit 4-Buchstaben-Code (live über Realtime), Flaggenraten (tippen oder 4 zur Auswahl), Flaggen-Sprint (60 s), Bestenliste (Siege, Punkte, Sprint), „Zuletzt gespielt".
@@ -185,6 +185,13 @@
   - **Figuren süchtig** (Colins Wunsch, für alle): jede hängt an etwas anderem, mit eigenen Augen (gerötet, Augenringe, halb zu, aufgerissen) und Gegenstand. Fuchs Kaffee, Frosch Kiffen, Panda Bambus, Eule Energy-Drinks, Krake Zocken, Pinguin Bier, Katze Katzenminze, Igel Donuts, Schildkröte Serien, Dino Burger, Biene Honig, Koala Eukalyptus, Wal Vapen, Papagei Handy, Quizbot Strom, Herzdrache Lollis, Sternwolf Musik, Phönix Chili, Hofnarr Glücksspiel, Löwe Zigarren. Bewusst nichts mit Spritzen oder harten Drogen.
   - Colin: **kein Shop**. Mehr Kosmetik zum Freispielen ist gewünscht, Chat-Sticker als gute Idee genannt.
 
+- **Neu in 0.14.0:**
+  - **Varianten** je Kategorie (`varianten` in kategorien.js, Raum-Einstellung `variante`, im Sprint unter „Mehr Einstellungen“): Buchstabensalat Leicht/Mittel/Schwer (Leicht: kurze Namen, erster Buchstabe steht vorne und ist golden; Schwer: lange/komplexe Namen, alle Wörter in einem Haufen; Stufe über `salatStufe`), Nachbarn Leicht (Karte) / Schwer (ohne Karte), Flaggen „Stück für Stück aufdecken“ (30 Kärtchen, Reihenfolge aus dem Ländercode, Dauer 75 % der Fragezeit, im Sprint 8 s; bei der Auflösung ganz offen), Autokennzeichen Richtung Kürzel/Ort/Gemischt.
+  - **Gemischt**: Kategorien an- und abwählen (Raum: `einst.arten`, null = alle; Sprint: `quizbude.sprintArten` im localStorage). Gemischt enthält jetzt auch Hauptstadt → Land, Autokennzeichen und Schätzfragen.
+  - **Sprint-Übung**: Rekorde zählen nur mit Standard-Einstellungen (Region Alle, jeweils erste Variante, alle Kategorien in Gemischt). Sonst `s.uebung` mit Grund, Kachel bekommt „Übung“.
+  - **Autokennzeichen** (`js/kennzeichen.js`, gebaut mit `node werkzeuge/kennzeichen_bauen.mjs <german-license-plate-prefixes/index.json>`; Daten daten.berlin.de, CC BY 3.0, Hinweis im Fuß). 697 Kürzel, 375 Kreise; Hauptkennzeichen je Kreis per Regel plus `HAUPT_FEST`. Antwort ist der Kreis, der das Kürzel heute vergibt. Schild und gelbes Ortsschild sind HTML/CSS.
+  - **Schätzfragen** (`js/schaetzen.js`, 62 Fragen in 5 Themen, Zahlen am 26.11. geprüft): Zahl eintippen (1.234, 2,5 Mio …, `zahlLesen`), Wertung nach Nähe (`schaetzWertung`: bis 150 Punkte, Verhältnis auf log-Skala, bei Jahren/Prozent fester Spielraum `s`), Treffer = höchstens 10 % daneben. Im Raum eine Abgabe pro Frage (Nachricht `schaetz`), Auflösung zeigt alle Schätzungen.
+  - Migration 012 (Sprint-Whitelist + kennzeichen, schaetzen), am 26.11. eingespielt und mit zurückgerolltem Probekonto geprüft.
 - **Neu in 0.13.2:** Kartenskins komplett neu als Kartenserie (siehe oben). Nachbarn zeigt im Spiel eine kleine Karte: das Land leuchtet, Nachbarn als Umriss, Rest blass (`js/nachbarkarte.js`, braucht die Weltkarten-Daten, die bei Nachbarn/Gemischt mitgeladen werden; ohne Daten Flagge wie vorher). Kachelbild Nachbarn: `bilder/nachbarn-vorschau.svg`, gebaut mit `node werkzeuge/nachbarn_vorschau.mjs [CODE]`. Buchstabensalat: helle Spielsteine mit Punktwerten auf einer Holzbank, Kachel als Fächer aus Steinen, Titel bricht als „Buchstaben-salat“ um.
 - **Neu in 0.13.1:** Ladebildschirm schlicht (nur Logo + dünne Linie, Logo erst nach 0,25 s, Fläche sofort deckend). Updates laden still: keine Meldung, erst wenn kein Spiel läuft und der Tab im Hintergrund ist oder 15 s nichts passiert; danach ohne Ladebildschirm zurück an dieselbe Stelle (Adresse, Scrollstand, Raum, Profil-Reiter, Anpassen-Reiter). Flag `quizbude.leise` in sessionStorage.
 
@@ -199,7 +206,7 @@
 6. Freunde + Einladen in Räume (Einladung 15 s oben sichtbar).
 7. Emoji-Rätsel inhaltlich überarbeiten (spannender).
 
-- **Insider-Fragen** (BAUPART, Ticketsystem): wartet auf Colins Antwort, ob Salvatore und Ali einverstanden sind. Wenn ja, nicht ins öffentliche Repo, sondern in Supabase nur für angemeldete Spieler.
+- **Insider-Fragen**: von Colin am 26.11. gestrichen.
 - **Regel:** In der Seite, in Patchnotes und im Repo nie erwähnen, woher Ideen stammen.
 
 ## Ideen für später

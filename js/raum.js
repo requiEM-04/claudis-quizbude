@@ -1,13 +1,13 @@
-import { sb, spielEintragen, spielLoggen } from './server.js?v=0.13.2';
-import { stilVon, bildVon } from './ruhm.js?v=0.13.2';
-import { letzteTippfehler } from './abgleich.js?v=0.13.2';
-import { auswerten } from './weltkarte.js?v=0.13.2';
+import { sb, spielEintragen, spielLoggen } from './server.js?v=0.14.0';
+import { stilVon, bildVon } from './ruhm.js?v=0.14.0';
+import { letzteTippfehler } from './abgleich.js?v=0.14.0';
+import { auswerten } from './weltkarte.js?v=0.14.0';
 export const TIPPFEHLER_ABZUG = 10; // Punkte Abzug je Tippfehler bei einer richtigen Antwort
-import { fragenBauen, pruefeFrage, richtigeWahl, fragenVorladen, KATEGORIEN, kategorieVon } from './kategorien.js?v=0.13.2';
-import { lobbyMelden, lobbyAbmelden } from './lobby.js?v=0.13.2';
-import { chatErlaubt, textPruefen } from './filter.js?v=0.13.2';
+import { fragenBauen, pruefeFrage, richtigeWahl, fragenVorladen, KATEGORIEN, kategorieVon, zahlLesen, schaetzWertung } from './kategorien.js?v=0.14.0';
+import { lobbyMelden, lobbyAbmelden } from './lobby.js?v=0.14.0';
+import { chatErlaubt, textPruefen } from './filter.js?v=0.14.0';
 
-export const STANDARD = { kategorie: 'flaggen', runden: 10, zeit: 15, auswahl: 'alle', modus: 'tippen', chat: 'eingeschraenkt', sichtbar: 'offen', ziel: 'beides' };
+export const STANDARD = { kategorie: 'flaggen', runden: 10, zeit: 15, auswahl: 'alle', modus: 'tippen', chat: 'eingeschraenkt', sichtbar: 'offen', ziel: 'beides', variante: null, arten: null };
 const COUNTDOWN = 3000;
 const AUFLOESUNG = 3500;
 
@@ -271,6 +271,11 @@ export class Raum {
         this.vergeben.add(p.von);
         this.senden('geloest', { i: p.i, id: p.von, pkt: Math.max(0, Math.min(150, Math.round(Number(p.pkt) || 0))), rang: this.vergeben.size, km: Math.max(0, Math.round(Number(p.km) || 0)), lon: +p.lon, lat: +p.lat, treffer: !!p.treffer, karte: true });
         break;
+      case 'schaetz': // Schätzfrage: Wertung nach Nähe, rechnet der Spieler selbst aus (gleiche Daten bei allen)
+        if (!this.binHost || this.phase !== 'frage' || p.i !== this.idx || this.vergeben.has(p.von)) break;
+        this.vergeben.add(p.von);
+        this.senden('geloest', { i: p.i, id: p.von, pkt: Math.max(0, Math.min(150, Math.round(Number(p.pkt) || 0))), rang: this.vergeben.size, wert: Number(p.wert), treffer: !!p.treffer, schaetz: true });
+        break;
       case 'fehl':
         if (!this.binHost || this.phase !== 'frage' || p.i !== this.idx || this.vergeben.has(p.von)) break;
         this.vergeben.add(p.von);
@@ -282,10 +287,11 @@ export class Raum {
         break;
       case 'geloest':
         if (p.i !== this.idx || this.geloest.has(p.id)) break;
-        this.geloest.set(p.id, { pkt: p.pkt, rang: p.rang, abzug: p.abzug || 0, ...(p.karte && { km: p.km, lon: p.lon, lat: p.lat, treffer: p.treffer }) });
+        this.geloest.set(p.id, { pkt: p.pkt, rang: p.rang, abzug: p.abzug || 0, ...(p.karte && { km: p.km, lon: p.lon, lat: p.lat, treffer: p.treffer }), ...(p.schaetz && { wert: p.wert, treffer: p.treffer }) });
         this.punkte.set(p.id, (this.punkte.get(p.id) || 0) + p.pkt);
         if (p.id === this.ich.id) { this.meinStatus = 'geloest'; if (p.treffer !== false) this.meineTreffer++; }
-        if (!p.karte) this.systemZeile(`${this.bekannt.get(p.id)?.name || 'Jemand'} hat's! +${p.pkt}${p.abzug ? ` (−${p.abzug} für Tippfehler)` : ''}`);
+        if (p.schaetz) this.systemZeile(`${this.bekannt.get(p.id)?.name || 'Jemand'} hat geschätzt.`);
+        else if (!p.karte) this.systemZeile(`${this.bekannt.get(p.id)?.name || 'Jemand'} hat's! +${p.pkt}${p.abzug ? ` (−${p.abzug} für Tippfehler)` : ''}`);
         if (this.binHost) this.allePruefen();
         break;
       case 'gesperrt':
@@ -424,6 +430,18 @@ export class Raum {
     this.meinPin = { lon, lat, ...a };
     this.senden('pin', { i: this.idx, lon, lat, km: a.km, pkt: a.pkt, treffer: a.treffer, ms: performance.now() - this.start });
     return a;
+  }
+
+  // Schätzfrage: eine Zahl abgeben (geht nur einmal pro Frage). null = keine Zahl erkannt
+  schaetzen(text) {
+    if (this.phase !== 'frage' || this.meinStatus || this.frage?.k !== 'schaetzen') return 'zu';
+    const wert = zahlLesen(text);
+    const w = schaetzWertung(this.frage, wert);
+    if (!w) return null;
+    this.meinStatus = 'wartet';
+    this.meineSchaetzung = wert;
+    this.senden('schaetz', { i: this.idx, wert, pkt: w.pkt, treffer: w.treffer });
+    return w;
   }
 
   waehlen(code) {

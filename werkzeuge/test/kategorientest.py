@@ -20,7 +20,9 @@ ANTWORTEN = """async (falsch) => {
     document.querySelector(`#optionen button[data-c="${CSS.escape(k)}"]`).click();
     return f.k + ' wahl ' + k;
   }
-  const text = falsch ? 'Atlantis' : (f.k === 'hauptstaedte' ? LAND[f.c].stadt : LAND[f.c].name);
+  let text = falsch ? 'Atlantis' : (f.k === 'hauptstaedte' ? LAND[f.c].stadt : LAND[f.c]?.name);
+  if (f.k === 'schaetzen') { const S = (await import('./js/schaetzen.js?v=' + v)).SCHAETZEN; text = falsch ? '1' : String(S[f.n].a).replace('.', ','); }
+  if (f.k === 'kennzeichen') { const K = (await import('./js/kennzeichen.js?v=' + v)).KENNZEICHEN; text = falsch ? 'Atlantis' : f.r === 'ort' ? f.c : K.find(x => x[0] === f.c)[1]; }
   const inp = document.getElementById('rate-eingabe'); inp.value = text; document.getElementById('rate-form').requestSubmit();
   return f.k + ' tippe ' + text;
 }"""
@@ -66,7 +68,7 @@ async def main():
         print('Lobby:', (await B.inner_text('#raum-liste')).replace('\n', ' | '))
         code = (await A.inner_text('#raum-code')).strip()
         await B.goto(BASIS + '?sitzung=2#/raum/' + code); await B.wait_for_selector('#p-warten:not([hidden])')
-        for kat in ['gemischt', 'flaggen', 'umrisse', 'hauptstaedte', 'nachbarn', 'buchstaben', 'groesser', 'wissen']:
+        for kat in ['gemischt', 'flaggen', 'umrisse', 'hauptstaedte', 'nachbarn', 'buchstaben', 'kennzeichen', 'groesser', 'schaetzen', 'wissen']:
             await waehle(A, '#einst-kategorie', kat); await A.wait_for_timeout(300)
             await waehle(A, '#einst [data-e=runden]', '10' if kat == 'gemischt' else '5')
             await waehle(A, '#einst [data-e=zeit]', '10'); await A.wait_for_timeout(300)
@@ -93,4 +95,5 @@ async def main():
         await A.goto(BASIS + '#/'); await A.wait_for_timeout(800)
         print('FEHLER:', fehler)
         await b.close()
-asyncio.run(main())
+if __name__ == "__main__":
+    asyncio.run(main())

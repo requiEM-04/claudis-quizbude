@@ -125,7 +125,7 @@ export function emblem(e, stufe, groesse = 44) {
 }
 
 // Saison-Medaillen: Name der Wertung
-const KAT_NAME = { flaggen: 'Flaggen', karte: 'Weltkarte', umrisse: 'Umrisse', hauptstaedte: 'Hauptstädte', stadtland: 'Hauptstadt → Land', nachbarn: 'Nachbarn', buchstaben: 'Buchstabensalat', groesser: 'Größer oder kleiner', wissen: 'Allgemeinwissen', gemischt: 'Gemischt', emoji: 'Emoji' };
+const KAT_NAME = { flaggen: 'Flaggen', karte: 'Weltkarte', umrisse: 'Umrisse', hauptstaedte: 'Hauptstädte', stadtland: 'Hauptstadt → Land', nachbarn: 'Nachbarn', buchstaben: 'Buchstabensalat', kennzeichen: 'Autokennzeichen', schaetzen: 'Schätzfragen', groesser: 'Größer oder kleiner', wissen: 'Allgemeinwissen', gemischt: 'Gemischt', emoji: 'Emoji' };
 export function wertungName(w) {
   if (w === 'punkte') return 'Punkte';
   if (w === 'siege') return 'Siege';

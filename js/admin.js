@@ -1,7 +1,7 @@
-import { VERSION } from './config.js?v=0.13.2';
-import { adminClient, adminAnmelden } from './server.js?v=0.13.2';
-import { ruhmInfo, wappen, stilVon, bildVon } from './ruhm.js?v=0.13.2';
-import { figurSvg, figurAusEmoji } from './figuren.js?v=0.13.2';
+import { VERSION } from './config.js?v=0.14.0';
+import { adminClient, adminAnmelden } from './server.js?v=0.14.0';
+import { ruhmInfo, wappen, stilVon, bildVon } from './ruhm.js?v=0.14.0';
+import { figurSvg, figurAusEmoji } from './figuren.js?v=0.14.0';
 
 // Admin-Bereich: eigenes Konto, eigene Sitzung (quizbude.admin), alles läuft über admin_*-Funktionen mit Protokoll
 const $ = id => document.getElementById(id);
@@ -14,7 +14,7 @@ let filter = 'alle';
 let offenId = null;
 let lobby = null;
 
-const KAT = { flaggen: 'Flaggen', karte: 'Weltkarte', umrisse: 'Umrisse', hauptstaedte: 'Hauptstädte', stadtland: 'Hauptstadt → Land', groesser: 'Größer oder kleiner', wissen: 'Allgemeinwissen', gemischt: 'Gemischt', emoji: 'Emoji' };
+const KAT = { flaggen: 'Flaggen', karte: 'Weltkarte', umrisse: 'Umrisse', hauptstaedte: 'Hauptstädte', stadtland: 'Hauptstadt → Land', nachbarn: 'Nachbarn', buchstaben: 'Buchstabensalat', kennzeichen: 'Autokennzeichen', schaetzen: 'Schätzfragen', groesser: 'Größer oder kleiner', wissen: 'Allgemeinwissen', gemischt: 'Gemischt', emoji: 'Emoji' };
 const AKTION = {
   umbenennen: 'umbenannt', passwort: 'Passwort gesetzt', sperren: 'gesperrt', entsperren: 'entsperrt',
   aus_bestenliste: 'aus der Bestenliste genommen', in_bestenliste: 'wieder in die Bestenliste', deaktivieren: 'deaktiviert',

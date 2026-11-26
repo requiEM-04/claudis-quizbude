@@ -1,11 +1,13 @@
-import { LAENDER } from './laender.js?v=0.13.2';
-import { WISSEN, WISSEN_THEMEN } from './wissen.js?v=0.13.2';
-import { EMOJI, EMOJI_THEMEN } from './emoji.js?v=0.13.2';
-import { kanon } from './kanon.js?v=0.13.2';
-import { LAND, AUSWAHL, pruefe, mischen, flaggeUrl, abgleichen } from './abgleich.js?v=0.13.2';
-import { karteLaden, ringeAlle } from './weltkarte.js?v=0.13.2';
-import { nachbarKarte } from './nachbarkarte.js?v=0.13.2';
-import { GRENZEN } from './grenzen.js?v=0.13.2';
+import { LAENDER } from './laender.js?v=0.14.0';
+import { WISSEN, WISSEN_THEMEN } from './wissen.js?v=0.14.0';
+import { EMOJI, EMOJI_THEMEN } from './emoji.js?v=0.14.0';
+import { kanon } from './kanon.js?v=0.14.0';
+import { LAND, AUSWAHL, pruefe, mischen, flaggeUrl, abgleichen } from './abgleich.js?v=0.14.0';
+import { karteLaden, ringeAlle } from './weltkarte.js?v=0.14.0';
+import { nachbarKarte } from './nachbarkarte.js?v=0.14.0';
+import { GRENZEN } from './grenzen.js?v=0.14.0';
+import { KENNZEICHEN } from './kennzeichen.js?v=0.14.0';
+import { SCHAETZEN, SCHAETZ_THEMEN } from './schaetzen.js?v=0.14.0';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const zahl = n => n.toLocaleString('de-DE');
@@ -15,7 +17,7 @@ let UMRISSE = null;
 let umrisseLaeuft = null;
 export function umrisseLaden() {
   if (UMRISSE) return Promise.resolve(UMRISSE);
-  umrisseLaeuft ||= import('./umrisse.js?v=0.13.2').then(m => { UMRISSE = m.UMRISSE; return UMRISSE; });
+  umrisseLaeuft ||= import('./umrisse.js?v=0.14.0').then(m => { UMRISSE = m.UMRISSE; return UMRISSE; });
   return umrisseLaeuft;
 }
 export const umrisseDa = () => !!UMRISSE;
@@ -38,14 +40,28 @@ function nachbarPruefen(text, f) {
 const nachbarListe = c => (GRENZEN[c] || []).map(n => LAND[n].name).sort((a, b) => a.localeCompare(b, 'de')).join(', ');
 
 // Buchstabensalat: Buchstaben jedes Worts mischen, Leerzeichen und Bindestriche bleiben stehen, nie die richtige Reihenfolge
-function salat(name) {
+// leicht: der erste Buchstabe jedes Worts bleibt vorne; schwer: alle Wörter landen in einem einzigen Haufen
+function durcheinander(b) {
+  if (new Set(b).size <= 1) return b.join('');
+  for (let v = 0; v < 12; v++) { const m = mischen(b).join(''); if (m !== b.join('')) return m; }
+  return b.slice().reverse().join('');
+}
+function salat(name, stufe = 'mittel') {
+  if (stufe === 'schwer') return durcheinander([...name.toUpperCase().replace(/[\s-]+/g, '')]);
   return name.split(/(\s+|-)/).map(teil => {
     if (/^(\s+|-)$/.test(teil) || teil.length < 2) return teil.toUpperCase();
     const b = [...teil.toUpperCase()];
-    if (new Set(b).size === 1) return b.join('');
-    for (let v = 0; v < 12; v++) { const m = mischen(b).join(''); if (m !== b.join('')) return m; }
-    return b.reverse().join('');
+    const vorne = stufe === 'leicht' ? b.shift() : '';
+    return vorne + durcheinander(b);
   }).join('');
+}
+// Wie schwer ist ein Name zum Entwirren? Länge, Zahl der Wörter und seltene Buchstaben
+const SELTEN = /[ÄÖÜYJQXZC]/g;
+function salatStufe(name) {
+  const n = name.replace(/[^\p{L}]/gu, '').length, woerter = name.split(/[\s-]+/).length, selten = (name.toUpperCase().match(SELTEN) || []).length;
+  if (n <= 7 && woerter === 1 && selten <= 1) return 'leicht';
+  if (n >= 10 || woerter >= 2 || selten >= 2) return 'schwer';
+  return 'mittel';
 }
 // Punktwerte wie bei deutschen Buchstabenspielen, nur als Zierde auf den Steinen
 const STEIN_WERT = { A: 1, B: 3, C: 4, D: 1, E: 1, F: 4, G: 2, H: 2, I: 1, J: 6, K: 4, L: 2, M: 3, N: 1, O: 2, P: 4, Q: 10, R: 1, S: 1, T: 1, U: 1, V: 6, W: 3, X: 8, Y: 10, Z: 3, Ä: 6, Ö: 8, Ü: 6 };
@@ -55,6 +71,67 @@ function aehnlichLang(l) {
   const n = buchstabenZahl(l.name);
   const nah = mischen(LAENDER.filter(x => x.code !== l.code && Math.abs(buchstabenZahl(x.name) - n) <= 1 && (!l.bekannt || x.bekannt)));
   return nah.concat(nachbarn(l).filter(x => !nah.includes(x))).slice(0, 3);
+}
+
+// ---------- Autokennzeichen ----------
+const KFZ = KENNZEICHEN.map(([code, ort, haupt]) => ({ code, ort, haupt: !!haupt }));
+const KFZ_ORT = Object.fromEntries(KFZ.map(x => [x.code, x.ort]));
+const KFZ_CODES = {}; // Ort -> alle Kürzel, Hauptkennzeichen zuerst
+for (const x of KFZ) (KFZ_CODES[x.ort] ||= [])[x.haupt ? 'unshift' : 'push'](x.code);
+const ortGrund = o => o.replace(/^(Region|Städteregion|Regionalverband|Rhein-Kreis|Landkreis|Kreis)\s+/, '').replace(/\s*\(.*\)$/, '').replace(/\s+(a\.|i\.|am|an der).*$/, '').trim();
+const GRUND_ZAHL = {};
+for (const o of Object.keys(KFZ_CODES)) GRUND_ZAHL[kanon(ortGrund(o))] = (GRUND_ZAHL[kanon(ortGrund(o))] || 0) + 1;
+const ORT_ANTWORTEN = Object.fromEntries(Object.keys(KFZ_CODES).map(o => {
+  const a = new Set([kanon(o)]);
+  const g = kanon(ortGrund(o));
+  if (GRUND_ZAHL[g] === 1) a.add(g);
+  if (/kreis$/.test(g) && g.length > 9) a.add(g.replace(/-?kreis$/, ''));
+  return [o, [...a]];
+}));
+const ALLE_ORTE = new Map(Object.entries(ORT_ANTWORTEN).flatMap(([o, as]) => as.map(a => [a, o])));
+// Rest des Schilds, nur Deko: aus dem Kürzel abgeleitet, damit alle im Raum dasselbe sehen
+function schildRest(code) {
+  let h = 7; for (const ch of code) h = (h * 31 + ch.charCodeAt(0)) % 100003;
+  const B = 'ABCDEFGHJKLMNPRSTUVWXYZ';
+  return `${B[h % B.length]}${B[(h >> 3) % B.length]} ${1 + (h % 9)}${(h >> 2) % 10}${(h >> 5) % 10}`;
+}
+// ähnliche Kürzel aus anderen Kreisen als falsche Antworten (gleicher Anfangsbuchstabe zuerst)
+function kfzFalsche(x, anzahl, nurHaupt) {
+  const fremd = KFZ.filter(y => y.ort !== x.ort && (!nurHaupt || y.haupt));
+  const nah = mischen(fremd.filter(y => y.code[0] === x.code[0]));
+  const rest = mischen(fremd.filter(y => y.code[0] !== x.code[0]));
+  const aus = [], orte = new Set([x.ort]);
+  for (const y of nah.concat(rest)) { if (orte.has(y.ort)) continue; orte.add(y.ort); aus.push(y.code); if (aus.length === anzahl) break; }
+  return aus;
+}
+export const schildHtml = (code, klein = false) => `<span class="kfz${klein ? ' klein' : ''}" aria-label="Kennzeichen ${esc(code)}"><span class="kfz-eu" aria-hidden="true"><svg viewBox="-10 -10 20 20">${Array.from({ length: 12 }, (_, i) => `<circle cx="${(Math.cos(i * Math.PI / 6) * 6).toFixed(2)}" cy="${(Math.sin(i * Math.PI / 6) * 6).toFixed(2)}" r="1.15"/>`).join('')}</svg><b>D</b></span><span class="kfz-text">${esc(code)}</span>${klein ? '' : `<span class="kfz-siegel" aria-hidden="true"><i></i><i></i></span><span class="kfz-text">${schildRest(code)}</span>`}</span>`;
+
+// ---------- Schätzfragen ----------
+// Zahl aus der Eingabe lesen: 1.234, 1,5, 2 Mio, 3,5 Mrd, 10k
+export function zahlLesen(text) {
+  let t = String(text ?? '').toLowerCase().replace(/\s+/g, '').replace(/[’'_]/g, '');
+  let faktor = 1;
+  const m = t.match(/(milliarden|milliarde|mrd|millionen|million|mio|tausend|tsd|k)\.?$/);
+  if (m) { faktor = { milliarden: 1e9, milliarde: 1e9, mrd: 1e9, millionen: 1e6, million: 1e6, mio: 1e6, tausend: 1e3, tsd: 1e3, k: 1e3 }[m[1]]; t = t.slice(0, m.index); }
+  t = t.replace(/[^0-9.,-]/g, '');
+  if (!/\d/.test(t)) return null;
+  if (t.includes(',')) t = t.replace(/\./g, '').replace(',', '.');
+  else if (/^-?\d{1,3}(\.\d{3})+$/.test(t)) t = t.replace(/\./g, '');
+  const n = parseFloat(t);
+  return Number.isFinite(n) ? n * faktor : null;
+}
+export const zahlText = n => (Math.abs(n) >= 1e9 && n % 1e8 === 0 ? `${(n / 1e9).toLocaleString('de-DE')} Mrd.` : Math.abs(n) >= 1e6 && n % 1e5 === 0 && n % 1e6 !== 0 ? `${(n / 1e6).toLocaleString('de-DE')} Mio.` : n.toLocaleString('de-DE', { maximumFractionDigits: 2 }));
+// Wertung: wer näher dran ist, bekommt mehr; Treffer heißt höchstens 10 % daneben (bzw. ein Zehntel des Spielraums)
+export function schaetzWertung(f, wert) {
+  const q = SCHAETZEN[f.n];
+  if (wert == null || !Number.isFinite(wert)) return null;
+  let nah;
+  if (q.s) nah = Math.max(0, 1 - Math.abs(wert - q.a) / q.s);
+  else if (wert <= 0) nah = 0;
+  else nah = Math.max(0, 1 - Math.abs(Math.log(wert / q.a)) / Math.log(3));
+  const treffer = q.s ? Math.abs(wert - q.a) <= q.s * 0.1 : wert > 0 && Math.abs(Math.log(wert / q.a)) <= Math.log(1.1);
+  const prozent = q.s ? null : Math.round((wert - q.a) / q.a * 100);
+  return { pkt: Math.round(150 * nah), treffer, nah, abweichung: q.s ? `${wert > q.a ? '+' : ''}${(wert - q.a).toLocaleString('de-DE', { maximumFractionDigits: 2 })}` : `${prozent > 0 ? '+' : ''}${prozent.toLocaleString('de-DE')} %` };
 }
 
 function stadtPruefen(text, l) {
@@ -89,10 +166,11 @@ export const KATEGORIEN = {
   flaggen: {
     name: 'Flaggen', text: 'Land an der Flagge erkennen', tippen: true, zeit: 15, land: true,
     auswahlen: LAENDER_AUSWAHL, standard: 'alle',
+    varianten: { titel: 'Flagge', werte: { normal: 'Ganz zeigen', aufdecken: 'Stück für Stück aufdecken' }, standard: 'normal', kurz: { aufdecken: 'Aufdecken' } },
     pool: a => laenderPool(a),
-    frage: (l, mitOptionen) => ({ k: 'flaggen', c: l.code, ...(mitOptionen && { o: mischen([l.code, ...nachbarn(l).map(x => x.code)]) }) }),
-    hinweis: () => 'Welches Land ist das?',
-    bild: f => `<img class="bild-flagge" src="${flaggeUrl(f.c)}" alt="Flagge, welches Land ist das?" draggable="false">`,
+    frage: (l, mitOptionen, _ziel, opt = {}) => ({ k: 'flaggen', c: l.code, ...(mitOptionen && { o: mischen([l.code, ...nachbarn(l).map(x => x.code)]) }), ...(opt.v === 'aufdecken' && { v: 'auf', z: Math.max(5, Math.round((opt.zeit || 15) * 0.75)) }) }),
+    hinweis: f => f.v === 'auf' ? 'Welches Land ist das? Je früher, desto mehr Punkte.' : 'Welches Land ist das?',
+    bild: f => f.v === 'auf' ? aufdeckenHtml(f) : `<img class="bild-flagge" src="${flaggeUrl(f.c)}" alt="Flagge, welches Land ist das?" draggable="false">`,
     option: (key) => esc(LAND[key].name),
     pruefe: (text, f) => pruefe(text, f.c),
     richtig: (key, f) => key === f.c,
@@ -151,19 +229,21 @@ export const KATEGORIEN = {
   nachbarn: {
     name: 'Nachbarn', text: 'Welche Länder grenzen aneinander?', tippen: true, zeit: 15, land: true,
     auswahlen: LAENDER_AUSWAHL, standard: 'bekannt',
+    varianten: { titel: 'Schwierigkeit', werte: { leicht: 'Leicht, mit Karte', schwer: 'Schwer, ohne Karte' }, standard: 'leicht', kurz: { schwer: 'ohne Karte' } },
     pool: a => laenderPool(a, l => GRENZEN[l.code]),
-    frage: (l, mitOptionen) => {
-      if (!mitOptionen) return { k: 'nachbarn', c: l.code };
+    frage: (l, mitOptionen, _ziel, opt = {}) => {
+      const v = opt.v === 'schwer' ? { v: 'schwer' } : {};
+      if (!mitOptionen) return { k: 'nachbarn', c: l.code, ...v };
       const nb = GRENZEN[l.code], richtig = nb[Math.floor(Math.random() * nb.length)];
       const keinNachbar = x => x.code !== l.code && !nb.includes(x.code);
       const falsch = mischen(LAENDER.filter(x => keinNachbar(x) && x.region === l.region && (!l.bekannt || x.bekannt)))
         .concat(mischen(LAENDER.filter(x => keinNachbar(x) && x.region === l.region))).concat(mischen(LAENDER.filter(keinNachbar)));
       const drei = [...new Set(falsch.map(x => x.code))].slice(0, 3);
-      return { k: 'nachbarn', c: l.code, o: mischen([richtig, ...drei]) };
+      return { k: 'nachbarn', c: l.code, o: mischen([richtig, ...drei]), ...v };
     },
     hinweis: f => f.o ? 'Welches Land grenzt daran?' : 'Nenne ein Nachbarland. Jedes zählt.',
     bild: f => {
-      const n = GRENZEN[f.c].length, zahlText = n === 1 ? '1 Nachbarland' : `${n} Nachbarländer`, ringe = ringeAlle();
+      const n = GRENZEN[f.c].length, zahlText = n === 1 ? '1 Nachbarland' : `${n} Nachbarländer`, ringe = f.v === 'schwer' ? null : ringeAlle();
       if (!ringe) return `<div class="bild-land bild-nachbarn"><img src="${flaggeUrl(f.c)}" alt=""><span>${esc(LAND[f.c].name)}</span><small>${zahlText}</small></div>`;
       return `<div class="bild-nachbarn mit-karte">${nachbarKarte(f.c, ringe, GRENZEN, { klasse: 'nk-karte', label: `Karte: ${esc(LAND[f.c].name)} und Umgebung` })}`
         + `<div class="nk-name"><img src="${flaggeUrl(f.c)}" alt=""><span>${esc(LAND[f.c].name)}</span></div><small class="nk-zahl">${zahlText}</small></div>`;
@@ -179,13 +259,22 @@ export const KATEGORIEN = {
   buchstaben: {
     name: 'Buchstabensalat', text: 'Ländernamen aus gemischten Buchstaben', tippen: true, zeit: 20, land: true,
     auswahlen: LAENDER_AUSWAHL, standard: 'bekannt',
-    pool: a => laenderPool(a, l => buchstabenZahl(l.name) >= 4 && buchstabenZahl(l.name) <= 20),
-    frage: (l, mitOptionen) => ({ k: 'buchstaben', c: l.code, s: salat(l.name), ...(mitOptionen && { o: mischen([l.code, ...aehnlichLang(l).map(x => x.code)]) }) }),
-    hinweis: () => 'Welches Land steckt in den Buchstaben?',
+    varianten: { titel: 'Schwierigkeit', werte: { leicht: 'Leicht: kurze Namen, erster Buchstabe steht', mittel: 'Mittel: alle Namen', schwer: 'Schwer: lange Namen, alles in einem Haufen' }, standard: 'mittel', kurz: { leicht: 'Leicht', schwer: 'Schwer' } },
+    pool: (a, v) => {
+      const basis = laenderPool(a, l => buchstabenZahl(l.name) >= 4 && buchstabenZahl(l.name) <= 20);
+      if (v !== 'leicht' && v !== 'schwer') return basis;
+      const passend = basis.filter(l => v === 'leicht' ? salatStufe(l.name) === 'leicht' : salatStufe(l.name) !== 'leicht');
+      return passend.length >= 6 ? passend : basis; // kleine Auswahl: lieber alle als zu wenige
+    },
+    frage: (l, mitOptionen, _ziel, opt = {}) => {
+      const v = opt.v === 'leicht' || opt.v === 'schwer' ? opt.v : 'mittel';
+      return { k: 'buchstaben', c: l.code, s: salat(l.name, v), ...(v !== 'mittel' && { v }), ...(mitOptionen && { o: mischen([l.code, ...aehnlichLang(l).map(x => x.code)]) }) };
+    },
+    hinweis: f => f.v === 'leicht' ? 'Welches Land ist das? Der erste Buchstabe steht schon vorne.' : f.v === 'schwer' ? 'Alle Wörter durcheinander: welches Land ist das?' : 'Welches Land steckt in den Buchstaben?',
     bild: f => {
       let i = 0;
-      const stein = ch => { const n = i++; return `<b style="--i:${n};--r:${((n * 37) % 7 - 3) * .7}deg">${esc(ch)}<sub>${STEIN_WERT[ch.toUpperCase()] ?? 1}</sub></b>`; };
-      return `<div class="bild-salat" aria-label="Gemischte Buchstaben: ${esc(f.s)}">${f.s.split(/\s+/).filter(Boolean).map(w => `<span class="salat-wort">${[...w].map(stein).join('')}</span>`).join('')}</div>`;
+      const stein = (ch, j) => { const n = i++; return `<b${f.v === 'leicht' && j === 0 ? ' class="anfang"' : ''} style="--i:${n};--r:${((n * 37) % 7 - 3) * .7}deg">${esc(ch)}<sub>${STEIN_WERT[ch.toUpperCase()] ?? 1}</sub></b>`; };
+      return `<div class="bild-salat${f.v ? ' salat-' + f.v : ''}" aria-label="Gemischte Buchstaben: ${esc(f.s)}">${f.s.split(/\s+/).filter(Boolean).map(w => `<span class="salat-wort">${[...w].map(stein).join('')}</span>`).join('')}</div>`;
     },
     option: (key) => esc(LAND[key].name),
     pruefe: (text, f) => pruefe(text, f.c),
@@ -193,6 +282,44 @@ export const KATEGORIEN = {
     loesung: f => LAND[f.c].name,
     nachher: f => `<img class="info-flagge" src="${flaggeUrl(f.c)}" alt="">`,
     kurz: f => `<img src="${flaggeUrl(f.c)}" alt=""><span>${esc(f.s)}: <b>${esc(LAND[f.c].name)}</b></span>`,
+  },
+
+  kennzeichen: {
+    name: 'Autokennzeichen', text: 'Woher kommt das Kennzeichen?', tippen: true, zeit: 15, stufig: true,
+    auswahlen: { bekannt: 'Hauptkennzeichen der Kreise', alle: 'Alle, auch Altkennzeichen' }, standard: 'bekannt',
+    varianten: { titel: 'Richtung', werte: { kuerzel: 'Kürzel gegeben, Ort raten', ort: 'Ort gegeben, Kürzel raten', beides: 'Gemischt' }, standard: 'kuerzel', kurz: { ort: 'Ort → Kürzel', beides: 'gemischt' } },
+    pool: a => KFZ.filter(x => a === 'alle' || x.haupt),
+    frage: (x, mitOptionen, _ziel, opt = {}) => {
+      const v = opt.v || 'beides', r = v === 'beides' ? (Math.random() < 0.5 ? 'kuerzel' : 'ort') : v;
+      return { k: 'kennzeichen', c: x.code, r, ...(mitOptionen && { o: mischen([x.code, ...kfzFalsche(x, 3, x.haupt)]) }) };
+    },
+    hinweis: f => f.r === 'ort' ? 'Welches Kennzeichen gehört zu diesem Ort?' : 'Woher kommt dieses Kennzeichen?',
+    bild: f => f.r === 'ort'
+      ? `<div class="ortsschild"><span>${esc(KFZ_ORT[f.c])}</span></div>`
+      : `<div class="bild-kfz">${schildHtml(f.c)}</div>`,
+    option: (key, f) => f.r === 'ort' ? `<span class="kfz-option">${esc(key)}</span>` : esc(KFZ_ORT[key]),
+    pruefe: (text, f) => f.r === 'ort'
+      ? abgleichen(text, KFZ_CODES[KFZ_ORT[f.c]].map(kanon), k => KFZ.some(x => x.ort !== KFZ_ORT[f.c] && kanon(x.code) === k))
+      : abgleichen(text, ORT_ANTWORTEN[KFZ_ORT[f.c]], k => ALLE_ORTE.has(k) && ALLE_ORTE.get(k) !== KFZ_ORT[f.c]),
+    richtig: (key, f) => KFZ_ORT[key] === KFZ_ORT[f.c],
+    loesung: f => f.r === 'ort' ? KFZ_CODES[KFZ_ORT[f.c]].join(', ') : KFZ_ORT[f.c],
+    info: f => { const andere = KFZ_CODES[KFZ_ORT[f.c]].filter(c => c !== f.c); return f.r === 'ort' ? `Kennzeichen für ${KFZ_ORT[f.c]}` : andere.length ? `Dort gibt es auch: ${andere.join(', ')}` : ''; },
+    kurz: f => `${schildHtml(f.c, true)}<span>${esc(KFZ_ORT[f.c])}</span>`,
+  },
+
+  schaetzen: {
+    name: 'Schätzfragen', text: 'Wer liegt am nächsten dran?', tippen: true, zahl: true, zeit: 20,
+    auswahlen: { alle: 'Alle Themen', ...SCHAETZ_THEMEN }, standard: 'alle',
+    pool: a => SCHAETZEN.map((q, n) => ({ ...q, n })).filter(q => a === 'alle' || q.t === a),
+    frage: q => ({ k: 'schaetzen', n: q.n }),
+    hinweis: f => `${SCHAETZ_THEMEN[SCHAETZEN[f.n].t]}: schätz so genau wie möglich`,
+    bild: f => `<div class="bild-schaetzen"><p class="bild-frage">${esc(SCHAETZEN[f.n].f)}</p><span class="schaetz-einheit">Antwort in ${esc(SCHAETZEN[f.n].e)}</span></div>`,
+    option: () => '',
+    pruefe: () => 'falsch',
+    richtig: () => false,
+    loesung: f => `${zahlText(SCHAETZEN[f.n].a)} ${SCHAETZEN[f.n].e}`,
+    info: f => SCHAETZEN[f.n].i || '',
+    kurz: f => `<span class="kurz-frage">${esc(SCHAETZEN[f.n].f)}</span><b>${zahlText(SCHAETZEN[f.n].a)} ${esc(SCHAETZEN[f.n].e)}</b>`,
   },
 
   groesser: {
@@ -265,49 +392,66 @@ export const KATEGORIEN = {
 
 };
 
+// Flagge unter 30 Kärtchen, die nacheinander verschwinden; Reihenfolge aus dem Ländercode, damit alle dasselbe sehen
+function aufdeckenHtml(f) {
+  const n = 30, reihe = [...Array(n).keys()];
+  let h = 17; for (const ch of f.c) h = (h * 131 + ch.charCodeAt(0)) % 2147483647;
+  for (let i = n - 1; i > 0; i--) { h = (h * 48271) % 2147483647; const j = h % (i + 1); [reihe[i], reihe[j]] = [reihe[j], reihe[i]]; }
+  const takt = f.z / n;
+  return `<div class="bild-aufdecken" style="--z:${f.z}s"><img class="bild-flagge" src="${flaggeUrl(f.c)}" alt="Flagge, wird Stück für Stück aufgedeckt" draggable="false"><span class="ad-decke" aria-hidden="true">${reihe.map(r => `<i style="--t:${(r * takt).toFixed(2)}s"></i>`).join('')}</span></div>`;
+}
+
 const groesseres = f => (LAND[f.c].flaeche >= LAND[f.d].flaeche ? f.c : f.d);
 
 // Emoji-Rätsel ist vorerst raus (wird inhaltlich überarbeitet), die Weltkarte steht direkt nach Flaggen
-export const KATEGORIE_REIHE = ['flaggen', 'karte', 'umrisse', 'hauptstaedte', 'nachbarn', 'buchstaben', 'groesser', 'wissen', 'gemischt'];
-export const ARTEN = ['flaggen', 'umrisse', 'hauptstaedte', 'stadtland', 'nachbarn', 'buchstaben', 'groesser', 'wissen'];
+export const KATEGORIE_REIHE = ['flaggen', 'karte', 'umrisse', 'hauptstaedte', 'nachbarn', 'buchstaben', 'kennzeichen', 'groesser', 'schaetzen', 'wissen', 'gemischt'];
+// Was in „Gemischt“ vorkommen kann; ohne eigene Auswahl alle
+export const ARTEN = ['flaggen', 'umrisse', 'hauptstaedte', 'stadtland', 'nachbarn', 'buchstaben', 'kennzeichen', 'groesser', 'schaetzen', 'wissen'];
+export const gemischtArten = arten => { const a = (Array.isArray(arten) ? arten : ARTEN).filter(k => ARTEN.includes(k)); return a.length ? a : ARTEN; };
+export const alleArten = arten => gemischtArten(arten).length === ARTEN.length;
 // Kategorien mit Sprint-Rekord und eigener Sprint-Bestenliste (Hauptstädte gibt es in zwei Richtungen)
-export const SPRINT_REIHE = ['flaggen', 'karte', 'umrisse', 'hauptstaedte', 'stadtland', 'nachbarn', 'buchstaben', 'groesser', 'wissen', 'gemischt'];
+export const SPRINT_REIHE = ['flaggen', 'karte', 'umrisse', 'hauptstaedte', 'stadtland', 'nachbarn', 'buchstaben', 'kennzeichen', 'groesser', 'schaetzen', 'wissen', 'gemischt'];
+// gewählte Variante einer Kategorie, sonst die Standardvariante
+export const varianteVon = (kat, v) => (kat?.varianten ? (v in kat.varianten.werte ? v : kat.varianten.standard) : null);
 
 // Eine einzelne Frage für den Sprint. Länder-Kategorien fangen leicht an und werden mit jedem Treffer schwerer.
-export function sprintFrage(kategorie, stand, benutzt, region = null) {
-  const k = kategorie === 'gemischt' ? ARTEN[Math.floor(Math.random() * ARTEN.length)] : kategorie;
+export function sprintFrage(kategorie, stand, benutzt, region = null, opt = {}) {
+  const arten = gemischtArten(opt.arten);
+  const k = kategorie === 'gemischt' ? arten[Math.floor(Math.random() * arten.length)] : kategorie;
   const kat = KATEGORIEN[k];
-  const leicht = kat.land && (stand < 8 || (stand < 16 && Math.random() < 0.5));
+  const v = kategorie === 'gemischt' ? null : varianteVon(kat, opt.variante);
+  const leicht = (kat.land || kat.stufig) && (stand < 8 || (stand < 16 && Math.random() < 0.5));
   const id = x => `${k}:${x.code ?? x.n}`;
   // mit Region (Übung): nur Länder dieser Region, sonst erst bekannte, dann alle
-  let pool = (kat.land && region ? kat.pool(region) : kat.pool(leicht ? 'bekannt' : 'alle')).filter(x => !benutzt.has(id(x)));
-  if (!pool.length && kat.land && region) { for (const b of [...benutzt]) if (b.startsWith(k + ':')) benutzt.delete(b); pool = kat.pool(region); }
-  if (!pool.length) pool = kat.pool('alle').filter(x => !benutzt.has(id(x)));
-  if (!pool.length) { for (const b of [...benutzt]) if (b.startsWith(k + ':')) benutzt.delete(b); pool = kat.pool('alle'); }
+  let pool = (kat.land && region ? kat.pool(region, v) : kat.pool(leicht ? 'bekannt' : 'alle', v)).filter(x => !benutzt.has(id(x)));
+  if (!pool.length && kat.land && region) { for (const b of [...benutzt]) if (b.startsWith(k + ':')) benutzt.delete(b); pool = kat.pool(region, v); }
+  if (!pool.length) pool = kat.pool('alle', v).filter(x => !benutzt.has(id(x)));
+  if (!pool.length) { for (const b of [...benutzt]) if (b.startsWith(k + ':')) benutzt.delete(b); pool = kat.pool('alle', v); }
   const x = pool[Math.floor(Math.random() * pool.length)];
   benutzt.add(id(x));
-  return kat.frage(x, !kat.tippen || kategorie === 'gemischt');
+  return kat.frage(x, !kat.tippen || kategorie === 'gemischt', undefined, { v: v ?? undefined, zeit: 8 });
 }
 
-export function fragenBauen({ kategorie = 'flaggen', auswahl, runden, modus, ziel }) {
+export function fragenBauen({ kategorie = 'flaggen', auswahl, runden, modus, ziel, variante, arten: gewaehlt, zeit }) {
   if (kategorie === 'gemischt') {
-    const arten = ['flaggen', 'umrisse', 'hauptstaedte', 'nachbarn', 'buchstaben', 'groesser', 'wissen'];
-    const vorrat = Object.fromEntries(arten.map(k => [k, mischen(KATEGORIEN[k].pool(k === 'wissen' ? 'alle' : auswahl))]));
+    const arten = gemischtArten(gewaehlt);
+    const vorrat = Object.fromEntries(arten.map(k => [k, mischen(KATEGORIEN[k].pool(auswahl in KATEGORIEN[k].auswahlen ? auswahl : KATEGORIEN[k].standard))]));
     const fragen = [];
     let letzte = '';
     for (let i = 0; i < runden; i++) {
       const moeglich = arten.filter(k => vorrat[k].length && k !== letzte);
       if (!moeglich.length) break;
       const k = moeglich[Math.floor(Math.random() * moeglich.length)];
-      fragen.push(KATEGORIEN[k].frage(vorrat[k].pop(), true));
+      fragen.push(KATEGORIEN[k].frage(vorrat[k].pop(), true, undefined, { zeit }));
       letzte = k;
     }
     return fragen;
   }
   const kat = KATEGORIEN[kategorie];
-  const pool = mischen(kat.pool(auswahl in kat.auswahlen ? auswahl : kat.standard));
-  const mitOptionen = !kat.tippen || modus === 'auswahl';
-  return pool.slice(0, Math.min(runden, pool.length)).map(x => kat.frage(x, mitOptionen, ziel));
+  const v = varianteVon(kat, variante);
+  const pool = mischen(kat.pool(auswahl in kat.auswahlen ? auswahl : kat.standard, v));
+  const mitOptionen = !kat.zahl && (!kat.tippen || modus === 'auswahl');
+  return pool.slice(0, Math.min(runden, pool.length)).map(x => kat.frage(x, mitOptionen, ziel, { v: v ?? undefined, zeit }));
 }
 
 export const kategorieVon = f => KATEGORIEN[f.k];
