@@ -2,7 +2,7 @@
 
 ## Aktuell (25.11.2026)
 
-- **Version:** 0.12.0
+- **Version:** 0.12.1
 - **Live:** https://requiem-04.github.io/claudis-quizbude/ (Repo `requiEM-04/claudis-quizbude`, Branch `main`, GitHub Pages)
 - **Server:** Supabase-Projekt `quizbude` (Ref `jgvjjjiwfjxynbzjaxsg`, Frankfurt), E-Mail-Bestätigung aus, Realtime mit öffentlichen Kanälen.
 - **Inhalt:** Konten (Name + Passwort ab 4 Zeichen), Räume mit 4-Buchstaben-Code (live über Realtime), Flaggenraten (tippen oder 4 zur Auswahl), Flaggen-Sprint (60 s), Bestenliste (Siege, Punkte, Sprint), „Zuletzt gespielt".
@@ -176,6 +176,8 @@
 - **Einladen:** im Warteraum „Freunde einladen“ bzw. im Fenster „Einladen“; beim Freund erscheint oben 15 s ein Banner mit „Beitreten“. Ist ein Freund in einem Raum, zeigt das Fenster „Mitspielen“.
 - **Technik:** Tabelle `freunde` + Funktionen `freund_anfragen`, `freund_antworten`, `freund_entfernen`, `freunde_liste` (Migration 010). Online und Einladungen über Realtime-Kanal `qb-online` (`js/freunde.js`, Presence-Schlüssel = Konto-ID, Broadcasts `einladung` und `anfrage`). Test: `werkzeuge/test/freundetest.py`.
 - **Sprint** für Nachbarn und Buchstabensalat (inkl. Regionen) und zwei Rekord-Abzeichen (Grenzkenner, Wortakrobat). Migration 010 lässt die Kategorien in `sprint_eintragen` zu.
+
+- **Neu in 0.12.1:** Abzeichen auf der Spielerkarte 74 px und in der Profil-Übersicht 68 px, ohne Namen darunter; Name und Stufe erscheinen als Schild beim Drüberfahren (auch per Tastatur), ebenso bei Medaillen im Spielerfenster.
 
 ## Als Nächstes (mit Colin besprochen)
 - Reihenfolge jetzt: neue Profilbilder (live in 0.11.0) → Freunde und Einladungen → neue Quizze Nachbarn und Buchstabensalat → vorgemerkt: Seitenverhältnisse (von Flaggen) raten. Kein Tagesrätsel nach Loldle-Art.

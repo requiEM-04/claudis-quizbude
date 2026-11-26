@@ -1585,16 +1585,16 @@ body.kartenmodus main .effekt * { animation-play-state: paused; }
 /* Vitrine auf der Spielerkarte statt Spiele/Siege/Sprint */
 .hk-vitrine { align-items: end; }
 .hk-abz { display: grid; justify-items: center; gap: 3px; min-width: 0; }
-.hk-abz svg { width: 34px; height: auto; filter: drop-shadow(0 4px 6px rgba(0,0,0,.45)); }
-.hk-abz svg.emblem { width: 52px; height: 52px; margin: -8px 0 -4px; filter: none; }
-.hk-medaille svg { width: 27px; height: 32px; }
-.hk-abz small { font-size: .6rem; font-weight: 700; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.hk-abz svg { width: 40px; height: auto; filter: drop-shadow(0 4px 6px rgba(0,0,0,.45)); }
+.hk-abz svg.emblem { width: 74px; height: 74px; margin: -10px -6px -8px; filter: none; }
+.hk-medaille svg { width: 40px; height: 48px; }
 /* Übersicht */
 .profil-abzeichen-box { padding: 16px 22px; margin: 16px 0; }
 .profil-abzeichen-box h2 { font-size: 1.05rem; margin: 0 0 10px; }
 .abz-kompakt { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .abz-mini svg { display: block; height: 46px; width: auto; }
-.abz-mini svg.emblem { height: 58px; margin: -6px -3px; }
+.abz-mini svg.emblem { height: 68px; margin: -7px -4px; }
+.abz-mini svg:not(.emblem) { height: 52px; }
 .abz-kompakt .leer, .abz-medaillen .leer { color: var(--text-3); margin: 0; font-size: .9rem; }
 /* Reiter Abzeichen */
 .abz-oben { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 24px; align-items: center; padding-bottom: 18px; border-bottom: 1px solid var(--linie); }
@@ -1882,3 +1882,9 @@ button.dock-link { border: 0; background: none; cursor: pointer; }
 .ei-zeit { position: absolute; left: 0; bottom: 0; height: 3px; width: 100%; background: var(--sand); transform-origin: left; animation: ei-ablauf 15s linear forwards; }
 @keyframes ei-ablauf { to { transform: scaleX(0); } }
 @media (prefers-reduced-motion: reduce) { .einladung.an, .dock-zahl.anfrage { animation: none; } }
+
+/* Schild beim Drüberfahren (Abzeichen und Medaillen auf Karte, Profil, Spielerfenster) */
+[data-tip] { position: relative; cursor: default; outline: none; }
+[data-tip]::after { content: attr(data-tip) "\A" attr(data-tip2); white-space: pre; position: absolute; bottom: calc(100% - 2px); left: 50%; z-index: 8; padding: 6px 11px; border-radius: 10px; border: 1px solid var(--linie-stark); background: #15181B; color: var(--text); font: 700 .76rem/1.4 var(--schrift); text-align: center; box-shadow: 0 12px 24px -10px rgba(0,0,0,.85); opacity: 0; pointer-events: none; transform: translate(-50%, 5px); transition: opacity .15s, transform .15s; }
+[data-tip]:hover::after, [data-tip]:focus-visible::after { opacity: 1; transform: translate(-50%, 0); }
+[data-tip]:focus-visible { box-shadow: 0 0 0 2px var(--sand); border-radius: 12px; }

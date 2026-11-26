@@ -1,28 +1,28 @@
-import { VERSION } from './config.js?v=0.12.0';
+import { VERSION } from './config.js?v=0.12.1';
 import {
   online, nameFehler, registrieren, anmelden, abmelden, sitzungHolen, profilLaden, profilSpeichern,
   bestenliste, spieleSeit, alleProfile, sprintEintragen, sprintBestenliste, rangVon, spielerAnzahl, spieleVon, sb,
   adminAnmelden, istAdminName, konfigLaden, adminEinrichten, einrichtungOffen, abzeichenVon, saisonAbschliessen, winterquestStand,
   freundeListe, freundAnfragen, freundAntworten, freundEntfernen,
-} from './server.js?v=0.12.0';
-import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.12.0';
-import { Raum, codeNeu, STANDARD, TIPPFEHLER_ABZUG } from './raum.js?v=0.12.0';
-import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.12.0';
+} from './server.js?v=0.12.1';
+import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.12.1';
+import { Raum, codeNeu, STANDARD, TIPPFEHLER_ABZUG } from './raum.js?v=0.12.1';
+import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.12.1';
 import {
   KATEGORIEN, KATEGORIE_REIHE, SPRINT_REIHE, kategorieVon, optionSchluessel, richtigeWahl, umrisseDa, umrisseLaden,
   sprintFrage, pruefeFrage, fragenVorladen, kanon,
-} from './kategorien.js?v=0.12.0';
-import { LAENDER } from './laender.js?v=0.12.0';
-import { auswahlfeld } from './auswahlfeld.js?v=0.12.0';
-import { KATEGORIE_SYMBOL } from './symbole.js?v=0.12.0';
-import { konfetti } from './konfetti.js?v=0.12.0';
-import { karteBauen, karteLaden, auswerten } from './weltkarte.js?v=0.12.0';
-import { STUFEN, ERFOLGE, erfolgStand, emblem, wertungName, saisonName, saisonKurz, vitrineLesen } from './abzeichen.js?v=0.12.0';
+} from './kategorien.js?v=0.12.1';
+import { LAENDER } from './laender.js?v=0.12.1';
+import { auswahlfeld } from './auswahlfeld.js?v=0.12.1';
+import { KATEGORIE_SYMBOL } from './symbole.js?v=0.12.1';
+import { konfetti } from './konfetti.js?v=0.12.1';
+import { karteBauen, karteLaden, auswerten } from './weltkarte.js?v=0.12.1';
+import { STUFEN, ERFOLGE, erfolgStand, emblem, wertungName, saisonName, saisonKurz, vitrineLesen } from './abzeichen.js?v=0.12.1';
 import {
   RAENGE, BILDER, ARTEN, JOKER, SONDER, sonderVon, sonderFrei, WINTERQUEST, questGeschafft, ruhmInfo, stufeVon, stufeInfo, wappen, effektHtml, rahmenDeko, stilVon, istFrei, freiAb, neuFrei,
-  belohnungName, rangVonId, symbol, symbolSvg, SCHWELLEN, flockeSvg, bildVon, BILD_ARTEN } from './ruhm.js?v=0.12.0';
-import { freundeStart, freundeStopp, freundeOrt, istOnline, onlineAbo, einladungAbo, anfrageAbo, einladen, anfrageMelden } from './freunde.js?v=0.12.0';
-import { FIGUREN, FREIE_FIGUREN, KREISE, RINGE, figurSvg, figurAusEmoji, figurVonId, bildFrei, bildFreiAb, bildEintrag } from './figuren.js?v=0.12.0';
+  belohnungName, rangVonId, symbol, symbolSvg, SCHWELLEN, flockeSvg, bildVon, BILD_ARTEN } from './ruhm.js?v=0.12.1';
+import { freundeStart, freundeStopp, freundeOrt, istOnline, onlineAbo, einladungAbo, anfrageAbo, einladen, anfrageMelden } from './freunde.js?v=0.12.1';
+import { FIGUREN, FREIE_FIGUREN, KREISE, RINGE, figurSvg, figurAusEmoji, figurVonId, bildFrei, bildFreiAb, bildEintrag } from './figuren.js?v=0.12.1';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -817,7 +817,7 @@ async function spielerFenster(id, platz) {
       </header>
       <div class="sf-raster">
         <div class="sf-karte">${hochkarteHtml(p, stilVon(p), med)}
-          ${med.length ? `<div class="sf-medaillen">${med.slice(0, 6).map(m => `<span title="Platz ${m.platz}, ${esc(wertungName(m.wertung))}, Saison ${esc(saisonName(m.saison))}">${abzeichenSvg(m.platz, saisonKurz(m.saison))}</span>`).join('')}</div>` : ''}</div>
+          ${med.length ? `<div class="sf-medaillen">${med.slice(0, 6).map(m => `<span tabindex="0" data-tip="Platz ${m.platz}, ${esc(wertungName(m.wertung))}" data-tip2="Saison ${esc(saisonName(m.saison))}">${abzeichenSvg(m.platz, saisonKurz(m.saison))}</span>`).join('')}</div>` : ''}</div>
         <div class="sf-rechts">
           <table class="sf-tabelle">
             <thead><tr><th>Kategorie</th><th>Spiele</th><th>Siege</th><th>Ø Punkte</th><th>Bestes Spiel</th><th>Sprint-Rekord</th></tr></thead>
@@ -1087,9 +1087,13 @@ let vorschauStil = null; // beim Drüberfahren: so würde es aussehen
 let auswahlStil = null;  // angetippt, aber noch nicht angelegt
 
 // Ein Platz der Vitrine auf der Karte: Abzeichen oder Saison-Medaille
+// Abzeichen auf der Spielerkarte: groß, Name und Stufe erst beim Drüberfahren (data-tip)
 function vitrineTeil(v) {
-  if (v.art === 'e') return `<span class="hk-abz st-${STUFEN[v.stufe - 1].id}" title="${esc(v.e.name)}, ${STUFEN[v.stufe - 1].name}">${emblem(v.e, v.stufe, 52)}<small>${esc(v.e.name)}</small></span>`;
-  return `<span class="hk-abz hk-medaille" title="Platz ${v.platz}, ${esc(wertungName(v.wertung))}, Saison ${esc(saisonName(v.saison))}">${abzeichenSvg(v.platz, saisonKurz(v.saison))}<small>${esc(wertungName(v.wertung))}</small></span>`;
+  if (v.art === 'e') {
+    const st = STUFEN[v.stufe - 1];
+    return `<span class="hk-abz st-${st.id}" tabindex="0" data-tip="${esc(v.e.name)}" data-tip2="${st.name}" aria-label="${esc(v.e.name)}, ${st.name}">${emblem(v.e, v.stufe, 74)}</span>`;
+  }
+  return `<span class="hk-abz hk-medaille" tabindex="0" data-tip="Platz ${v.platz}, ${esc(wertungName(v.wertung))}" data-tip2="Saison ${esc(saisonName(v.saison))}" aria-label="Platz ${v.platz}, ${esc(wertungName(v.wertung))}, Saison ${esc(saisonName(v.saison))}">${abzeichenSvg(v.platz, saisonKurz(v.saison))}</span>`;
 }
 function hochkarteHtml(p, st, medaillen = null) {
   const info = ruhmInfo(p.ruhm || 0), zahl = n => (n || 0).toLocaleString('de-DE');
@@ -1474,8 +1478,8 @@ async function abzeichenLaden(p, eigenes, abruf) {
   hochkarteZeichnen();
   // kurze Übersicht für alle Profile: erreichte Abzeichen und Medaillen
   const erreicht = ERFOLGE.map(e => ({ e, st: erfolgStand(e, p, { medaillen: med.length }) })).filter(x => x.st.stufe).sort((a, b) => b.st.stufe - a.st.stufe);
-  $('profil-abzeichen').innerHTML = med.map(m => `<span class="abz-mini" title="Platz ${m.platz}, ${esc(wertungName(m.wertung))}, Saison ${esc(saisonName(m.saison))}">${abzeichenSvg(m.platz, saisonKurz(m.saison))}</span>`).join('')
-    + erreicht.map(x => `<span class="abz-mini" title="${esc(x.e.name)}, ${STUFEN[x.st.stufe - 1].name}">${emblem(x.e, x.st.stufe, 58)}</span>`).join('')
+  $('profil-abzeichen').innerHTML = med.map(m => `<span class="abz-mini" tabindex="0" data-tip="Platz ${m.platz}, ${esc(wertungName(m.wertung))}" data-tip2="Saison ${esc(saisonName(m.saison))}">${abzeichenSvg(m.platz, saisonKurz(m.saison))}</span>`).join('')
+    + erreicht.map(x => `<span class="abz-mini" tabindex="0" data-tip="${esc(x.e.name)}" data-tip2="${STUFEN[x.st.stufe - 1].name}">${emblem(x.e, x.st.stufe, 68)}</span>`).join('')
     || `<p class="leer">${eigenes ? 'Noch keine Abzeichen. Spiel ein paar Runden, die ersten kommen schnell.' : 'Noch keine Abzeichen.'}</p>`;
   if (eigenes) abzeichenZeichnen();
 }
