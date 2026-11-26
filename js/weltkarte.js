@@ -3,10 +3,11 @@
 let RINGE = null, STAEDTE = null;
 let laden = null;
 export function karteLaden() {
-  if (!laden) laden = import('./weltkarte-daten.js?v=0.13.1').then(m => { RINGE = m.LAENDER_RINGE; STAEDTE = m.STAEDTE; });
+  if (!laden) laden = import('./weltkarte-daten.js?v=0.13.2').then(m => { RINGE = m.LAENDER_RINGE; STAEDTE = m.STAEDTE; });
   return laden;
 }
 export const karteDa = () => !!RINGE;
+export const ringeAlle = () => RINGE;
 export const stadtVon = code => STAEDTE?.[code] || null;
 
 // ---------- Projektion (Miller), Weltbreite 2000 Einheiten ----------

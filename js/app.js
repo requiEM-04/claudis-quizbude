@@ -1,28 +1,28 @@
-import { VERSION } from './config.js?v=0.13.1';
+import { VERSION } from './config.js?v=0.13.2';
 import {
   online, nameFehler, registrieren, anmelden, abmelden, sitzungHolen, profilLaden, profilSpeichern,
   bestenliste, spieleSeit, alleProfile, sprintEintragen, sprintBestenliste, rangVon, spielerAnzahl, spieleVon, sb,
   adminAnmelden, istAdminName, konfigLaden, adminEinrichten, einrichtungOffen, abzeichenVon, saisonAbschliessen, winterquestStand,
   freundeListe, freundAnfragen, freundAntworten, freundEntfernen,
-} from './server.js?v=0.13.1';
-import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.13.1';
-import { Raum, codeNeu, STANDARD, TIPPFEHLER_ABZUG } from './raum.js?v=0.13.1';
-import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.13.1';
+} from './server.js?v=0.13.2';
+import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.13.2';
+import { Raum, codeNeu, STANDARD, TIPPFEHLER_ABZUG } from './raum.js?v=0.13.2';
+import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.13.2';
 import {
   KATEGORIEN, KATEGORIE_REIHE, SPRINT_REIHE, kategorieVon, optionSchluessel, richtigeWahl, umrisseDa, umrisseLaden,
   sprintFrage, pruefeFrage, fragenVorladen, kanon,
-} from './kategorien.js?v=0.13.1';
-import { LAENDER } from './laender.js?v=0.13.1';
-import { auswahlfeld } from './auswahlfeld.js?v=0.13.1';
-import { KATEGORIE_SYMBOL } from './symbole.js?v=0.13.1';
-import { konfetti } from './konfetti.js?v=0.13.1';
-import { karteBauen, karteLaden, auswerten } from './weltkarte.js?v=0.13.1';
-import { STUFEN, ERFOLGE, erfolgStand, emblem, wertungName, saisonName, saisonKurz, vitrineLesen, SKINS, skinVon, skinVonId, skinStand, skinBedingung } from './abzeichen.js?v=0.13.1';
+} from './kategorien.js?v=0.13.2';
+import { LAENDER } from './laender.js?v=0.13.2';
+import { auswahlfeld } from './auswahlfeld.js?v=0.13.2';
+import { KATEGORIE_SYMBOL } from './symbole.js?v=0.13.2';
+import { konfetti } from './konfetti.js?v=0.13.2';
+import { karteBauen, karteLaden, auswerten } from './weltkarte.js?v=0.13.2';
+import { STUFEN, ERFOLGE, erfolgStand, emblem, wertungName, saisonName, saisonKurz, vitrineLesen, SKINS, skinVon, skinVonId, skinStand, skinBedingung } from './abzeichen.js?v=0.13.2';
 import {
   RAENGE, BILDER, ARTEN, JOKER, SONDER, sonderVon, sonderFrei, WINTERQUEST, questGeschafft, ruhmInfo, stufeVon, stufeInfo, wappen, effektHtml, rahmenDeko, stilVon, istFrei, freiAb, neuFrei,
-  belohnungName, rangVonId, symbol, symbolSvg, SCHWELLEN, flockeSvg, bildVon, BILD_ARTEN } from './ruhm.js?v=0.13.1';
-import { freundeStart, freundeStopp, freundeOrt, istOnline, onlineAbo, einladungAbo, anfrageAbo, einladen, anfrageMelden } from './freunde.js?v=0.13.1';
-import { FIGUREN, FREIE_FIGUREN, KREISE, RINGE, figurSvg, figurAusEmoji, figurVonId, bildFrei, bildFreiAb, bildEintrag, suchtVon } from './figuren.js?v=0.13.1';
+  belohnungName, rangVonId, symbol, symbolSvg, SCHWELLEN, flockeSvg, bildVon, BILD_ARTEN } from './ruhm.js?v=0.13.2';
+import { freundeStart, freundeStopp, freundeOrt, istOnline, onlineAbo, einladungAbo, anfrageAbo, einladen, anfrageMelden } from './freunde.js?v=0.13.2';
+import { FIGUREN, FREIE_FIGUREN, KREISE, RINGE, figurSvg, figurAusEmoji, figurVonId, bildFrei, bildFreiAb, bildEintrag, suchtVon } from './figuren.js?v=0.13.2';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -903,7 +903,7 @@ function kachelnHtml(mitRekord) {
     return `
     <button class="kachel${mitRekord ? ' sprint-karte' : ''}" data-k="${k}">
       <span class="kachel-bild" aria-hidden="true">${kachelBild(k)}</span>
-      <span class="kachel-name">${esc(KATEGORIEN[k].name).replace('Allgemeinwissen', 'Allgemein&shy;wissen')}</span>
+      <span class="kachel-name">${esc(KATEGORIEN[k].name).replace('Allgemeinwissen', 'Allgemein&shy;wissen').replace('Buchstabensalat', 'Buchstaben&shy;salat')}</span>
       <span class="kachel-text">${esc(KATEGORIEN[kk].text)}</span>
       ${mitRekord ? `<span class="sk-rekord${rekord ? '' : ' leer'}"><b>${rekord || '–'}</b><small>${rekord ? 'dein Rekord' : 'noch kein Rekord'}</small></span>` : ''}
     </button>`;
@@ -972,8 +972,8 @@ function kachelBild(k) {
     case 'karte': return '<img class="kb-karte" src="bilder/weltkarte-vorschau.svg" alt="">';
     case 'umrisse': return '<img class="kb-umriss" src="bilder/umriss-vorschau.svg" alt="">';
     case 'hauptstaedte': return '<span class="kb-text">Wien?</span>';
-    case 'nachbarn': return `<span class="kb-nachbarn">${f('DE')}<i></i>${f('FR')}</span>`;
-    case 'buchstaben': return '<span class="kb-salat"><b>N</b><b>R</b><b>O</b><b>W</b><b>E</b><b>E</b><b>G</b><b>N</b></span>';
+    case 'nachbarn': return '<img class="kb-nachbarn" src="bilder/nachbarn-vorschau.svg" alt="">';
+    case 'buchstaben': return `<span class="kb-salat">${[['L', 2], ['I', 1], ['H', 2], ['C', 4], ['E', 1]].map(([b, w], i) => `<b style="--w:${(i - 2) * 17}deg">${b}<sub>${w}</sub></b>`).join('')}</span>`;
     case 'groesser': return `<span class="kb-duell">${f('CA')}<b>oder</b>${f('BR')}</span>`;
     case 'wissen': return '<span class="kb-text kb-gross">?</span>';
     case 'emoji': return '<span class="kb-emoji">🦁👑</span>';
@@ -1095,6 +1095,12 @@ function vitrineTeil(v) {
   }
   return `<span class="hk-abz hk-medaille" tabindex="0" data-tip="Platz ${v.platz}, ${esc(wertungName(v.wertung))}" data-tip2="Saison ${esc(saisonName(v.saison))}" aria-label="Platz ${v.platz}, ${esc(wertungName(v.wertung))}, Saison ${esc(saisonName(v.saison))}">${abzeichenSvg(v.platz, saisonKurz(v.saison))}</span>`;
 }
+// Kartenskins: alle Skins haben dieselben Ebenen, Farben und Motive kommen aus dem CSS
+const SKIN_SZENE = '<b class="sz sz-feld"><i></i></b><b class="sz sz-strahlen"></b><b class="sz sz-wirbel"></b><b class="sz sz-halo"></b>'
+  + '<b class="sz sz-emblem"><i></i></b><b class="sz sz-orbit"><i></i><i></i><i></i><i></i></b><b class="sz sz-teilchen"><i></i><i></i><i></i><i></i></b><b class="sz sz-glanz"></b>'
+  + '<b class="sk-rahmen"></b><b class="sk-linie"></b><b class="sk-ecke ro"></b><b class="sk-ecke lu"></b><b class="sk-stein oben"></b><b class="sk-stein unten"></b>';
+const skinSzene = id => id ? SKIN_SZENE : '';
+
 // Ecke wie bei einer echten Spielkarte: Rang-Buchstabe über dem Farbsymbol, in der Rangfarbe
 function eckeHtml(info, pos) {
   const joker = info.i >= JOKER;
@@ -1106,7 +1112,7 @@ function hochkarteHtml(p, st, medaillen = null) {
   const sprint = Math.max(0, p.sprint_rekord || 0, ...Object.values(p.rekorde || {}));
   const skin = p.skinVorschau !== undefined ? p.skinVorschau : skinVon(p);
   return `<div class="hochkarte${st.rahmen ? ` rahmen-${st.rahmen}` : ''}${skin ? ` skin-${skin}` : ''}" style="--rang:${info.rang.farbe}">
-    <div class="hk-flaeche"></div>
+    <div class="hk-flaeche">${skinSzene(skin)}</div>
     ${effektHtml(st.effekt)}${rahmenDeko(st.rahmen)}
     ${eckeHtml(info, 'lo')}${eckeHtml(info, 'ru')}
     <div class="hk-inhalt">
@@ -1389,7 +1395,7 @@ function freundeAufbauen() {
 // Kartenskins: eigene Oberfläche der Spielerkarte, frei über Abzeichen
 function skinKachelnZeichnen() {
   const extra = { medaillen: meineMedaillen.length }, jetzt = skinVon(ich);
-  const probe = id => `<span class="sk-probe skin-probe${id ? ` skin-${id}` : ''}"><span class="hk-flaeche"></span></span>`;
+  const probe = id => `<span class="sk-probe skin-probe${id ? ` skin-${id}` : ''}"><span class="hk-flaeche">${skinSzene(id)}</span></span>`;
   $('stil-kacheln').innerHTML = `<button class="stil-kachel${!jetzt ? ' gewaehlt an' : ''}" data-skin="" aria-pressed="${!jetzt}">${probe('')}<span class="sk-text"><b>Klassik</b><small>${!jetzt ? 'angelegt' : 'immer frei'}</small></span></button>`
     + SKINS.map(k => {
       const st = skinStand(k, ich, extra), an = jetzt === k.id;
@@ -2107,7 +2113,7 @@ async function sprintStart(kategorie = 'flaggen') {
   $('sprint-hinweis').textContent = `${KATEGORIEN[kategorie].name}${region ? ` (${REGIONEN_SPRINT[region]}, Übung)` : ''}: gleich geht's los`;
   $('sprint-bild').innerHTML = `<p class="countdown" id="sprint-countdown">${SPRINT_COUNTDOWN}</p>`;
   // Während des Countdowns schon Umrisse und die ersten Bilder laden
-  const laden = kategorie === 'umrisse' || kategorie === 'gemischt' ? umrisseLaden() : kategorie === 'karte' ? karteLaden() : Promise.resolve();
+  const laden = Promise.all([['umrisse', 'gemischt'].includes(kategorie) ? umrisseLaden() : null, ['karte', 'nachbarn', 'gemischt'].includes(kategorie) ? karteLaden() : null]);
   laden.then(() => { if (sprint === s) while (s.vorrat.length < 2) sprintZiehen(); });
   for (let i = SPRINT_COUNTDOWN; i >= 1; i--) {
     if (sprint !== s) return;

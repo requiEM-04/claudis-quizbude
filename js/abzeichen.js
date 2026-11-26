@@ -157,15 +157,16 @@ export function vitrineLesen(p, extra, medaillen = null) {
   return aus;
 }
 
-// Kartenskins: eigene Oberfläche der Spielerkarte, freigeschaltet über Abzeichen (der Server rechnet dasselbe nach, Migration 011)
+// Kartenskins: eigene Oberfläche der Spielerkarte, freigeschaltet über Abzeichen (der Server rechnet dasselbe nach, Migration 011).
+// Die IDs sind die vom Server geprüften Schlüssel und bleiben deshalb, auch wenn Name und Aussehen sich geändert haben.
 export const SKINS = [
-  { id: 'gewitter', name: 'Gewitter', stufe: 2, anzahl: 5 },
-  { id: 'matrix', name: 'Matrix', stufe: 3, anzahl: 1 },
-  { id: 'frost', name: 'Frost', stufe: 3, anzahl: 3 },
-  { id: 'toxisch', name: 'Toxisch', stufe: 4, anzahl: 1 },
-  { id: 'lava', name: 'Lava', stufe: 4, anzahl: 3 },
-  { id: 'galaxie', name: 'Galaxie', stufe: 5, anzahl: 1 },
-  { id: 'meister', name: 'Meister', medaille: true },
+  { id: 'gewitter', name: 'Mitternacht', stufe: 2, anzahl: 5 },
+  { id: 'matrix', name: 'Neon', stufe: 3, anzahl: 1 },
+  { id: 'frost', name: 'Saphir', stufe: 3, anzahl: 3 },
+  { id: 'toxisch', name: 'Smaragd', stufe: 4, anzahl: 1 },
+  { id: 'lava', name: 'Rubin', stufe: 4, anzahl: 3 },
+  { id: 'galaxie', name: 'Harlekin', stufe: 5, anzahl: 1 },
+  { id: 'meister', name: 'Royal Flush', medaille: true },
 ];
 export const skinVonId = id => SKINS.find(s => s.id === id) || null;
 export const skinVon = p => skinVonId(p?.stil?.skin)?.id || null;

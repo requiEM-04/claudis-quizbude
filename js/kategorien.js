@@ -1,10 +1,11 @@
-import { LAENDER } from './laender.js?v=0.13.1';
-import { WISSEN, WISSEN_THEMEN } from './wissen.js?v=0.13.1';
-import { EMOJI, EMOJI_THEMEN } from './emoji.js?v=0.13.1';
-import { kanon } from './kanon.js?v=0.13.1';
-import { LAND, AUSWAHL, pruefe, mischen, flaggeUrl, abgleichen } from './abgleich.js?v=0.13.1';
-import { karteLaden } from './weltkarte.js?v=0.13.1';
-import { GRENZEN } from './grenzen.js?v=0.13.1';
+import { LAENDER } from './laender.js?v=0.13.2';
+import { WISSEN, WISSEN_THEMEN } from './wissen.js?v=0.13.2';
+import { EMOJI, EMOJI_THEMEN } from './emoji.js?v=0.13.2';
+import { kanon } from './kanon.js?v=0.13.2';
+import { LAND, AUSWAHL, pruefe, mischen, flaggeUrl, abgleichen } from './abgleich.js?v=0.13.2';
+import { karteLaden, ringeAlle } from './weltkarte.js?v=0.13.2';
+import { nachbarKarte } from './nachbarkarte.js?v=0.13.2';
+import { GRENZEN } from './grenzen.js?v=0.13.2';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const zahl = n => n.toLocaleString('de-DE');
@@ -14,7 +15,7 @@ let UMRISSE = null;
 let umrisseLaeuft = null;
 export function umrisseLaden() {
   if (UMRISSE) return Promise.resolve(UMRISSE);
-  umrisseLaeuft ||= import('./umrisse.js?v=0.13.1').then(m => { UMRISSE = m.UMRISSE; return UMRISSE; });
+  umrisseLaeuft ||= import('./umrisse.js?v=0.13.2').then(m => { UMRISSE = m.UMRISSE; return UMRISSE; });
   return umrisseLaeuft;
 }
 export const umrisseDa = () => !!UMRISSE;
@@ -46,6 +47,8 @@ function salat(name) {
     return b.reverse().join('');
   }).join('');
 }
+// Punktwerte wie bei deutschen Buchstabenspielen, nur als Zierde auf den Steinen
+const STEIN_WERT = { A: 1, B: 3, C: 4, D: 1, E: 1, F: 4, G: 2, H: 2, I: 1, J: 6, K: 4, L: 2, M: 3, N: 1, O: 2, P: 4, Q: 10, R: 1, S: 1, T: 1, U: 1, V: 6, W: 3, X: 8, Y: 10, Z: 3, Ä: 6, Ö: 8, Ü: 6 };
 const buchstabenZahl = n => n.replace(/[^\p{L}]/gu, '').length;
 // drei falsche Länder mit ähnlich langem Namen (sonst verrät die Länge die Antwort)
 function aehnlichLang(l) {
@@ -159,7 +162,12 @@ export const KATEGORIEN = {
       return { k: 'nachbarn', c: l.code, o: mischen([richtig, ...drei]) };
     },
     hinweis: f => f.o ? 'Welches Land grenzt daran?' : 'Nenne ein Nachbarland. Jedes zählt.',
-    bild: f => `<div class="bild-land bild-nachbarn"><img src="${flaggeUrl(f.c)}" alt=""><span>${esc(LAND[f.c].name)}</span><small>${GRENZEN[f.c].length === 1 ? 'hat 1 Nachbarland' : `hat ${GRENZEN[f.c].length} Nachbarländer`}</small></div>`,
+    bild: f => {
+      const n = GRENZEN[f.c].length, zahlText = n === 1 ? '1 Nachbarland' : `${n} Nachbarländer`, ringe = ringeAlle();
+      if (!ringe) return `<div class="bild-land bild-nachbarn"><img src="${flaggeUrl(f.c)}" alt=""><span>${esc(LAND[f.c].name)}</span><small>${zahlText}</small></div>`;
+      return `<div class="bild-nachbarn mit-karte">${nachbarKarte(f.c, ringe, GRENZEN, { klasse: 'nk-karte', label: `Karte: ${esc(LAND[f.c].name)} und Umgebung` })}`
+        + `<div class="nk-name"><img src="${flaggeUrl(f.c)}" alt=""><span>${esc(LAND[f.c].name)}</span></div><small class="nk-zahl">${zahlText}</small></div>`;
+    },
     option: (key) => esc(LAND[key].name),
     pruefe: (text, f) => nachbarPruefen(text, f),
     richtig: (key, f) => GRENZEN[f.c].includes(key),
@@ -174,7 +182,11 @@ export const KATEGORIEN = {
     pool: a => laenderPool(a, l => buchstabenZahl(l.name) >= 4 && buchstabenZahl(l.name) <= 20),
     frage: (l, mitOptionen) => ({ k: 'buchstaben', c: l.code, s: salat(l.name), ...(mitOptionen && { o: mischen([l.code, ...aehnlichLang(l).map(x => x.code)]) }) }),
     hinweis: () => 'Welches Land steckt in den Buchstaben?',
-    bild: f => `<div class="bild-salat" aria-label="Gemischte Buchstaben: ${esc(f.s)}">${f.s.split(/(\s+)/).filter(w => w.trim()).map((w, wi, alle) => `<span class="salat-wort">${[...w].map((ch, i) => `<b style="--i:${alle.slice(0, wi).reduce((n, x) => n + x.length, 0) + i}">${esc(ch)}</b>`).join('')}</span>`).join('')}</div>`,
+    bild: f => {
+      let i = 0;
+      const stein = ch => { const n = i++; return `<b style="--i:${n};--r:${((n * 37) % 7 - 3) * .7}deg">${esc(ch)}<sub>${STEIN_WERT[ch.toUpperCase()] ?? 1}</sub></b>`; };
+      return `<div class="bild-salat" aria-label="Gemischte Buchstaben: ${esc(f.s)}">${f.s.split(/\s+/).filter(Boolean).map(w => `<span class="salat-wort">${[...w].map(stein).join('')}</span>`).join('')}</div>`;
+    },
     option: (key) => esc(LAND[key].name),
     pruefe: (text, f) => pruefe(text, f.c),
     richtig: (key, f) => key === f.c,
@@ -311,8 +323,9 @@ export function fragenVorladen(fragen) {
     if (f.k === 'groesser') { bilder.add(f.c); bilder.add(f.d); }
     if (f.k === 'umrisse') umrisse = true;
   }
+  const karte = fragen.some(f => f.k === 'karte' || f.k === 'nachbarn');
   for (const c of bilder) { const img = new Image(); img.src = flaggeUrl(c); }
-  return Promise.all([umrisse ? umrisseLaden() : null, fragen.some(f => f.k === 'karte') ? karteLaden() : null]);
+  return Promise.all([umrisse ? umrisseLaden() : null, karte ? karteLaden() : null]);
 }
 
 export { kanon };

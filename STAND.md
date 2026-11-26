@@ -2,7 +2,7 @@
 
 ## Aktuell (25.11.2026)
 
-- **Version:** 0.13.1
+- **Version:** 0.13.2
 - **Live:** https://requiem-04.github.io/claudis-quizbude/ (Repo `requiEM-04/claudis-quizbude`, Branch `main`, GitHub Pages)
 - **Server:** Supabase-Projekt `quizbude` (Ref `jgvjjjiwfjxynbzjaxsg`, Frankfurt), E-Mail-Bestätigung aus, Realtime mit öffentlichen Kanälen.
 - **Inhalt:** Konten (Name + Passwort ab 4 Zeichen), Räume mit 4-Buchstaben-Code (live über Realtime), Flaggenraten (tippen oder 4 zur Auswahl), Flaggen-Sprint (60 s), Bestenliste (Siege, Punkte, Sprint), „Zuletzt gespielt".
@@ -181,10 +181,11 @@
 
 - **Neu in 0.13.0:**
   - **Spielerkarte:** Ecken wie bei echten Spielkarten (Rang-Buchstabe über Farbsymbol, unten gedreht) statt kleiner Wappenkarten. Die Kartenfläche folgt nicht mehr dem Seitenhintergrund.
-  - **Kartenskins** (Anpassen → Kartenskin, `profile.stil.skin`), frei über Abzeichen: Gewitter (5× Silber+), Matrix (1× Gold+), Frost (3× Gold+), Toxisch (1× Platin+), Lava (3× Platin+), Galaxie (1× Diamant), Meister (Saison-Medaille). Server prüft mit `qb_abzeichen_anzahl`/`qb_skin_frei` (Migration 011, am 26.11. eingespielt; Grenzen müssen zu ERFOLGE passen).
+  - **Kartenskins** (Anpassen → Kartenskin, `profile.stil.skin`), frei über Abzeichen, seit 0.13.2 als Kartenserie: Mitternacht (Pik, 5× Silber+), Neon (1× Gold+), Saphir (Karo, 3× Gold+), Smaragd (Kreuz, 1× Platin+), Rubin (Herz, 3× Platin+), Harlekin (1× Diamant), Royal Flush (Saison-Medaille). Gespeicherte IDs bleiben die alten (gewitter, matrix, frost, toxisch, lava, galaxie, meister), weil der Server sie prüft. Alle Skins haben dieselben Ebenen (`SKIN_SZENE` in app.js: Muster, Strahlen, Lichtring, Kartensymbol, Teilchen, Glanz, Rahmen, Zierlinie, Ecken, Steine); was sichtbar ist und wie es aussieht, regelt nur das CSS. Server prüft mit `qb_abzeichen_anzahl`/`qb_skin_frei` (Migration 011, am 26.11. eingespielt; Grenzen müssen zu ERFOLGE passen).
   - **Figuren süchtig** (Colins Wunsch, für alle): jede hängt an etwas anderem, mit eigenen Augen (gerötet, Augenringe, halb zu, aufgerissen) und Gegenstand. Fuchs Kaffee, Frosch Kiffen, Panda Bambus, Eule Energy-Drinks, Krake Zocken, Pinguin Bier, Katze Katzenminze, Igel Donuts, Schildkröte Serien, Dino Burger, Biene Honig, Koala Eukalyptus, Wal Vapen, Papagei Handy, Quizbot Strom, Herzdrache Lollis, Sternwolf Musik, Phönix Chili, Hofnarr Glücksspiel, Löwe Zigarren. Bewusst nichts mit Spritzen oder harten Drogen.
   - Colin: **kein Shop**. Mehr Kosmetik zum Freispielen ist gewünscht, Chat-Sticker als gute Idee genannt.
 
+- **Neu in 0.13.2:** Kartenskins komplett neu als Kartenserie (siehe oben). Nachbarn zeigt im Spiel eine kleine Karte: das Land leuchtet, Nachbarn als Umriss, Rest blass (`js/nachbarkarte.js`, braucht die Weltkarten-Daten, die bei Nachbarn/Gemischt mitgeladen werden; ohne Daten Flagge wie vorher). Kachelbild Nachbarn: `bilder/nachbarn-vorschau.svg`, gebaut mit `node werkzeuge/nachbarn_vorschau.mjs [CODE]`. Buchstabensalat: helle Spielsteine mit Punktwerten auf einer Holzbank, Kachel als Fächer aus Steinen, Titel bricht als „Buchstaben-salat“ um.
 - **Neu in 0.13.1:** Ladebildschirm schlicht (nur Logo + dünne Linie, Logo erst nach 0,25 s, Fläche sofort deckend). Updates laden still: keine Meldung, erst wenn kein Spiel läuft und der Tab im Hintergrund ist oder 15 s nichts passiert; danach ohne Ladebildschirm zurück an dieselbe Stelle (Adresse, Scrollstand, Raum, Profil-Reiter, Anpassen-Reiter). Flag `quizbude.leise` in sessionStorage.
 
 ## Als Nächstes (mit Colin besprochen)
