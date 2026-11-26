@@ -40,7 +40,15 @@ function leinwand() {
 
 // Augenpaar, x = linkes Auge (das rechte wird gespiegelt). schraeg > 0: Lid fällt zur Nase hin ab (entschlossener Blick)
 let SUCHT_JETZT = null; // Augen-Einstellungen der Sucht, gelten für die gerade gezeichnete Figur
+let AUSDRUCK_JETZT = null; // Emotes: andere Augen und die Lage der Augen für Zutaten
 function augen(L, x, y, r, iris, opt = {}) {
+  const a = AUSDRUCK_JETZT;
+  if (!a) return augenNormal(L, x, y, r, iris, opt);
+  a.pos = { x, y, r, iris, lid: opt.lid || T };
+  const normal = (o = {}) => augenNormal(L, x, y, r, iris, { ...opt, ...o });
+  return a.augen ? a.augen({ L, x, y, r, iris, lid: opt.lid || T, normal }) : normal(a.augenOpt);
+}
+function augenNormal(L, x, y, r, iris, opt = {}) {
   const { lid = T, schraeg = 1, pupille = 'rund', braue = null, schlitz = false, rot = false, ringe = false, zu = 0, weit = false, haut = null } = { ...opt, ...(SUCHT_JETZT?.augen || {}) };
   const s2 = weit ? schraeg * .2 : schraeg;
   const form = `M${r1(x - r)} ${r1(y + r * .08)} Q${r1(x - r * .15)} ${r1(y - r * 1.05)} ${r1(x + r)} ${r1(y - r * (.05 + .28 * s2))} Q${r1(x + r * .2)} ${r1(y + r * .95)} ${r1(x - r)} ${r1(y + r * .08)}Z`;
@@ -416,6 +424,21 @@ export function figurSvg(id) {
   SUCHT_JETZT = null;
   return `<svg class="figur" viewBox="0 0 64 64" aria-hidden="true"><defs>${L.defs()}</defs>${inhalt}</svg>`;
 }
+
+// Emotes: Figur ohne ihren Gegenstand, mit eigenem Ausdruck. ausdruck = { augen?, augenOpt?, hinten?, dazu?, rahmen? }
+// augen({ L, x, y, r, iris, lid, normal }) zeichnet beide Augen; hinten/dazu(L, pos) liegen hinter bzw. über der Figur
+export function figurAusdruck(id, ausdruck = {}) {
+  const zeichnen = ZEICHNUNG[id];
+  if (!zeichnen) return '';
+  AUSDRUCK_JETZT = { ...ausdruck, pos: null };
+  const L = leinwand();
+  let inhalt;
+  try { inhalt = zeichnen(L); } finally { var pos = AUSDRUCK_JETZT.pos; AUSDRUCK_JETZT = null; }
+  const p = pos || { x: 24, y: 32, r: 4, iris: '#888', lid: T };
+  const hinten = ausdruck.hinten ? ausdruck.hinten(L, p) : '', dazu = ausdruck.dazu ? ausdruck.dazu(L, p) : '';
+  return `<svg class="emote-bild" viewBox="${ausdruck.rahmen || '0 0 64 64'}" aria-hidden="true"><defs>${L.defs()}</defs>${hinten}${inhalt}${dazu}</svg>`;
+}
+export const ZEICHEN = { T, U, hell, dunkel, stern, zacken, glanz, r1, mix };
 
 // Alte Emoji-Avatare: freie Tiere werden automatisch zur passenden Figur
 const EMOJI_FIGUR = Object.fromEntries(FIGUREN.filter(f => !f.rang && !f.medaille).map(f => [f.emoji, f.id]));

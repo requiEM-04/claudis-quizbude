@@ -2,7 +2,7 @@
 
 ## Aktuell (25.11.2026)
 
-- **Version:** 0.17.1
+- **Version:** 0.18.0
 - **Live:** https://requiem-04.github.io/claudis-quizbude/ (Repo `requiEM-04/claudis-quizbude`, Branch `main`, GitHub Pages)
 - **Server:** Supabase-Projekt `quizbude` (Ref `jgvjjjiwfjxynbzjaxsg`, Frankfurt), E-Mail-Bestätigung aus, Realtime mit öffentlichen Kanälen.
 - **Inhalt:** Konten (Name + Passwort ab 4 Zeichen), Räume mit 4-Buchstaben-Code (live über Realtime), Flaggenraten (tippen oder 4 zur Auswahl), Flaggen-Sprint (60 s), Bestenliste (Siege, Punkte, Sprint), „Zuletzt gespielt".
@@ -183,8 +183,15 @@
   - **Spielerkarte:** Ecken wie bei echten Spielkarten (Rang-Buchstabe über Farbsymbol, unten gedreht) statt kleiner Wappenkarten. Die Kartenfläche folgt nicht mehr dem Seitenhintergrund.
   - **Kartenskins** (Anpassen → Kartenskin, `profile.stil.skin`), frei über Abzeichen, seit 0.13.2 als Kartenserie: Mitternacht (Pik, 5× Silber+), Neon (1× Gold+), Saphir (Karo, 3× Gold+), Smaragd (Kreuz, 1× Platin+), Rubin (Herz, 3× Platin+), Harlekin (1× Diamant), Royal Flush (Saison-Medaille). Gespeicherte IDs bleiben die alten (gewitter, matrix, frost, toxisch, lava, galaxie, meister), weil der Server sie prüft. Alle Skins haben dieselben Ebenen (`SKIN_SZENE` in app.js: Muster, Strahlen, Lichtring, Kartensymbol, Teilchen, Glanz, Rahmen, Zierlinie, Ecken, Steine); was sichtbar ist und wie es aussieht, regelt nur das CSS. Server prüft mit `qb_abzeichen_anzahl`/`qb_skin_frei` (Migration 011, am 26.11. eingespielt; Grenzen müssen zu ERFOLGE passen).
   - **Figuren süchtig** (Colins Wunsch, für alle): jede hängt an etwas anderem, mit eigenen Augen (gerötet, Augenringe, halb zu, aufgerissen) und Gegenstand. Fuchs Kaffee, Frosch Kiffen, Panda Bambus, Eule Energy-Drinks, Krake Zocken, Pinguin Bier, Katze Katzenminze, Igel Donuts, Schildkröte Serien, Dino Burger, Biene Honig, Koala Eukalyptus, Wal Vapen, Papagei Handy, Quizbot Strom, Herzdrache Lollis, Sternwolf Musik, Phönix Chili, Hofnarr Glücksspiel, Löwe Zigarren. Bewusst nichts mit Spritzen oder harten Drogen.
-  - Colin: **kein Shop**. Mehr Kosmetik zum Freispielen ist gewünscht, Chat-Sticker als gute Idee genannt.
+  - Colin: **kein Shop**. Mehr Kosmetik zum Freispielen ist gewünscht, Chat-Sticker als gute Idee genannt (umgesetzt als Emotes in 0.18.0).
 
+- **Neu in 0.18.0:**
+  - **Emotes im Raum-Chat** (`js/emotes.js`): 16 eigene Emotes aus den Figuren mit eigenem Ausdruck (Hook `figurAusdruck` in figuren.js: Figur ohne Gegenstand, Augen per Funktion ersetzbar, Lage der Augen für Zutaten). Frei für alle: qbGG, qbLOL, qbHmm, qbWow, qbHeul, qbLiebe. Mit Ruhm (Dame und Ass jeder Farbe, Joker): qbCool, qbZzz, qbWut, qbSus, qbPopcorn, qbBumm, qbIdee, qbKrone, qbJackpot. Ab 1.12.2026 für alle: qbSchnee.
+  - Tippen: Wort im Text (Groß/klein egal), Tab ergänzt angefangene Wörter (auch „gg“, „li“), nochmal Tab blättert. Smiley-Knopf links im Chat-Feld öffnet die Liste (gesperrte grau mit Hinweis), klappt nach unten, wenn oben kein Platz ist. Escape schließt.
+  - Gezeichnet wird ein Emote nur, wenn der Absender es hat (Ruhm aus der Spielerliste im Raum), sonst bleibt es ein Wort. Nur Emotes in einer Nachricht (bis 6) werden größer. Als `<img>` mit Daten-Adresse (einmal erzeugt, doppelte Attribute der Figuren werden fürs XML bereinigt).
+  - Profil, Anpassen: neuer Reiter „Emotes“ mit allen, Fortschrittsbalken für gesperrte. Ruhmesweg und Aufstiegs-Fenster nennen die neuen Emotes. Vorschau aller Emotes: `werkzeuge/emote-vorschau.html`.
+  - Raum am Handy: Kopfzeile bricht um, die Seite war vorher breiter als der Bildschirm.
+  - Test: `werkzeuge/test/emotetest.py`.
 - **Neu in 0.17.1:** Gruppenfarben (Colin mochte vom Startseiten-Entwurf 3b nur die Farben, der Rest bleibt wie er war): Geografie Salbei `#8FB3A2`, Wörter Gold `#E3B66B`, Wissen und Schätzen Blau `#9DB8D9`, Alles zusammen Rosé `#D99A9A` (`--akzent` über `.gruppe-<id>`). Gruppentitel mit Farbpunkt in Bude und Sprint-Liste, Kacheln mit farbiger Oberkante, beim Drüberfahren Rand in der Gruppenfarbe.
 - **Neu in 0.17.0:**
   - **Sprint-Auswahl als Liste mit Vorschau** (Colin hat aus vier UI-Vorschlägen diesen gewählt): links alle Sprint-Kategorien nach Gruppen (`SPRINT_LISTE` in app.js, Hauptstädte nur einmal), je Zeile Symbol, Rekord, Saisonplatz und „Übung“-Marke. Rechts die gewählte Kategorie groß (Kachelbild, Rekord, Saisonplatz, Bestwert der Saison, kurze Regel für Karte/Größer/Mehr/Schätzen/Bombe/Wissen/Gemischt), darunter nur die Einstellungen, die für sie gelten (Richtung, Region, Variante, Gemischt-Auswahl), „Standard einstellen“ bei Übung, Startknopf und die Top 5 der Saison plus eigener Platz. Die alte Leiste für alle Kategorien, „Mehr Einstellungen“ und das Saison-Raster darunter sind weg.
@@ -212,7 +219,7 @@
 - **Neu in 0.13.1:** Ladebildschirm schlicht (nur Logo + dünne Linie, Logo erst nach 0,25 s, Fläche sofort deckend). Updates laden still: keine Meldung, erst wenn kein Spiel läuft und der Tab im Hintergrund ist oder 15 s nichts passiert; danach ohne Ladebildschirm zurück an dieselbe Stelle (Adresse, Scrollstand, Raum, Profil-Reiter, Anpassen-Reiter). Flag `quizbude.leise` in sessionStorage.
 
 ## Als Nächstes (mit Colin besprochen)
-- Reihenfolge jetzt: neue Profilbilder (live in 0.11.0) → Freunde und Einladungen → neue Quizze Nachbarn und Buchstabensalat → vorgemerkt: Seitenverhältnisse (von Flaggen) raten. Kein Tagesrätsel nach Loldle-Art.
+- Stand 26.11.: Colin will die UI-Vorschläge Warteraum als Spieltisch und Fragebildschirm als Showbühne nicht. Seitenverhältnisse raten gestrichen (zu schwer). Emoji-Rätsel bleibt ausgeblendet, Colin fragt evtl. andere Leute. Kein Tagesrätsel nach Loldle-Art.
 
 1. Eigene Profilbilder statt Emojis (mit Colin zusammen gestalten).
 2. (erledigt in 0.9.3) Admin-Bereich (eigenes Konto `requiem-admin`, Login mit Name „Admin“, Tabelle `admins`, `is_admin()` in jeder Funktion, eigene Seite `admin.html`): Spieler, Räume, Nachricht an alle, Server, Protokoll. Colin legt das Konto selbst in Supabase an.

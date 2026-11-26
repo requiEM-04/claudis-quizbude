@@ -1,28 +1,29 @@
-import { VERSION } from './config.js?v=0.17.1';
+import { VERSION } from './config.js?v=0.18.0';
 import {
   online, nameFehler, registrieren, anmelden, abmelden, sitzungHolen, profilLaden, profilSpeichern,
   bestenliste, spieleSeit, alleProfile, sprintEintragen, sprintBestenliste, rangVon, spielerAnzahl, spieleVon, sb,
   adminAnmelden, istAdminName, konfigLaden, adminEinrichten, einrichtungOffen, abzeichenVon, saisonAbschliessen, winterquestStand,
   freundeListe, freundAnfragen, freundAntworten, freundEntfernen,
-} from './server.js?v=0.17.1';
-import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.17.1';
-import { Raum, codeNeu, STANDARD, TIPPFEHLER_ABZUG } from './raum.js?v=0.17.1';
-import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.17.1';
+} from './server.js?v=0.18.0';
+import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.18.0';
+import { Raum, codeNeu, STANDARD, TIPPFEHLER_ABZUG } from './raum.js?v=0.18.0';
+import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.18.0';
 import {
   KATEGORIEN, KATEGORIE_REIHE, KATEGORIE_GRUPPEN, SPRINT_REIHE, mehrWert, bombeLaden, bombeBenutzt, bombeGrund, bombeZuletzt, bombeSvg, kategorieVon, optionSchluessel, richtigeWahl, umrisseDa, umrisseLaden,
   sprintFrage, pruefeFrage, fragenVorladen, kanon, ARTEN as GEMISCHT_ARTEN, gemischtArten, alleArten, varianteVon, zahlLesen, schaetzWertung, zahlText,
-} from './kategorien.js?v=0.17.1';
-import { LAENDER } from './laender.js?v=0.17.1';
-import { auswahlfeld } from './auswahlfeld.js?v=0.17.1';
-import { KATEGORIE_SYMBOL } from './symbole.js?v=0.17.1';
-import { konfetti } from './konfetti.js?v=0.17.1';
-import { karteBauen, karteLaden, auswerten } from './weltkarte.js?v=0.17.1';
-import { STUFEN, ERFOLGE, erfolgStand, emblem, wertungName, saisonName, saisonKurz, vitrineLesen, SKINS, skinVon, skinVonId, skinStand, skinBedingung } from './abzeichen.js?v=0.17.1';
+} from './kategorien.js?v=0.18.0';
+import { LAENDER } from './laender.js?v=0.18.0';
+import { auswahlfeld } from './auswahlfeld.js?v=0.18.0';
+import { KATEGORIE_SYMBOL } from './symbole.js?v=0.18.0';
+import { konfetti } from './konfetti.js?v=0.18.0';
+import { karteBauen, karteLaden, auswerten } from './weltkarte.js?v=0.18.0';
+import { STUFEN, ERFOLGE, erfolgStand, emblem, wertungName, saisonName, saisonKurz, vitrineLesen, SKINS, skinVon, skinVonId, skinStand, skinBedingung } from './abzeichen.js?v=0.18.0';
 import {
   RAENGE, BILDER, ARTEN, JOKER, SONDER, sonderVon, sonderFrei, WINTERQUEST, questGeschafft, ruhmInfo, stufeVon, stufeInfo, wappen, effektHtml, rahmenDeko, stilVon, istFrei, freiAb, neuFrei,
-  belohnungName, rangVonId, symbol, symbolSvg, SCHWELLEN, flockeSvg, bildVon, BILD_ARTEN } from './ruhm.js?v=0.17.1';
-import { freundeStart, freundeStopp, freundeOrt, istOnline, onlineAbo, einladungAbo, anfrageAbo, einladen, anfrageMelden } from './freunde.js?v=0.17.1';
-import { FIGUREN, FREIE_FIGUREN, KREISE, RINGE, figurSvg, figurAusEmoji, figurVonId, bildFrei, bildFreiAb, bildEintrag, suchtVon } from './figuren.js?v=0.17.1';
+  belohnungName, rangVonId, symbol, symbolSvg, SCHWELLEN, flockeSvg, bildVon, BILD_ARTEN } from './ruhm.js?v=0.18.0';
+import { freundeStart, freundeStopp, freundeOrt, istOnline, onlineAbo, einladungAbo, anfrageAbo, einladen, anfrageMelden } from './freunde.js?v=0.18.0';
+import { FIGUREN, FREIE_FIGUREN, KREISE, RINGE, figurSvg, figurAusEmoji, figurVonId, bildFrei, bildFreiAb, bildEintrag, suchtVon } from './figuren.js?v=0.18.0';
+import { EMOTES, emoteVonId, emoteFrei, emoteHinweis, emoteImg, chatHtml, emoteErgaenzen, emotesAbStufe } from './emotes.js?v=0.18.0';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -137,6 +138,73 @@ function toast(text) {
 
 function farbe(f) { return /^#[0-9a-fA-F]{6}$/.test(f || '') ? f : FARBEN[0]; }
 // Kleines Bild vor Chatzeilen (bekannte Mitspieler mit ihrer Figur)
+// Emotes zeigen wir nur, wenn der Absender sie freigespielt hat (sein Ruhm steht in der Spielerliste)
+function chatZeile(r, m) {
+  const p = r.bekannt?.get(m.id) || (ich && m.id === ich.id ? ich : null);
+  const { html, nurEmotes } = chatHtml(m.text, p);
+  return `<li${nurEmotes ? ' class="nur-emotes"' : ''}><b>${chatAvatar(r, m)} ${esc(m.name)}:</b> ${html}</li>`;
+}
+// Emote-Liste über dem Chat-Feld: Klick setzt das Wort an die Schreibstelle
+function emoteListeZeichnen() {
+  const p = raum?.bekannt?.get(raum.ich?.id) || ich;
+  $('emote-liste').innerHTML = `<div class="el-kopf"><b>Emotes</b><small>Wort tippen, Tab ergänzt</small></div><div class="el-raster">${EMOTES.map(e => {
+    const frei = emoteFrei(e, p);
+    return `<button type="button" class="el-emote${frei ? '' : ' zu'}" data-emote="${e.id}" title="${esc(frei ? e.code : `${e.code}: ${emoteHinweis(e)}`)}"${frei ? '' : ' aria-disabled="true"'}>${emoteImg(e, 'el-bild')}</button>`;
+  }).join('')}</div>`;
+}
+function emoteListe(auf) {
+  const l = $('emote-liste');
+  if (auf === undefined) auf = l.hidden;
+  if (auf) emoteListeZeichnen();
+  l.hidden = !auf;
+  $('emote-knopf').setAttribute('aria-expanded', auf);
+  // Nach oben, wenn darüber Platz ist, sonst unter das Eingabefeld
+  if (auf) l.classList.toggle('unten', $('chat-form').getBoundingClientRect().top < l.offsetHeight + 16);
+}
+function emoteEinsetzen(code) {
+  const ein = $('chat-eingabe'), v = ein.value, a = ein.selectionStart ?? v.length, b = ein.selectionEnd ?? v.length;
+  const vor = v.slice(0, a), nach = v.slice(b);
+  const neu = (vor && !/\s$/.test(vor) ? vor + ' ' : vor) + code + (nach.startsWith(' ') ? '' : ' ');
+  if ((neu + nach).length > 200) { toast('Die Nachricht ist schon voll.'); return; }
+  ein.value = neu + nach;
+  ein.focus();
+  ein.setSelectionRange(neu.length, neu.length);
+}
+let emoteTab = null; // { start, anfang, n }: letztes Ergänzen, damit Tab weiterblättert
+function emoteListeAufbauen() {
+  $('emote-knopf').onclick = () => emoteListe();
+  $('emote-liste').onclick = e => {
+    const b = e.target.closest('.el-emote');
+    if (!b) return;
+    const em = emoteVonId(b.dataset.emote);
+    if (b.classList.contains('zu')) { toast(`${em.code}: ${emoteHinweis(em)}.`); return; }
+    emoteEinsetzen(em.code);
+  };
+  document.addEventListener('pointerdown', e => {
+    if (!$('emote-liste').hidden && !e.target.closest('#emote-liste, #emote-knopf')) emoteListe(false);
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && !$('emote-liste').hidden) { emoteListe(false); $('chat-eingabe').focus(); }
+  });
+  const ein = $('chat-eingabe');
+  ein.addEventListener('keydown', e => {
+    if (e.key !== 'Tab' || e.shiftKey || e.altKey || e.ctrlKey) { if (e.key !== 'Shift') emoteTab = null; return; }
+    const pos = ein.selectionStart ?? ein.value.length, vor = ein.value.slice(0, pos);
+    const wort = vor.match(/(\S+)$/)?.[1] || '';
+    const weiter = emoteTab && emoteTab.ende === pos && vor.endsWith(emoteTab.zuletzt);
+    const anfang = weiter ? emoteTab.anfang : wort, n = weiter ? emoteTab.n + 1 : 0;
+    const p = raum?.bekannt?.get(raum.ich?.id) || ich;
+    const em = emoteErgaenzen(anfang, p, n);
+    if (!em) return;
+    e.preventDefault();
+    const start = pos - (weiter ? emoteTab.zuletzt.length : wort.length);
+    const einsatz = em.code + ' ';
+    ein.value = ein.value.slice(0, start) + einsatz + ein.value.slice(pos).replace(/^ /, '');
+    const ende = start + einsatz.length;
+    ein.setSelectionRange(ende, ende);
+    emoteTab = { anfang, n, ende, zuletzt: einsatz };
+  });
+}
 const chatAvatar = (r, m) => { const p = m.id && r.bekannt?.get(m.id); return `<span class="chat-av">${avatarHtml(p ? { ...p, id: m.id } : { avatar: m.avatar, farbe: '#353B3F' })}</span>`; };
 
 // Profilbild: Figur (gewählt oder aus dem alten Emoji), Kreis (bewegt oder einfache Farbe), Rand
@@ -1290,6 +1358,16 @@ function kachelName(art, r) {
   if (art === 'titel') return `<span class="nf-${r.id}">${esc(r.titel)}</span>`;
   return esc(r[art === 'effekt' ? 'effekt' : art === 'rahmen' ? 'rahmen' : 'hintergrund']);
 }
+function emoteKachelnZeichnen() {
+  const ruhm = ich.ruhm || 0, zahl = n => n.toLocaleString('de-DE');
+  $('stil-kacheln').innerHTML = EMOTES.map(e => {
+    const frei = emoteFrei(e, ich), noetig = e.ab != null ? SCHWELLEN[e.ab] : 0, rang = e.ab != null ? stufeInfo(e.ab).rang : null;
+    const unten = frei ? `<small>${e.ab == null ? (e.winter ? 'Winter 2026, frei' : 'für alle frei') : `${stufeInfo(e.ab).name}, frei`}</small>`
+      : e.winter ? `<small>${esc(emoteHinweis(e))}</small>`
+        : `<small>ab ${stufeInfo(e.ab).name}</small><span class="ruhm-balken" style="--rang:${rang.farbe};--anteil:${Math.min(1, ruhm / noetig).toFixed(3)}"><i></i></span><small>${zahl(ruhm)} / ${zahl(noetig)} Ruhm</small>`;
+    return `<button class="stil-kachel emote-kachel${frei ? '' : ' gesperrt'}" data-emote="${e.id}" aria-pressed="false"><span class="sk-probe ek-bild">${emoteImg(e, 'ek-img')}</span><span class="sk-text"><b>${esc(e.code)}</b><small class="ek-name">${esc(e.name)}</small>${unten}</span>${frei ? '' : '<span class="sk-schloss" aria-hidden="true">🔒</span>'}</button>`;
+  }).join('');
+}
 function anpassenZeichnen() {
   const st = stilVon(ich), wahl = st, ruhm = ich.ruhm || 0, zahl = n => n.toLocaleString('de-DE');
   $('anpassen-reiter').innerHTML = ARTEN.map(a => {
@@ -1299,8 +1377,10 @@ function anpassenZeichnen() {
   }).join('') + (() => {
     const extra = { medaillen: meineMedaillen.length }, frei = SKINS.filter(k => skinStand(k, ich, extra).frei).length;
     return `<button role="tab" class="umschalter-knopf${anpassenArt === 'skin' ? ' aktiv' : ''}" aria-selected="${anpassenArt === 'skin'}" data-art="skin">Kartenskin <small>${frei + 1}/${SKINS.length + 1}</small></button>`;
-  })();
+  })() + `<button role="tab" class="umschalter-knopf${anpassenArt === 'emote' ? ' aktiv' : ''}" aria-selected="${anpassenArt === 'emote'}" data-art="emote">Emotes <small>${EMOTES.filter(e => emoteFrei(e, ich)).length}/${EMOTES.length}</small></button>`;
+  $('anpassen-info').textContent = anpassenArt === 'emote' ? 'Emotes gibt es im Raum-Chat: das Wort tippen (Tab ergänzt) oder über den Smiley neben dem Eingabefeld wählen.' : 'Ein Klick legt es an, links siehst du sofort das Ergebnis.';
   if (anpassenArt === 'skin') { skinKachelnZeichnen(); hochkarteZeichnen(); return; }
+  if (anpassenArt === 'emote') { emoteKachelnZeichnen(); hochkarteZeichnen(); return; }
   const art = anpassenArt;
   const keiner = `<button class="stil-kachel${!wahl[art] ? ' gewaehlt' : ''}${!st[art] ? ' an' : ''}" data-rang="" aria-pressed="${!wahl[art]}">${kachelProbe(art, null)}<span class="sk-text"><b>Keiner</b><small>${!st[art] ? 'angelegt' : 'nichts anzeigen'}</small></span></button>`;
   $('stil-kacheln').innerHTML = keiner + RAENGE.map(r => {
@@ -1329,19 +1409,20 @@ async function stilAnlegen(neu, meldung = 'Angelegt.') {
   } catch (e) { toast(e.message); }
 }
 // Ruhmesweg als Tabelle: Zeilen sind die Kartenfarben (Ränge), Spalten Bube bis Ass, jede Stufe schaltet eine Sache frei
-const FREI_NACH_STUFE = ['Namensfarbe + Bildrand', 'Titel + Bildhintergrund', 'Karten-Effekt + Figur', 'Rahmen + Hintergrund'];
+const FREI_NACH_STUFE = ['Namensfarbe + Bildrand', 'Titel + Bildhintergrund + Emote', 'Karten-Effekt + Figur', 'Rahmen + Hintergrund + Emote'];
+const emoteAb = i => emotesAbStufe(i).map(e => `, ${e.code}`).join('');
 function ruhmeswegZeichnen() {
   const jetzt = stufeVon(ich.ruhm || 0), zahl = n => n.toLocaleString('de-DE');
   const zustand = i => i < jetzt ? 'erreicht' : i === jetzt ? 'aktuell' : 'gesperrt';
   const bild = (liste, r) => esc(liste.find(e => e.rang === r.id)?.name || '');
-  const belohnung = (r, f) => [`${esc(r.name)}, Rand ${bild(RINGE, r)}`, `„${esc(r.titel)}“, ${bild(KREISE, r)}`, `${esc(r.effekt)}, ${bild(FIGUREN, r)}`, `${esc(r.rahmen)}, ${esc(r.hintergrund)}`][f];
+  const belohnung = (r, f) => [`${esc(r.name)}, Rand ${bild(RINGE, r)}`, `„${esc(r.titel)}“, ${bild(KREISE, r)}`, `${esc(r.effekt)}, ${bild(FIGUREN, r)}`, `${esc(r.rahmen)}, ${esc(r.hintergrund)}`][f] + emoteAb(RAENGE.indexOf(r) * 4 + f);
   const kopf = `<div class="rw-ecke"></div>${BILDER.map((b, f) => `<div class="rw-kopf"><b>${b.name}</b><small>${FREI_NACH_STUFE[f]}</small></div>`).join('')}`;
   const zeilen = RAENGE.slice(0, 4).map((r, ri) => `<div class="rw-rang nf-${r.id}"><span class="rw-farbe ${r.rot ? 'rot' : ''}">${symbolSvg(r.id)}</span>${r.name}</div>${[0, 1, 2, 3].map(f => {
     const i = ri * 4 + f;
     return `<div class="rw-zelle ${zustand(i)}" style="--rang:${r.farbe}">${wappen(0, { stufe: i, groesse: 28 })}<span><b>${zahl(SCHWELLEN[i])}</b><small>${belohnung(r, f)}</small></span>${i === jetzt ? '<i class="rw-du">du</i>' : ''}</div>`;
   }).join('')}`).join('');
   const joker = RAENGE[4];
-  const jz = `<div class="rw-rang nf-joker">Joker</div><div class="rw-zelle rw-joker ${zustand(JOKER)}" style="--rang:${joker.farbe}">${wappen(0, { stufe: JOKER, groesse: 28 })}<span><b>${zahl(SCHWELLEN[JOKER])}</b><small>Alles im Joker-Stil: schillernder Name, „${esc(joker.titel)}“, Holo-Effekt, Regenbogenrahmen und Hintergrund, dazu Figur Hofnarr mit Holo-Kreis und Regenbogenrand</small></span>${jetzt === JOKER ? '<i class="rw-du">du</i>' : ''}</div>`;
+  const jz = `<div class="rw-rang nf-joker">Joker</div><div class="rw-zelle rw-joker ${zustand(JOKER)}" style="--rang:${joker.farbe}">${wappen(0, { stufe: JOKER, groesse: 28 })}<span><b>${zahl(SCHWELLEN[JOKER])}</b><small>Alles im Joker-Stil: schillernder Name, „${esc(joker.titel)}“, Holo-Effekt, Regenbogenrahmen und Hintergrund, dazu Figur Hofnarr mit Holo-Kreis und Regenbogenrand${emoteAb(JOKER).replace(', ', ' und Emote ')}</small></span>${jetzt === JOKER ? '<i class="rw-du">du</i>' : ''}</div>`;
   $('ruhmesweg').innerHTML = kopf + zeilen + jz;
 }
 
@@ -1378,7 +1459,7 @@ function aufstiegZeigen(alt, neu, erstesMal) {
   if (dlg.open || !ich) return;
   const s = stufeInfo(neu);
   const neues = [];
-  for (let i = Math.max(0, alt + 1); i <= neu; i++) neues.push(...neuFrei(i));
+  for (let i = Math.max(0, alt + 1); i <= neu; i++) neues.push(...neuFrei(i), ...emotesAbStufe(i).map(e => ({ art: 'emote', rang: stufeInfo(i).rang.id, id: e.id })));
   const zeigen = neues.slice(-4);
   $('aufstieg-inhalt').style.setProperty('--rang', s.rang.farbe);
   $('aufstieg-inhalt').innerHTML = `
@@ -1386,7 +1467,7 @@ function aufstiegZeigen(alt, neu, erstesMal) {
     <p class="ueber">${erstesMal ? 'Ruhm ist da. Alles Bisherige zählt mit.' : 'Aufstieg!'}</p>
     <h2 id="aufstieg-titel" class="nf-${s.rang.id}">${s.name}</h2>
     <p class="ruhm-zahl">${(ich.ruhm || 0).toLocaleString('de-DE')} Ruhm</p>
-    ${zeigen.length ? `<ul class="aufstieg-neu">${zeigen.map((n, i) => `<li style="--i:${i}"><span class="nf-${n.rang}">${esc(belohnungName(n.art, n.rang, n.id))}</span><small>neu</small></li>`).join('')}</ul>` : ''}
+    ${zeigen.length ? `<ul class="aufstieg-neu">${zeigen.map((n, i) => `<li style="--i:${i}"><span class="nf-${n.rang}">${n.art === 'emote' ? `Emote ${esc(emoteVonId(n.id).code)}` : esc(belohnungName(n.art, n.rang, n.id))}</span><small>neu</small></li>`).join('')}</ul>` : ''}
     ${neues.length > zeigen.length ? `<p class="unterzeile">und ${neues.length - zeigen.length} weitere im Profil</p>` : ''}
     <div class="zeile mitte">${neues.length ? '<button class="knopf haupt" id="aufstieg-ansehen">Im Profil ansehen</button>' : ''}<button class="knopf zweit" id="aufstieg-weiter">Weiter</button></div>`;
   dlg.showModal();
@@ -1611,6 +1692,11 @@ function profilAufbauen() {
   $('stil-kacheln').onclick = e => {
     const b = e.target.closest('.stil-kachel');
     if (!b) return;
+    if (anpassenArt === 'emote') {
+      const em = emoteVonId(b.dataset.emote);
+      toast(b.classList.contains('gesperrt') ? `${em.code}: ${emoteHinweis(em)}.` : `Im Raum-Chat ${em.code} tippen.`);
+      return;
+    }
     if (anpassenArt === 'skin') {
       const k = skinVonId(b.dataset.skin);
       if (b.classList.contains('gesperrt')) { toast(`${k.name}: frei mit ${skinBedingung(k)}.`); return; }
@@ -2018,9 +2104,11 @@ function raumAufbauen() {
     if (r === 'falsch') { b.classList.add('falsch'); rm.className = 'rueckmeldung schlecht'; rm.textContent = zufall(SPRUCH.falsch); }
     if (r !== 'zu') document.querySelectorAll('#optionen button').forEach(x => { x.disabled = true; });
   };
+  emoteListeAufbauen();
   $('chat-form').onsubmit = e => {
     e.preventDefault();
     if (!raum) return;
+    emoteListe(false);
     const r = raum.chatten($('chat-eingabe').value);
     if (r === 'hass') { toast('Nicht gesendet. So etwas gibt es hier nicht.'); return; }
     if (r === 'grob') { toast('Nicht gesendet. Der Chat ist eingeschränkt.'); return; }
@@ -2243,7 +2331,7 @@ function raumZeichnen() {
     ? `<li class="system">${esc(m.text)}</li>`
     : m.daneben
       ? `<li class="daneben"><span class="daneben-x" aria-label="falsch">✗</span><b>${esc(m.name)}</b> <span class="daneben-text">${esc(m.text)}</span></li>`
-      : `<li><b>${chatAvatar(r, m)} ${esc(m.name)}:</b> ${esc(m.text)}</li>`).join('');
+      : chatZeile(r, m)).join('');
   if (unten) cl.scrollTop = cl.scrollHeight;
 }
 

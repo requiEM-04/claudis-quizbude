@@ -658,6 +658,7 @@ kbd {
   box-shadow: var(--schatten);
 }
 .buehne-kopf { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+@media (max-width: 560px) { .buehne-kopf { flex-wrap: wrap; row-gap: 10px; } .buehne-kopf .kopf-knoepfe { margin-left: auto; } }
 .raum-code {
   font: 800 1.2rem/1 var(--display); letter-spacing: .16em; color: var(--sand);
   background: var(--tief); border: 1px solid var(--linie); border-radius: 999px; padding: 10px 16px; cursor: pointer;
@@ -813,6 +814,30 @@ img[src$="/np.svg"] { border-radius: 0 !important; }
 .chat-form input { border: 0; background: transparent; padding: .5em .8em; }
 .chat-form input:focus { box-shadow: none; }
 .chat-form:focus-within { border-color: rgba(205,182,140,.5); }
+/* Emotes im Chat */
+.chat { position: relative; }
+.chat-liste .emote { width: 28px; height: 28px; vertical-align: -8px; margin: -3px 1px; }
+.chat-liste li.nur-emotes .emote { width: 46px; height: 46px; vertical-align: -15px; margin: 0 1px; }
+.emote-knopf { flex: none; display: grid; place-items: center; width: 34px; height: 34px; margin-left: 2px; border: 0; border-radius: 50%; background: transparent; color: var(--text-3); cursor: pointer; transition: color .15s, background .15s; }
+.emote-knopf:hover, .emote-knopf[aria-expanded="true"] { color: var(--sand); background: var(--flaeche-hoch); }
+.chat-form input { min-width: 0; flex: 1; padding-left: .4em; }
+.emote-liste { position: absolute; left: 0; right: 0; bottom: 52px; z-index: 20; padding: 12px 12px 10px; border-radius: var(--r-mittel); border: 1px solid var(--linie-stark); background: #262A2E; box-shadow: 0 18px 40px -12px rgba(0,0,0,.7); }
+.emote-liste.unten { bottom: auto; top: calc(100% + 8px); }
+.el-kopf { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin: 0 2px 8px; }
+.el-kopf b { font: 800 .95rem var(--display); }
+.el-kopf small { color: var(--text-3); font-size: .76rem; }
+.el-raster { display: grid; grid-template-columns: repeat(auto-fill, minmax(46px, 1fr)); gap: 4px; }
+.el-emote { display: grid; place-items: center; aspect-ratio: 1; padding: 3px; border: 0; border-radius: 12px; background: transparent; cursor: pointer; transition: background .12s, transform .12s; }
+.el-emote:hover, .el-emote:focus-visible { background: var(--flaeche-aktiv); transform: scale(1.06); }
+.el-bild { width: 100%; height: auto; display: block; }
+.el-emote.zu { cursor: help; }
+.el-emote.zu .el-bild { filter: grayscale(1) brightness(.55); opacity: .55; }
+.el-emote.zu:hover { transform: none; }
+.stil-kachel.emote-kachel { grid-template-columns: 64px minmax(0, 1fr); }
+.emote-kachel .ek-bild { width: 64px; height: 64px; background: transparent; border: 0; overflow: visible; }
+.emote-kachel .ek-img { width: 64px; height: 64px; display: block; }
+.emote-kachel.gesperrt .ek-img { filter: grayscale(1) brightness(.6); opacity: .6; }
+.emote-kachel .ek-name { color: var(--text-2); }
 
 .sprint { max-width: 780px; margin: 0 auto; }
 /* Große Bildschirme: Fragen, Bilder und Antworten deutlich größer (Sprint und Raum) */

@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="de"><head><meta charset="utf-8"><title>Emotes</title>
+<link rel="stylesheet" href="../css/stil.css">
+<style>
+  body { padding: 24px; background: #1B1E21; }
+  .raster { display: grid; grid-template-columns: repeat(8, 1fr); gap: 18px; }
+  .e { display: grid; justify-items: center; gap: 6px; color: #A2AAAB; font: 700 13px Figtree, sans-serif; }
+  .e .gross svg { width: 128px; height: 128px; }
+  .e .klein { display: flex; gap: 10px; align-items: center; }
+  .e .klein span:nth-child(1) svg { width: 56px; height: 56px; }
+  .e .klein span:nth-child(2) svg { width: 28px; height: 28px; }
+  .chat { margin-top: 20px; color: #E4E7E4; font: 15px Figtree, sans-serif; }
+  .chat svg { width: 26px; height: 26px; vertical-align: -7px; }
+</style></head>
+<body><div class="raster" id="r"></div><p class="chat" id="c"></p>
+<script type="module">
+  const { EMOTES, emoteSvg } = await import('../js/emotes.js?x=' + Date.now());
+  document.getElementById('r').innerHTML = EMOTES.map(e => `<div class="e"><span class="gross">${emoteSvg(e.id)}</span><span class="klein"><span>${emoteSvg(e.id)}</span><span>${emoteSvg(e.id)}</span></span>${e.code}</div>`).join('');
+  document.getElementById('c').innerHTML = 'Leonie: das war knapp ' + emoteSvg('lol') + ' nächste Runde ' + emoteSvg('wut') + emoteSvg('gg');
+  document.body.dataset.fertig = '1';
+</script></body></html>
