@@ -53,4 +53,5 @@ async def main():
         print('Spielt mit, 2 Leute: Start aus:', await A.eval_on_selector('#los', 'e => e.disabled'))
         print('FEHLER:', fehler)
         await b.close()
-asyncio.run(main())
+if __name__ == "__main__":
+    asyncio.run(main())

@@ -1,28 +1,28 @@
-import { VERSION } from './config.js?v=0.16.0';
+import { VERSION } from './config.js?v=0.17.0';
 import {
   online, nameFehler, registrieren, anmelden, abmelden, sitzungHolen, profilLaden, profilSpeichern,
   bestenliste, spieleSeit, alleProfile, sprintEintragen, sprintBestenliste, rangVon, spielerAnzahl, spieleVon, sb,
   adminAnmelden, istAdminName, konfigLaden, adminEinrichten, einrichtungOffen, abzeichenVon, saisonAbschliessen, winterquestStand,
   freundeListe, freundAnfragen, freundAntworten, freundEntfernen,
-} from './server.js?v=0.16.0';
-import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.16.0';
-import { Raum, codeNeu, STANDARD, TIPPFEHLER_ABZUG } from './raum.js?v=0.16.0';
-import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.16.0';
+} from './server.js?v=0.17.0';
+import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.17.0';
+import { Raum, codeNeu, STANDARD, TIPPFEHLER_ABZUG } from './raum.js?v=0.17.0';
+import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.17.0';
 import {
   KATEGORIEN, KATEGORIE_REIHE, KATEGORIE_GRUPPEN, SPRINT_REIHE, mehrWert, bombeLaden, bombeBenutzt, bombeGrund, bombeZuletzt, bombeSvg, kategorieVon, optionSchluessel, richtigeWahl, umrisseDa, umrisseLaden,
   sprintFrage, pruefeFrage, fragenVorladen, kanon, ARTEN as GEMISCHT_ARTEN, gemischtArten, alleArten, varianteVon, zahlLesen, schaetzWertung, zahlText,
-} from './kategorien.js?v=0.16.0';
-import { LAENDER } from './laender.js?v=0.16.0';
-import { auswahlfeld } from './auswahlfeld.js?v=0.16.0';
-import { KATEGORIE_SYMBOL } from './symbole.js?v=0.16.0';
-import { konfetti } from './konfetti.js?v=0.16.0';
-import { karteBauen, karteLaden, auswerten } from './weltkarte.js?v=0.16.0';
-import { STUFEN, ERFOLGE, erfolgStand, emblem, wertungName, saisonName, saisonKurz, vitrineLesen, SKINS, skinVon, skinVonId, skinStand, skinBedingung } from './abzeichen.js?v=0.16.0';
+} from './kategorien.js?v=0.17.0';
+import { LAENDER } from './laender.js?v=0.17.0';
+import { auswahlfeld } from './auswahlfeld.js?v=0.17.0';
+import { KATEGORIE_SYMBOL } from './symbole.js?v=0.17.0';
+import { konfetti } from './konfetti.js?v=0.17.0';
+import { karteBauen, karteLaden, auswerten } from './weltkarte.js?v=0.17.0';
+import { STUFEN, ERFOLGE, erfolgStand, emblem, wertungName, saisonName, saisonKurz, vitrineLesen, SKINS, skinVon, skinVonId, skinStand, skinBedingung } from './abzeichen.js?v=0.17.0';
 import {
   RAENGE, BILDER, ARTEN, JOKER, SONDER, sonderVon, sonderFrei, WINTERQUEST, questGeschafft, ruhmInfo, stufeVon, stufeInfo, wappen, effektHtml, rahmenDeko, stilVon, istFrei, freiAb, neuFrei,
-  belohnungName, rangVonId, symbol, symbolSvg, SCHWELLEN, flockeSvg, bildVon, BILD_ARTEN } from './ruhm.js?v=0.16.0';
-import { freundeStart, freundeStopp, freundeOrt, istOnline, onlineAbo, einladungAbo, anfrageAbo, einladen, anfrageMelden } from './freunde.js?v=0.16.0';
-import { FIGUREN, FREIE_FIGUREN, KREISE, RINGE, figurSvg, figurAusEmoji, figurVonId, bildFrei, bildFreiAb, bildEintrag, suchtVon } from './figuren.js?v=0.16.0';
+  belohnungName, rangVonId, symbol, symbolSvg, SCHWELLEN, flockeSvg, bildVon, BILD_ARTEN } from './ruhm.js?v=0.17.0';
+import { freundeStart, freundeStopp, freundeOrt, istOnline, onlineAbo, einladungAbo, anfrageAbo, einladen, anfrageMelden } from './freunde.js?v=0.17.0';
+import { FIGUREN, FREIE_FIGUREN, KREISE, RINGE, figurSvg, figurAusEmoji, figurVonId, bildFrei, bildFreiAb, bildEintrag, suchtVon } from './figuren.js?v=0.17.0';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -56,6 +56,9 @@ let aktuellerScreen = null;
 function zeige(name) {
   document.querySelectorAll('.screen').forEach(s => { s.hidden = s.id !== 's-' + name; });
   if (name !== 'raum' && name !== 'sprint') document.body.classList.remove('kartenmodus');
+  // Weltkarte liegt außerhalb der Screens: beim Verlassen mitten im Spiel ausblenden
+  if (name !== 'raum') $('raum-weltkarte').hidden = true;
+  if (name !== 'sprint') $('sprint-weltkarte').hidden = true;
   if (aktuellerScreen !== name) { aktuellerScreen = name; scrollTo(0, 0); } // neue Seite beginnt oben
   ruhmMiniZeichnen();
 }
@@ -873,10 +876,6 @@ function budeAufbauen() {
     const b = e.target.closest('.kachel');
     if (b) raumAufmachen(b.dataset.k);
   };
-  $('sprint-kacheln').onclick = e => {
-    const b = e.target.closest('.kachel');
-    if (b) navigieren('#/sprint/' + sprintKat(b.dataset.k));
-  };
   $('beitreten-form').onsubmit = e => {
     e.preventDefault();
     const c = $('code-eingabe').value.trim().toUpperCase();
@@ -906,61 +905,171 @@ function sprintRekord(k) {
   return ich.rekorde?.[k] ?? (k === 'flaggen' ? ich.sprint_rekord || 0 : 0);
 }
 
-function kachelHtml(k, mitRekord) {
-  const kk = mitRekord ? sprintKat(k) : k; // im Sprint: Hauptstädte in der gewählten Richtung
-  const rekord = mitRekord ? sprintRekord(kk) : 0;
+function kachelHtml(k) {
   return `
-    <button class="kachel${mitRekord ? ' sprint-karte' : ''}" data-k="${k}">
+    <button class="kachel" data-k="${k}">
       <span class="kachel-bild" aria-hidden="true">${kachelBild(k)}</span>
       <span class="kachel-name">${esc(KATEGORIEN[k].name).replace('Allgemeinwissen', 'Allgemein&shy;wissen').replace('Buchstabensalat', 'Buchstaben&shy;salat')}</span>
-      <span class="kachel-text">${esc(KATEGORIEN[kk].text)}</span>
-      ${mitRekord ? `<span class="sk-rekord${rekord ? '' : ' leer'}"><b>${rekord || '–'}</b><small>${rekord ? 'dein Rekord' : 'noch kein Rekord'}</small></span>` : ''}
+      <span class="kachel-text">${esc(KATEGORIEN[k].text)}</span>
     </button>`;
 }
 // Kacheln in Gruppen (Geografie, Wörter, …); kleine Gruppen stehen nebeneinander
-function kachelnHtml(mitRekord) {
-  return KATEGORIE_GRUPPEN.map(g => {
-    const arten = g.arten.filter(k => !mitRekord || SPRINT_REIHE.includes(k));
-    if (!arten.length) return '';
-    return `<section class="kachel-gruppe gruppe-${g.id}" style="--n:${arten.length}" aria-label="${esc(g.titel)}">
+function kachelnHtml() {
+  return KATEGORIE_GRUPPEN.map(g => `<section class="kachel-gruppe gruppe-${g.id}" style="--n:${g.arten.length}" aria-label="${esc(g.titel)}">
       <h3 class="gruppe-titel">${esc(g.titel)}</h3>
-      <div class="gruppe-kacheln">${arten.map(k => kachelHtml(k, mitRekord)).join('')}</div>
-    </section>`;
-  }).join('');
+      <div class="gruppe-kacheln">${g.arten.map(k => kachelHtml(k)).join('')}</div>
+    </section>`).join('');
 }
 
 function kachelnZeichnen() {
-  $('kachel-raster').innerHTML = kachelnHtml(false);
+  $('kachel-raster').innerHTML = kachelnHtml();
 }
+
+// ---------- Sprint-Auswahl: Liste links, Vorschau rechts ----------
+// Hauptstädte steht einmal in der Liste, die Richtung wählt man in der Vorschau
+const SPRINT_LISTE = KATEGORIE_GRUPPEN.map(g => ({ ...g, arten: g.arten.filter(k => SPRINT_REIHE.includes(k)) })).filter(g => g.arten.length);
+const SPRINT_LISTE_FLACH = SPRINT_LISTE.flatMap(g => g.arten);
+let sprintWahl = (() => { try { const k = localStorage.getItem('quizbude.sprintWahl'); return SPRINT_LISTE_FLACH.includes(k) ? k : 'flaggen'; } catch { return 'flaggen'; } })();
+let sprintSaisonListen = null; // { kategorie: [{ id, name, wert, … }] } der laufenden Saison
+const SPRINT_REGEL = {
+  karte: 'Tipp das Land auf der Karte an. Die Uhr steht, solange die Lösung zu sehen ist.',
+  groesser: 'Tipp das größere Land an. Falsch kostet 5 Sekunden.',
+  mehr: 'Mehr oder weniger antippen, auch mit ↑ und ↓. Falsch kostet 5 Sekunden.',
+  schaetzen: 'Zahl eintippen. Wer höchstens etwa 10 Prozent daneben liegt, bekommt den Treffer.',
+  bombe: 'Ein Wort mit der Silbe eintippen. Je mehr du schaffst, desto schwerer werden die Silben.',
+  wissen: 'Antwort antippen. Falsch kostet 5 Sekunden.',
+  gemischt: 'Alles durcheinander. Bei Fragen mit Auswahl kostet falsch 5 Sekunden.',
+};
+const schmal = matchMedia('(max-width: 899px)');
 
 function sprintWahlZeigen() {
   zeige('sprintwahl');
-  $('sprint-kacheln').innerHTML = kachelnHtml(true);
-  sprintRegionZeichnen();
+  sprintListeZeichnen();
+  sprintVorschauZeichnen();
   sprintSaisonLaden();
 }
 
-// Unter den Kacheln: Top 3 der Saison je Kategorie, dazu der eigene Platz
+function sprintSaisonText() {
+  const jetzt = new Date(), ende = new Date(jetzt.getFullYear(), jetzt.getMonth() + 1, 0);
+  const tage = Math.ceil((new Date(jetzt.getFullYear(), jetzt.getMonth() + 1, 1) - jetzt) / 86400000);
+  return `${MONATE[jetzt.getMonth()]}, läuft bis ${ende.getDate()}.${ende.getMonth() + 1}., noch ${tage} ${tage === 1 ? 'Tag' : 'Tage'}`;
+}
+const sprintPlatz = kk => (ich && sprintSaisonListen?.[kk] ? sprintSaisonListen[kk].findIndex(p => p.id === ich.id) + 1 : 0);
+
+function sprintZeileInnen(k) {
+  const kk = sprintKat(k), rekord = sprintRekord(kk), platz = sprintPlatz(kk);
+  const marken = (platz ? `<span class="sl-marke${platz <= 3 ? ' p' + platz : ''}">Platz ${platz}</span>` : '') + (sprintIstUebung(kk) ? '<span class="sl-marke uebung">Übung</span>' : '');
+  return `<span class="sl-symbol" aria-hidden="true">${KATEGORIE_SYMBOL[k] || ''}</span>
+    <span class="sl-name"><b>${esc(KATEGORIEN[k].name)}</b>${marken ? `<span class="sl-marken">${marken}</span>` : ''}</span>
+    <span class="sl-rekord${rekord ? '' : ' ohne'}"${rekord ? '' : ' aria-label="noch kein Rekord"'}><b>${rekord || '–'}</b>${rekord ? '<small>Rekord</small>' : ''}</span>`;
+}
+function sprintListeZeichnen() {
+  $('sprint-wahl').append($('sprint-vorschau')); // auf dem Handy steckt die Vorschau in der Liste
+  $('sprint-liste').innerHTML = SPRINT_LISTE.map(g => `<div class="sl-gruppe gruppe-${g.id}" role="group" aria-label="${esc(g.titel)}">
+      <h3 class="gruppe-titel">${esc(g.titel)}</h3>
+      ${g.arten.map(k => `<button type="button" class="sl-zeile${k === sprintWahl ? ' an' : ''}" data-k="${k}" aria-pressed="${k === sprintWahl}">${sprintZeileInnen(k)}</button>`).join('')}
+    </div>`).join('');
+}
+// Nur den Inhalt der Zeilen neu, damit der Fokus bleibt
+function sprintZeilenAuffrischen() {
+  document.querySelectorAll('#sprint-liste .sl-zeile').forEach(z => {
+    z.innerHTML = sprintZeileInnen(z.dataset.k);
+    z.classList.toggle('an', z.dataset.k === sprintWahl);
+    z.setAttribute('aria-pressed', z.dataset.k === sprintWahl);
+  });
+}
+
+function sprintWerteHtml(kk) {
+  const rekord = sprintRekord(kk), l = sprintSaisonListen?.[kk], platz = sprintPlatz(kk);
+  const wert = (b, text, leer) => `<div class="${leer ? 'ohne' : ''}"><b>${b}</b><span>${text}</span></div>`;
+  return wert(rekord || '–', rekord ? 'dein Rekord' : 'noch kein Rekord', !rekord)
+    + wert(!l ? '…' : platz ? `${platz}.` : '–', 'dein Platz diese Saison', !platz)
+    + wert(!l ? '…' : l.length ? l[0].wert : '–', 'Bestwert der Saison', !l?.length);
+}
+function sprintSaisonHtml(kk) {
+  const l = sprintSaisonListen?.[kk];
+  const kopf = `<div class="sv-saison-kopf"><h3>Beste der Saison</h3><small>${esc(sprintSaisonText())}</small></div>`;
+  if (!l) return kopf + '<div class="sv-laedt" aria-hidden="true"></div>';
+  if (!l.length) return kopf + '<p class="sv-leer">Diese Saison ist hier noch niemand gelaufen. Platz 1 ist frei.</p>';
+  const i = ich ? l.findIndex(p => p.id === ich.id) : -1;
+  const zeile = (p, platz, extra = '') => `<li class="${platz <= 3 ? `p${platz}` : ''}${ich && p.id === ich.id ? ' ich' : ''}${extra}"><span class="ss-platz">${platz}</span>${avatarMitWappen(p, 12)}<span class="ss-name${nameKlasse(p)}">${esc(p.name)}</span><b>${p.wert}</b></li>`;
+  return kopf + `<ol>${l.slice(0, 5).map((p, j) => zeile(p, j + 1)).join('')}${i >= 5 ? zeile(l[i], i + 1, ' weiter') : ''}</ol>`;
+}
+
+function sprintKnoepfe(name, werte, jetzt, titel) {
+  return `<div class="umschalter klein" role="radiogroup" aria-label="${esc(titel)}">${werte.map(([w, text, lang]) => `<button type="button" role="radio" class="umschalter-knopf${w === jetzt ? ' aktiv' : ''}" aria-checked="${w === jetzt}" data-${name}="${w}"${lang && lang !== text ? ` title="${esc(lang)}"` : ''}>${esc(text)}</button>`).join('')}</div>`;
+}
+function sprintVorschauZeichnen() {
+  const k = sprintWahl, kk = sprintKat(k), kat = KATEGORIEN[k];
+  const opt = [];
+  const zeile = (titel, inhalt, erkl) => `<span class="sv-l">${esc(titel)}</span><div class="sv-wahl">${inhalt}${erkl ? `<small>${esc(erkl)}</small>` : ''}</div>`;
+  if (k === 'hauptstaedte') opt.push(zeile('Richtung', sprintKnoepfe('ri', [['land', 'Land → Stadt'], ['stadt', 'Stadt → Land']], sprintRichtung, 'Richtung'), 'Jede Richtung hat ihren eigenen Rekord.'));
+  if (REGION_KATEGORIEN.includes(kk)) opt.push(zeile('Region', sprintKnoepfe('r', Object.entries(REGIONEN_SPRINT), sprintRegion, 'Region'), sprintRegion !== 'alle' ? 'Gilt für alle Länder-Kategorien im Sprint.' : ''));
+  if (VARIANTEN_KATEGORIEN.includes(k)) {
+    const jetzt = varianteVon(kat, sprintVarianten[k]);
+    const werte = Object.entries(kat.varianten.werte).map(([v, n]) => [v, n.split(':')[0].split(',')[0], n]);
+    const lang = kat.varianten.werte[jetzt], erkl = lang.includes(':') ? lang.split(':')[1].trim() : lang.includes(',') ? lang.split(',').slice(1).join(',').trim() : '';
+    opt.push(zeile(kat.varianten.titel, sprintKnoepfe('v', werte, jetzt, kat.varianten.titel), erkl ? erkl[0].toUpperCase() + erkl.slice(1) + '.' : ''));
+  }
+  if (k === 'gemischt') {
+    const an = gemischtArten(sprintArten);
+    opt.push(zeile('Dabei', `<div class="arten-chips">${GEMISCHT_ARTEN.map(a => `<button type="button" class="art-chip${an.includes(a) ? ' an' : ''}" data-sart="${a}" aria-pressed="${an.includes(a)}"><span aria-hidden="true">${KATEGORIE_SYMBOL[a] || ''}</span>${esc(KAT_KURZ[a])}</button>`).join('')}</div>`));
+  }
+  const uebung = sprintIstUebung(kk);
+  $('sprint-vorschau').innerHTML = `
+    <div class="sv-kopf">
+      <div class="sv-bild kachel-bild" aria-hidden="true">${kachelBild(k)}</div>
+      <h2>${esc(kat.name)}</h2>
+      <p>${esc(KATEGORIEN[kk].text)}</p>
+    </div>
+    <div class="sv-werte" id="sv-werte">${sprintWerteHtml(kk)}</div>
+    ${SPRINT_REGEL[k] ? `<p class="sv-regel">${esc(SPRINT_REGEL[k])}</p>` : ''}
+    ${opt.length ? `<div class="sv-opt">${opt.join('')}</div>` : ''}
+    ${uebung ? '<p class="sv-uebung"><span>So ist es eine Übung, der Rekord zählt nur mit den Standard-Einstellungen.</span><button type="button" class="textknopf" data-standard>Standard einstellen</button></p>' : ''}
+    <button type="button" class="knopf haupt gross sv-start" data-start>${uebung ? 'Übung starten' : 'Sprint starten'}</button>
+    <section class="sv-saison" id="sv-saison" aria-label="Beste der Saison">${sprintSaisonHtml(kk)}</section>`;
+  sprintVorschauPlatzieren();
+}
+// Breit: Vorschau als zweite Spalte. Schmal: direkt unter der gewählten Zeile
+function sprintVorschauPlatzieren() {
+  const v = $('sprint-vorschau'), z = document.querySelector(`#sprint-liste .sl-zeile[data-k="${sprintWahl}"]`);
+  if (schmal.matches && z) { if (z.nextElementSibling !== v) z.after(v); }
+  else if (v.parentElement !== $('sprint-wahl')) $('sprint-wahl').append(v);
+}
+schmal.addEventListener('change', () => { if (!$('s-sprintwahl').hidden) sprintVorschauPlatzieren(); });
+
+function sprintWaehlen(k) {
+  if (!SPRINT_LISTE_FLACH.includes(k)) return;
+  const neu = k !== sprintWahl;
+  sprintWahl = k;
+  try { localStorage.setItem('quizbude.sprintWahl', k); } catch { /* egal */ }
+  document.querySelectorAll('#sprint-liste .sl-zeile').forEach(z => { z.classList.toggle('an', z.dataset.k === k); z.setAttribute('aria-pressed', z.dataset.k === k); });
+  if (!neu) return;
+  sprintVorschauZeichnen();
+  if (schmal.matches) document.querySelector(`#sprint-liste .sl-zeile[data-k="${k}"]`)?.scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+}
+const sprintLos = () => navigieren('#/sprint/' + sprintKat(sprintWahl));
+// Einstellung geändert: Vorschau neu, Zeilen (Übung, Rekord) auffrischen, Fokus zurück auf den gleichen Knopf
+function sprintEinstellungGeaendert(fokus) {
+  sprintVorschauZeichnen();
+  sprintZeilenAuffrischen();
+  if (fokus) $('sprint-vorschau').querySelector(fokus)?.focus();
+}
+
+// Beste der Saison je Kategorie, dazu der eigene Platz
 let sprintSaisonAbruf = 0;
 async function sprintSaisonLaden() {
   const abruf = ++sprintSaisonAbruf;
   const start = new Date(); start.setDate(1); start.setHours(0, 0, 0, 0);
-  const ende = new Date(start.getFullYear(), start.getMonth() + 1, 0);
-  const tage = Math.ceil((new Date(start.getFullYear(), start.getMonth() + 1, 1) - new Date()) / 86400000);
-  $('sprint-saison-info').textContent = `Saison ${MONATE[start.getMonth()]}, läuft bis ${ende.getDate()}.${ende.getMonth() + 1}., noch ${tage} ${tage === 1 ? 'Tag' : 'Tage'}`;
-  const box = $('sprint-saison');
-  if (!box.children.length) box.innerHTML = SPRINT_REIHE.map(() => '<div class="ss-karte laedt"></div>').join('');
   let listen;
   try { listen = await Promise.all(SPRINT_REIHE.map(k => sprintBestenliste(k, start.toISOString()).catch(() => []))); } catch { return; }
   if (abruf !== sprintSaisonAbruf) return;
-  box.innerHTML = SPRINT_REIHE.map((k, ki) => {
-    const l = listen[ki], i = ich ? l.findIndex(p => p.id === ich.id) : -1;
-    const zeile = (p, platz) => `<li class="${platz <= 3 ? `p${platz}` : ''}${ich && p.id === ich.id ? ' ich' : ''}"><span class="ss-platz">${platz}</span>${avatarMitWappen(p, 12)}<span class="ss-name${nameKlasse(p)}">${esc(p.name)}</span><b>${p.wert}</b></li>`;
-    return `<a class="ss-karte" href="#/sprint/${k}">
-      <span class="ss-titel"><span class="raum-symbol" aria-hidden="true">${KATEGORIE_SYMBOL[k] || ''}</span>${esc(KATEGORIEN[k].name)}</span>
-      ${l.length ? `<ol>${l.slice(0, 3).map((p, j) => zeile(p, j + 1)).join('')}${i >= 3 ? zeile(l[i], i + 1) : ''}</ol>` : '<p class="ss-leer">Noch kein Sprint diese Saison. Platz 1 ist frei.</p>'}
-    </a>`;
-  }).join('');
+  sprintSaisonListen = Object.fromEntries(SPRINT_REIHE.map((k, i) => [k, listen[i] || []]));
+  if ($('s-sprintwahl').hidden) return;
+  sprintZeilenAuffrischen();
+  const kk = sprintKat(sprintWahl);
+  if ($('sv-werte')) $('sv-werte').innerHTML = sprintWerteHtml(kk);
+  if ($('sv-saison')) $('sv-saison').innerHTML = sprintSaisonHtml(kk);
 }
 
 // ---------- Weltkarte: je eine Karte für Raum und Sprint, einmal gebaut ----------
@@ -2267,6 +2376,10 @@ const SPRINT_COUNTDOWN = 2;  // Sekunden vor der ersten Frage
 
 async function sprintStart(kategorie = 'flaggen') {
   if (!KATEGORIEN[kategorie] || !SPRINT_REIHE.includes(kategorie)) kategorie = 'flaggen';
+  // zurück in der Auswahl steht dann diese Kategorie
+  sprintWahl = kategorie === 'stadtland' ? 'hauptstaedte' : kategorie;
+  if (sprintWahl === 'hauptstaedte') sprintRichtung = kategorie === 'stadtland' ? 'stadt' : 'land';
+  try { localStorage.setItem('quizbude.sprintWahl', sprintWahl); localStorage.setItem('quizbude.sprintRichtung', sprintRichtung); } catch { /* egal */ }
   zeige('sprint');
   const region = REGION_KATEGORIEN.includes(kategorie) && sprintRegion !== 'alle' ? sprintRegion : null;
   const kk = KATEGORIEN[kategorie === 'stadtland' ? 'hauptstaedte' : kategorie];
@@ -2509,53 +2622,62 @@ let sprintArten = (() => { try { const a = JSON.parse(localStorage.getItem('quiz
 const sprintIstUebung = k => (sprintRegion !== 'alle' && REGION_KATEGORIEN.includes(k))
   || (KATEGORIEN[k]?.varianten && varianteVon(KATEGORIEN[k], sprintVarianten[k]) !== KATEGORIEN[k].varianten.standard)
   || (k === 'gemischt' && !alleArten(sprintArten));
-function sprintMehrZeichnen() {
-  const zeilen = VARIANTEN_KATEGORIEN.map(k => {
-    const kat = KATEGORIEN[k], jetzt = varianteVon(kat, sprintVarianten[k]);
-    return `<span class="sr-titel">${esc(KAT_KURZ[k])}</span><div class="umschalter klein" role="radiogroup" aria-label="${esc(KAT_KURZ[k])}">${Object.entries(kat.varianten.werte).map(([v, n]) => `<button type="button" role="radio" class="umschalter-knopf${v === jetzt ? ' aktiv' : ''}" aria-checked="${v === jetzt}" data-vk="${k}" data-v="${v}" title="${esc(n)}">${esc(n.split(':')[0].split(',')[0])}</button>`).join('')}</div>`;
-  }).join('');
-  const an = gemischtArten(sprintArten);
-  $('sprint-varianten').innerHTML = zeilen + `<span class="sr-titel">Gemischt</span><div class="arten-chips">${GEMISCHT_ARTEN.map(k => `<button type="button" class="art-chip${an.includes(k) ? ' an' : ''}" data-sart="${k}" aria-pressed="${an.includes(k)}"><span aria-hidden="true">${KATEGORIE_SYMBOL[k] || ''}</span>${esc(KAT_KURZ[k])}</button>`).join('')}</div>`;
-  const zahl = VARIANTEN_KATEGORIEN.filter(k => varianteVon(KATEGORIEN[k], sprintVarianten[k]) !== KATEGORIEN[k].varianten.standard).length + (alleArten(sprintArten) ? 0 : 1);
-  $('sprint-mehr-zahl').textContent = zahl ? `${zahl} geändert` : '';
-}
-function sprintRegionZeichnen() {
-  $('sprint-richtung').innerHTML = [['land', 'Land → Stadt'], ['stadt', 'Stadt → Land']].map(([k, n]) => `<button type="button" role="radio" class="umschalter-knopf${k === sprintRichtung ? ' aktiv' : ''}" aria-checked="${k === sprintRichtung}" data-ri="${k}">${n}</button>`).join('');
-  $('sprint-region').innerHTML = Object.entries(REGIONEN_SPRINT).map(([k, n]) => `<button type="button" role="radio" class="umschalter-knopf${k === sprintRegion ? ' aktiv' : ''}" aria-checked="${k === sprintRegion}" data-r="${k}">${n}</button>`).join('');
-  document.querySelectorAll('#sprint-kacheln .kachel').forEach(el => el.classList.toggle('mit-region', !!sprintIstUebung(el.dataset.k)));
-  sprintMehrZeichnen();
-}
 
 function sprintAufbauen() {
-  sprintRegionZeichnen();
-  $('sprint-region').onclick = e => {
-    const b = e.target.closest('[data-r]');
-    if (!b) return;
-    sprintRegion = b.dataset.r;
-    try { localStorage.setItem('quizbude.sprintRegion', sprintRegion); } catch { /* egal */ }
-    sprintRegionZeichnen();
+  const liste = $('sprint-liste');
+  liste.onclick = e => {
+    const z = e.target.closest('.sl-zeile');
+    if (!z) return;
+    // Enter auf der schon gewählten Zeile startet (Tastatur-Klick hat detail 0)
+    if (z.dataset.k === sprintWahl && e.detail === 0) { sprintLos(); return; }
+    sprintWaehlen(z.dataset.k);
   };
-  $('sprint-richtung').onclick = e => {
-    const b = e.target.closest('[data-ri]');
-    if (!b) return;
-    sprintRichtung = b.dataset.ri;
-    try { localStorage.setItem('quizbude.sprintRichtung', sprintRichtung); } catch { /* egal */ }
-    $('sprint-kacheln').innerHTML = kachelnHtml(true);
-    sprintRegionZeichnen();
+  liste.ondblclick = e => { if (e.target.closest('.sl-zeile')) sprintLos(); };
+  liste.onkeydown = e => {
+    const z = e.target.closest('.sl-zeile');
+    if (!z || !['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(e.key)) return;
+    const zeilen = [...liste.querySelectorAll('.sl-zeile')], i = zeilen.indexOf(z);
+    const ziel = zeilen[e.key === 'Home' ? 0 : e.key === 'End' ? zeilen.length - 1 : Math.min(zeilen.length - 1, Math.max(0, i + (e.key === 'ArrowDown' ? 1 : -1)))];
+    e.preventDefault();
+    ziel.focus();
+    sprintWaehlen(ziel.dataset.k);
   };
-  $('sprint-varianten').onclick = e => {
-    const v = e.target.closest('[data-vk]'), a = e.target.closest('[data-sart]');
-    if (v) {
-      sprintVarianten = { ...sprintVarianten, [v.dataset.vk]: v.dataset.v };
+  $('sprint-vorschau').onclick = e => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    const d = b.dataset;
+    if ('start' in d) { sprintLos(); return; }
+    if (d.r) {
+      sprintRegion = d.r;
+      try { localStorage.setItem('quizbude.sprintRegion', sprintRegion); } catch { /* egal */ }
+      sprintEinstellungGeaendert(`[data-r="${d.r}"]`);
+    } else if (d.ri) {
+      sprintRichtung = d.ri;
+      try { localStorage.setItem('quizbude.sprintRichtung', sprintRichtung); } catch { /* egal */ }
+      sprintEinstellungGeaendert(`[data-ri="${d.ri}"]`);
+    } else if (d.v) {
+      sprintVarianten = { ...sprintVarianten, [sprintWahl]: d.v };
       try { localStorage.setItem('quizbude.sprintVarianten', JSON.stringify(sprintVarianten)); } catch { /* egal */ }
-    } else if (a) {
+      sprintEinstellungGeaendert(`[data-v="${d.v}"]`);
+    } else if (d.sart) {
       const jetzt = gemischtArten(sprintArten);
-      const neu = jetzt.includes(a.dataset.sart) ? jetzt.filter(k => k !== a.dataset.sart) : GEMISCHT_ARTEN.filter(k => jetzt.includes(k) || k === a.dataset.sart);
+      const neu = jetzt.includes(d.sart) ? jetzt.filter(k => k !== d.sart) : GEMISCHT_ARTEN.filter(k => jetzt.includes(k) || k === d.sart);
       if (!neu.length) { toast('Mindestens eine Kategorie muss dabei sein.'); return; }
       sprintArten = neu.length === GEMISCHT_ARTEN.length ? null : neu;
       try { localStorage.setItem('quizbude.sprintArten', JSON.stringify(sprintArten)); } catch { /* egal */ }
-    } else return;
-    sprintRegionZeichnen();
+      sprintEinstellungGeaendert(`[data-sart="${d.sart}"]`);
+    } else if ('standard' in d) {
+      const kk = sprintKat(sprintWahl);
+      if (REGION_KATEGORIEN.includes(kk)) sprintRegion = 'alle';
+      if (VARIANTEN_KATEGORIEN.includes(sprintWahl)) sprintVarianten = { ...sprintVarianten, [sprintWahl]: KATEGORIEN[sprintWahl].varianten.standard };
+      if (sprintWahl === 'gemischt') sprintArten = null;
+      try {
+        localStorage.setItem('quizbude.sprintRegion', sprintRegion);
+        localStorage.setItem('quizbude.sprintVarianten', JSON.stringify(sprintVarianten));
+        localStorage.setItem('quizbude.sprintArten', JSON.stringify(sprintArten));
+      } catch { /* egal */ }
+      sprintEinstellungGeaendert('[data-start]');
+    }
   };
   $('sprint-form').onsubmit = e => {
     e.preventDefault();

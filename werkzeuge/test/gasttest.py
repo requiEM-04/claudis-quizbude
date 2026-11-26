@@ -36,4 +36,5 @@ async def main():
         print('Gäste nicht gespeichert:', await A.evaluate('(JSON.parse(localStorage.getItem("fake.spiele")) || []).length'), 'Logeinträge')
         await A.screenshot(path='/tmp/qbtest/g_ende.png')
         print('Fehler:', fehler); await b.close()
-asyncio.run(main())
+if __name__ == "__main__":
+    asyncio.run(main())

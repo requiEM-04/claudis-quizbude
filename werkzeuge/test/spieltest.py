@@ -156,4 +156,5 @@ async def main():
         print('Bestenliste A:', (await A.inner_text('#besten-liste')).replace('\n', ' '))
         print('FEHLER:', fehler)
         await b.close()
-asyncio.run(main())
+if __name__ == "__main__":
+    asyncio.run(main())

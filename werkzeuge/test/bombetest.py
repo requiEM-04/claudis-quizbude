@@ -67,7 +67,7 @@ async def main():
         for kat in ['bombe', 'mehr']:
             await A.goto(BASIS + '#/sprint'); await A.wait_for_selector('#s-sprintwahl:not([hidden])'); await A.wait_for_timeout(400)
             if kat == 'bombe': await A.screenshot(path=f'{BILDER}/b_sprintwahl.png')
-            await A.click(f'#sprint-kacheln .kachel[data-k={kat}]')
+            await A.click(f'.sl-zeile[data-k={kat}]'); await A.click('.sv-start')
             await A.wait_for_function('quizbude.sprint && quizbude.sprint.laeuft', timeout=10000); await A.wait_for_timeout(700)
             await A.screenshot(path=f'{BILDER}/b_sprint_{kat}.png')
             for i in range(6):
@@ -83,4 +83,5 @@ async def main():
             print(kat, 'Ende:', await A.inner_text('#sprint-rekord'), '|', (await A.inner_text('#sprint-richtig')).replace('\n', ', ')[:160])
         print('FEHLER:', fehler)
         await b.close()
-asyncio.run(main())
+if __name__ == "__main__":
+    asyncio.run(main())

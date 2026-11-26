@@ -76,4 +76,5 @@ async def main():
         print('B nach Entfernen:', await B.inner_text('#fr-innen .fr-leer'))
         print('FEHLER:', fehler)
         await b.close()
-asyncio.run(main())
+if __name__ == "__main__":
+    asyncio.run(main())

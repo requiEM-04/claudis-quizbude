@@ -65,12 +65,11 @@ async def main():
             await runde(A, B, name)
         # Sprint: mehr Einstellungen
         await A.goto(BASIS + '#/sprint'); await A.wait_for_selector('#s-sprintwahl:not([hidden])'); await A.wait_for_timeout(400)
-        await A.click('#sprint-mehr summary'); await A.wait_for_timeout(200)
-        await A.click('#sprint-varianten [data-vk=buchstaben][data-v=schwer]'); await A.wait_for_timeout(200)
+        await A.click('.sl-zeile[data-k=buchstaben]'); await A.click('.sv-opt [data-v=schwer]'); await A.wait_for_timeout(200)
         await A.screenshot(path=f'{BILDER}/v_sprint_mehr.png', full_page=True)
-        print('Sprint-Übung markiert:', await A.eval_on_selector_all('#sprint-kacheln .mit-region', 'l => l.map(e => e.dataset.k)'), '|', await A.inner_text('#sprint-mehr-zahl'))
+        print('Sprint-Übung markiert:', await A.eval_on_selector_all('.sl-marke.uebung', 'l => l.map(e => e.closest(".sl-zeile").dataset.k)'), '|', await A.inner_text('.sv-wahl small'))
         for kat in ['schaetzen', 'buchstaben']:
-            await A.click(f'#sprint-kacheln .kachel[data-k={kat}]')
+            await A.click(f'.sl-zeile[data-k={kat}]'); await A.click('.sv-start')
             await A.wait_for_function('quizbude.sprint && quizbude.sprint.laeuft', timeout=8000); await A.wait_for_timeout(600)
             print(kat, 'Sprint-Hinweis:', await A.inner_text('#sprint-hinweis'), '| Übung:', await A.evaluate('quizbude.sprint.uebung'))
             if kat == 'schaetzen':
@@ -90,4 +89,5 @@ async def main():
             await A.evaluate("location.hash = '#/sprint'"); await A.wait_for_selector('#s-sprintwahl:not([hidden])'); await A.wait_for_timeout(300)
         print('FEHLER:', fehler)
         await b.close()
-asyncio.run(main())
+if __name__ == "__main__":
+    asyncio.run(main())

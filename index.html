@@ -7,7 +7,7 @@
 <meta name="description" content="Flaggen raten in der Pause, allein oder zusammen im Raum.">
 <meta name="theme-color" content="#1B1E21">
 <link rel="icon" href="bilder/icon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="css/stil.css?v=0.16.0">
+<link rel="stylesheet" href="css/stil.css?v=0.17.0">
 </head>
 <body>
 <!-- Ladebildschirm: steht sofort, bis Schriften, Bilder und Effekte bereit sind -->
@@ -306,23 +306,10 @@
       <h1>Sprint</h1>
       <p class="unterzeile">Allein gegen die Uhr, ganz ohne Raum: 60 Sekunden, so viele wie möglich. Überspringen kostet 2 Sekunden. <button class="tasten-knopf text" type="button">Alle Tasten anzeigen</button></p>
     </div>
-    <div class="sprint-region">
-      <span class="sr-titel">Region</span>
-      <div class="umschalter klein" role="radiogroup" id="sprint-region" aria-label="Region für Flaggen, Umrisse und Hauptstädte"></div>
-      <span class="sr-titel sr-zweit">Hauptstädte</span>
-      <div class="umschalter klein" role="radiogroup" id="sprint-richtung" aria-label="Richtung bei Hauptstädte"></div>
-      <small id="sprint-region-hinweis">Gilt für Flaggen, Weltkarte, Umrisse und Hauptstädte. Mit Region ist der Sprint eine Übung, Rekorde zählen nur bei „Alle“.</small>
+    <div class="sprint-wahl" id="sprint-wahl">
+      <nav class="sprint-liste" id="sprint-liste" aria-label="Kategorien für den Sprint"></nav>
+      <section class="sprint-vorschau" id="sprint-vorschau" aria-label="Gewählte Kategorie"></section>
     </div>
-    <details class="sprint-mehr" id="sprint-mehr">
-      <summary>Mehr Einstellungen <small id="sprint-mehr-zahl"></small></summary>
-      <div class="sprint-region sm-raster" id="sprint-varianten"></div>
-      <small class="sm-hinweis">Rekorde zählen nur mit den Standard-Einstellungen (jeweils die erste Wahl und alle Kategorien in Gemischt). Alles andere ist eine Übung.</small>
-    </details>
-    <div class="kachel-raster" id="sprint-kacheln"></div>
-    <section class="sprint-saison">
-      <div class="ss-kopf"><h2>Beste Sprints der Saison</h2><small id="sprint-saison-info"></small></div>
-      <div class="ss-raster" id="sprint-saison"></div>
-    </section>
   </section>
 
   <!-- Sprint -->
@@ -378,6 +365,7 @@
     <dt>Antwort wählen</dt><dd><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> <kbd>4</kbd> oder <kbd>A</kbd> <kbd>B</kbd> <kbd>C</kbd> <kbd>D</kbd></dd>
     <dt>Antwort abschicken</dt><dd><kbd>Enter</kbd></dd>
     <dt>Mehr oder weniger</dt><dd><kbd>↑</kbd> höher, länger, später, schwerer · <kbd>↓</kbd> das Gegenteil</dd>
+    <dt>Kategorie im Sprint wählen</dt><dd><kbd>↑</kbd> <kbd>↓</kbd> in der Liste, <kbd>Enter</kbd> startet</dd>
     <dt>Überspringen im Sprint</dt><dd><kbd>→</kbd> oder <kbd>Alt</kbd> + <kbd>D</kbd> (kostet 2 Sekunden)</dd>
     <dt>Raus</dt><dd>Zurück-Taste im Browser oder an der Maus</dd>
     <dt>Diese Liste</dt><dd><kbd>?</kbd></dd>
@@ -397,7 +385,7 @@
 </nav>
 <div class="toast" id="toast" role="status" hidden></div>
 
-<script src="vendor/supabase.js?v=0.16.0"></script>
-<script type="module" src="js/app.js?v=0.16.0"></script>
+<script src="vendor/supabase.js?v=0.17.0"></script>
+<script type="module" src="js/app.js?v=0.17.0"></script>
 </body>
 </html>
