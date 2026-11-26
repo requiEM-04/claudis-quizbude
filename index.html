@@ -7,7 +7,7 @@
 <meta name="description" content="Flaggen raten in der Pause, allein oder zusammen im Raum.">
 <meta name="theme-color" content="#1B1E21">
 <link rel="icon" href="bilder/icon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="css/stil.css?v=0.18.0">
+<link rel="stylesheet" href="css/stil.css?v=0.19.0">
 </head>
 <body>
 <!-- Ladebildschirm: steht sofort, bis Schriften, Bilder und Effekte bereit sind -->
@@ -46,7 +46,7 @@
           <label>Passwort <input name="passwort" type="password" autocomplete="current-password" minlength="4" required></label>
           <small class="feststell" id="feststell-hinweis" hidden>Die Feststelltaste ist an.</small>
           <fieldset class="nur-neu" hidden>
-            <legend>Dein Avatar</legend>
+            <legend>Dein Kopf</legend>
             <div class="avatar-wahl" id="avatar-wahl"></div>
             <div class="farb-wahl" id="farb-wahl"></div>
           </fieldset>
@@ -107,7 +107,8 @@
           <p class="besten-saison-ende" id="besten-saison-ende" hidden></p>
         <div class="saison-abzeichen" id="besten-abzeichen" hidden></div>
         <label class="besten-kategorie" hidden><select id="besten-kategorie" aria-label="Sprint-Kategorie"></select></label>
-          <ol id="besten-liste" class="besten-felder"></ol>
+          <ol id="besten-drei" class="besten-drei" aria-label="Platz 1 bis 3" hidden></ol>
+          <ol id="besten-liste" class="besten-felder" start="4"></ol>
           <div class="besten-ich" id="besten-ich" hidden></div>
           <p class="besten-fuss" id="besten-fuss"></p>
         </section>
@@ -127,8 +128,10 @@
         <button class="knopf zweit klein" id="profil-bearbeiten" hidden>Profilbild ändern</button>
         <div class="karte profil-editor" id="profil-editor" hidden>
           <div class="pb-vorschau"><span id="pb-vorschau"></span><span class="pb-was" id="pb-was"></span></div>
-          <h3 class="pb-titel">Figur</h3>
-          <div class="pb-raster" id="pb-figuren"></div>
+          <h3 class="pb-titel">Kopf</h3>
+          <div class="pb-kopf" id="pb-kopf"></div>
+          <h3 class="pb-titel">Geste</h3>
+          <div class="pb-raster" id="pb-gesten"></div>
           <h3 class="pb-titel">Hintergrund</h3>
           <div class="pb-raster rund" id="pb-kreise"></div>
           <h3 class="pb-titel">Rand</h3>
@@ -351,7 +354,7 @@
     </div>
   </section>
 
-  <footer class="fuss">Version <span id="version"></span>. Flaggen von svg-country-flags (gemeinfrei), Länderdaten, Umrisse und Weltkarte von world-countries (ODbL), Hauptstädte von Natural Earth (gemeinfrei), Wörter für Bombe von all-the-german-words (MIT) und Häufigkeiten aus OpenSubtitles über OPUS (ODC-BY).</footer>
+  <footer class="fuss">Version <span id="version"></span>. Flaggen von svg-country-flags (gemeinfrei), Länderdaten, Umrisse und Weltkarte von world-countries (ODbL), Hauptstädte von Natural Earth (gemeinfrei), Wörter für Bombe von all-the-german-words (MIT) und Häufigkeiten aus OpenSubtitles über OPUS (ODC-BY), Köpfe von Notionists (Zoish, CC0) mit DiceBear (MIT).</footer>
 </main>
 
 <!-- Tastenliste -->
@@ -387,7 +390,7 @@
 </nav>
 <div class="toast" id="toast" role="status" hidden></div>
 
-<script src="vendor/supabase.js?v=0.18.0"></script>
-<script type="module" src="js/app.js?v=0.18.0"></script>
+<script src="vendor/supabase.js?v=0.19.0"></script>
+<script type="module" src="js/app.js?v=0.19.0"></script>
 </body>
 </html>

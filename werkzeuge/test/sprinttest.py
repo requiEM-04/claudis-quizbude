@@ -42,7 +42,7 @@ async def main():
         pg.on('console', lambda m: m.type == 'error' and fehler.append(m.text))
         await pg.goto(BASIS); await pg.wait_for_timeout(400)
         await pg.click('[data-modus=neu]'); await pg.fill('#anmelde-form [name=name]', 'Colin'); await pg.fill('#anmelde-form [name=passwort]', 'test1234')
-        await pg.click('#avatar-wahl [data-a="🦊"]'); await pg.click('#anmelde-knopf'); await pg.wait_for_selector('#s-bude:not([hidden])')
+        await pg.click('#avatar-wahl button[data-k=""]'); await pg.click('#anmelde-knopf'); await pg.wait_for_selector('#s-bude:not([hidden])')
 
         # Sprint-Reiter unten im Dock
         await pg.screenshot(path=f'{BILDER}/s_bude.png')
@@ -155,8 +155,9 @@ async def main():
         print('Profil:', await pg.inner_text('#profil-name'), '|', (await pg.inner_text('#profil-werte')).replace('\n', ' '))
         print('Rekorde:', (await pg.inner_text('#profil-rekorde')).replace('\n', ' '))
         await pg.screenshot(path=f'{BILDER}/s_profil.png', full_page=True)
-        await pg.click('#profil-bearbeiten'); await pg.click('.pb-wahl[data-art=figur][data-id=eule]'); await pg.click('#profil-speichern'); await pg.wait_for_timeout(300)
-        print('Figur im Dock (Eule erwartet):', await pg.evaluate("!!document.querySelector('.dock-ich .avatar .figur') && JSON.parse(localStorage.getItem('fake.profile')).find(p => p.name === 'Colin')?.avatar"))
+        await pg.click('#profil-bearbeiten'); vorher = await pg.get_attribute('#pb-vorschau img.kopf', 'src')
+        await pg.click('.pk-pfeil[data-teil=h][data-d="1"]'); await pg.click('#pb-gesten [data-id=handPhone]'); await pg.click('#profil-speichern'); await pg.wait_for_timeout(300)
+        print('Kopf geändert und gespeichert:', vorher != await pg.get_attribute('.dock-profil .avatar img.kopf, #profil-chip .avatar img.kopf', 'src'), '| stil:', await pg.evaluate("JSON.stringify(JSON.parse(localStorage.getItem('fake.profile')).find(p => p.name === 'Colin')?.stil)"))
         await pg.go_back(); await pg.wait_for_timeout(400)
         print('Profil -> Zurück:', await pg.evaluate('location.hash'), 'Bude sichtbar:', not await pg.evaluate('document.getElementById("s-bude").hidden'))
 

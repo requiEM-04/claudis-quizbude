@@ -472,14 +472,27 @@ export const RINGE = [
   { id: 'gold', name: 'Gold', medaille: 1 },
 ];
 
-// Ab welcher Ruhmstufe? (Farbe × 4 + Bild: Ring ab Bube, Kreis ab Dame, Figur ab König; Joker = 16)
-export const BILD_AB = { ring: 0, kreis: 1, figur: 2 };
+// Gesten der Köpfe: zwei frei, je eine ab König der Farbe, eine ab Joker, zwei für Saison-Medaillen
+export const GESTEN = [
+  { id: 'hand', name: 'Hand' },
+  { id: 'handPhone', name: 'Handy' },
+  { id: 'point', name: 'Zeigefinger', rang: 'karo' },
+  { id: 'ok', name: 'OK', rang: 'herz' },
+  { id: 'okLongArm', name: 'OK hoch', rang: 'pik' },
+  { id: 'waveLongArm', name: 'Winken', rang: 'kreuz' },
+  { id: 'waveLongArms', name: 'Beide Hände', rang: 'joker' },
+  { id: 'pointLongArm', name: 'Finger hoch', medaille: 3 },
+  { id: 'wavePointLongArms', name: 'Nummer eins', medaille: 1 },
+];
+
+// Ab welcher Ruhmstufe? (Farbe × 4 + Bild: Ring ab Bube, Kreis ab Dame, Figur und Geste ab König; Joker = 16)
+export const BILD_AB = { ring: 0, kreis: 1, figur: 2, geste: 2 };
 export function bildFreiAb(art, eintrag) {
   if (!eintrag?.rang) return null;
   if (eintrag.rang === 'joker') return 16;
   return ['karo', 'herz', 'pik', 'kreuz'].indexOf(eintrag.rang) * 4 + BILD_AB[art];
 }
-const LISTE = { figur: FIGUREN, kreis: KREISE, ring: RINGE };
+const LISTE = { figur: FIGUREN, kreis: KREISE, ring: RINGE, geste: GESTEN };
 export const bildEintrag = (art, id) => LISTE[art]?.find(e => e.id === id) || null;
 // bestPlatz: bester Saison-Platz (1–3) oder null
 export function bildFrei(art, id, stufe, bestPlatz) {

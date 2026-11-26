@@ -2,7 +2,7 @@
 
 ## Aktuell (25.11.2026)
 
-- **Version:** 0.18.0
+- **Version:** 0.19.0
 - **Live:** https://requiem-04.github.io/claudis-quizbude/ (Repo `requiEM-04/claudis-quizbude`, Branch `main`, GitHub Pages)
 - **Server:** Supabase-Projekt `quizbude` (Ref `jgvjjjiwfjxynbzjaxsg`, Frankfurt), E-Mail-Bestätigung aus, Realtime mit öffentlichen Kanälen.
 - **Inhalt:** Konten (Name + Passwort ab 4 Zeichen), Räume mit 4-Buchstaben-Code (live über Realtime), Flaggenraten (tippen oder 4 zur Auswahl), Flaggen-Sprint (60 s), Bestenliste (Siege, Punkte, Sprint), „Zuletzt gespielt".
@@ -185,6 +185,13 @@
   - **Figuren süchtig** (Colins Wunsch, für alle): jede hängt an etwas anderem, mit eigenen Augen (gerötet, Augenringe, halb zu, aufgerissen) und Gegenstand. Fuchs Kaffee, Frosch Kiffen, Panda Bambus, Eule Energy-Drinks, Krake Zocken, Pinguin Bier, Katze Katzenminze, Igel Donuts, Schildkröte Serien, Dino Burger, Biene Honig, Koala Eukalyptus, Wal Vapen, Papagei Handy, Quizbot Strom, Herzdrache Lollis, Sternwolf Musik, Phönix Chili, Hofnarr Glücksspiel, Löwe Zigarren. Bewusst nichts mit Spritzen oder harten Drogen.
   - Colin: **kein Shop**. Mehr Kosmetik zum Freispielen ist gewünscht, Chat-Sticker als gute Idee genannt (umgesetzt als Emotes in 0.18.0).
 
+- **Neu in 0.19.0:**
+  - **Köpfe statt Figuren als Profilbild** (Colin fand die Figuren und die Bestenliste zu kindlich): gezeichnete Köpfe aus Notionists (Zoish, CC0) über DiceBear (MIT), gebündelt in `vendor/koepfe.js` (esbuild aus @dicebear/core 9 + @dicebear/notionists 9, 372 KB, 122 KB gzip), Wrapper `js/koepfe.js`. Ohne Wahl entsteht der Kopf aus dem Namen (FNV-Startwert), eigene Wahl steht als kurzer Text in `profile.stil.kopf` (`s=…;h=…;g=…;b=…;o=…;k=h`). Avatare sind jetzt abgerundete Kacheln (28 %), Ränder per Maske auch für Gold/Silber/Bronze/Joker.
+  - Konto anlegen: Kopf aus dem Namen plus fünf andere zur Auswahl (Knopf für neue), gewählter Kopf wird nach dem Anlegen gespeichert. Profilbild-Editor: Frisur/Brille/Bart/Oberteil durchklicken, „Neu würfeln“, „Kopf aus meinem Namen“, Hintergrund Farbe, Hell oder bewegt, Rand, Geste.
+  - **Gesten statt Figuren im Ruhm**: Hand und Handy frei, Zeigefinger (Karo-König), OK (Herz-König), OK hoch (Pik-König), Winken (Kreuz-König), Beide Hände (Joker), Finger hoch (Platz 3 oder besser), Nummer eins (Saisonsieg). `GESTEN` in figuren.js, Ruhmesweg und Aufstieg nennen sie. Figuren gibt es nur noch als Emotes.
+  - Migration 014 (`qb_bild_frei` kennt `kopf` und `geste`), am 26.11. eingespielt und mit zurückgerolltem Probelauf geprüft.
+  - **Bestenliste neu** (Vorschlag B): Platz 1 bis 3 als Karten (Mitte der Erste, Farbe Gold/Silber/Bronze, Kartenfarbe in der Ecke), ab Platz 4 ruhige Zeilen mit feiner Linie für den Abstand zum Ersten, Reiter als Text mit Linie, Zeitraum als schlichter Text, Wappen neben dem Namen statt am Bild, keine Krone, keine Medaillen-Kärtchen mehr. Ruhm-Rahmen: Streifen links bzw. innerer Rand der Karte.
+  - **Keine Durchschnitte mehr, die an der Rundenzahl hängen**: Profil „Punkte pro Treffer“ statt „Ø Punkte pro Spiel“, „Nach Kategorie“ und Spielerfenster mit Siegquote statt Ø Punkte und bestem Spiel.
 - **Neu in 0.18.0:**
   - **Emotes im Raum-Chat** (`js/emotes.js`): 16 eigene Emotes aus den Figuren mit eigenem Ausdruck (Hook `figurAusdruck` in figuren.js: Figur ohne Gegenstand, Augen per Funktion ersetzbar, Lage der Augen für Zutaten). Frei für alle: qbGG, qbLOL, qbHmm, qbWow, qbHeul, qbLiebe. Mit Ruhm (Dame und Ass jeder Farbe, Joker): qbCool, qbZzz, qbWut, qbSus, qbPopcorn, qbBumm, qbIdee, qbKrone, qbJackpot. Ab 1.12.2026 für alle: qbSchnee.
   - Tippen: Wort im Text (Groß/klein egal), Tab ergänzt angefangene Wörter (auch „gg“, „li“), nochmal Tab blättert. Smiley-Knopf links im Chat-Feld öffnet die Liste (gesperrte grau mit Hinweis), klappt nach unten, wenn oben kein Platz ist. Escape schließt.

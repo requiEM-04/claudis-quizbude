@@ -1,7 +1,7 @@
-import { VERSION } from './config.js?v=0.18.0';
-import { adminClient, adminAnmelden } from './server.js?v=0.18.0';
-import { ruhmInfo, wappen, stilVon, bildVon } from './ruhm.js?v=0.18.0';
-import { figurSvg, figurAusEmoji } from './figuren.js?v=0.18.0';
+import { VERSION } from './config.js?v=0.19.0';
+import { adminClient, adminAnmelden } from './server.js?v=0.19.0';
+import { ruhmInfo, wappen, stilVon, bildVon } from './ruhm.js?v=0.19.0';
+import { kopfLesen, kopfBild } from './koepfe.js?v=0.19.0';
 
 // Admin-Bereich: eigenes Konto, eigene Sitzung (quizbude.admin), alles läuft über admin_*-Funktionen mit Protokoll
 const $ = id => document.getElementById(id);
@@ -50,9 +50,9 @@ const dauerhaft = p => p.gesperrt_bis && new Date(p.gesperrt_bis).getFullYear() 
 
 function avatar(p, gross = false) {
   const f = /^#[0-9a-fA-F]{6}$/.test(p.farbe || '') ? p.farbe : '#CDB68C';
-  const b = typeof p.ruhm === 'number' ? bildVon(p) : {}, fig = b.figur || figurAusEmoji(p.avatar);
-  const kl = ['avatar', gross ? 'gross' : '', b.kreis ? `kreis-${b.kreis}` : '', b.ring ? `ring-${b.ring}` : ''].filter(Boolean).join(' ');
-  return `<span class="${kl}"${b.kreis ? '' : ` style="background:${f}"`}>${fig ? figurSvg(fig) : esc(p.avatar || '🙂')}${b.kreis ? '<i class="kreis-ebene"></i>' : ''}</span>`;
+  const b = typeof p.ruhm === 'number' ? bildVon(p) : {};
+  const kl = ['avatar', 'mit-kopf', gross ? 'gross' : '', b.kreis ? `kreis-${b.kreis}` : '', b.ring ? `ring-${b.ring}` : ''].filter(Boolean).join(' ');
+  return `<span class="${kl}"><img class="kopf" src="${kopfBild(kopfLesen(p.stil?.kopf, p.name), { farbe: f, geste: b.geste, ohneGrund: !!b.kreis })}" alt="">${b.kreis ? '<i class="kreis-ebene"></i>' : ''}</span>`;
 }
 
 function marken(p) {

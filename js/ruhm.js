@@ -2,7 +2,7 @@
 // in jeder Farbe geht es von Bube über Dame und König bis zum Ass. Ganz oben steht der Joker.
 // Der Ruhm selbst wird auf dem Server aus der Statistik berechnet (siehe werkzeuge/schema.sql).
 
-import { FIGUREN, KREISE, RINGE, bildEintrag, bildFreiAb } from './figuren.js?v=0.18.0';
+import { FIGUREN, KREISE, RINGE, GESTEN, bildEintrag, bildFreiAb } from './figuren.js?v=0.19.0';
 
 export const SCHWELLEN = [0, 100, 250, 450, 700, 1000, 1350, 1750, 2200, 2700, 3250, 3850, 4500, 5200, 5950, 6750, 8000];
 
@@ -85,14 +85,14 @@ export const istFrei = (art, rangId, ruhm) => stufeVon(ruhm) >= freiAb(art, rang
 
 // Was wird mit Stufe i neu frei?
 export function neuFrei(i) {
-  const bild = [['ring', RINGE], ['kreis', KREISE], ['figur', FIGUREN]].flatMap(([art, liste]) => liste.filter(e => e.rang && bildFreiAb(art, e) === i).map(e => ({ art, rang: e.rang, id: e.id })));
+  const bild = [['ring', RINGE], ['kreis', KREISE], ['geste', GESTEN]].flatMap(([art, liste]) => liste.filter(e => e.rang && bildFreiAb(art, e) === i).map(e => ({ art, rang: e.rang, id: e.id })));
   if (i >= JOKER) return [...ARTEN.map(a => ({ art: a.id, rang: 'joker' })), ...bild];
   const rang = RAENGE[Math.floor(i / 4)].id;
   return [...ARTEN.filter(a => a.ab === i % 4).map(a => ({ art: a.id, rang })), ...bild];
 }
 
 // Profilbild (Figur, bewegter Kreis, Rand). Ruhm-Stücke prüfen wir hier, Medaillen-Stücke prüft der Server beim Speichern.
-export const BILD_ARTEN = ['figur', 'kreis', 'ring'];
+export const BILD_ARTEN = ['figur', 'kreis', 'ring', 'geste'];
 export function bildVon(p) {
   const st = p?.stil || {}, aus = {}, stufe = stufeVon(p?.ruhm || 0);
   for (const art of BILD_ARTEN) {
@@ -124,9 +124,9 @@ export function bestesFrei(ruhm) {
 }
 
 export const belohnungName = (art, rangId, id) => {
-  if (art === 'figur' || art === 'kreis' || art === 'ring') {
-    const e = bildEintrag(art, id) || [FIGUREN, KREISE, RINGE][['figur', 'kreis', 'ring'].indexOf(art)].find(x => x.rang === rangId);
-    return `${art === 'figur' ? 'Figur' : art === 'kreis' ? 'Bildhintergrund' : 'Bildrand'} ${e?.name || ''}`;
+  if (art === 'figur' || art === 'kreis' || art === 'ring' || art === 'geste') {
+    const e = bildEintrag(art, id) || [FIGUREN, KREISE, RINGE, GESTEN][['figur', 'kreis', 'ring', 'geste'].indexOf(art)].find(x => x.rang === rangId);
+    return `${{ figur: 'Figur', kreis: 'Bildhintergrund', ring: 'Bildrand', geste: 'Geste' }[art]} ${e?.name || ''}`;
   }
   const r = rangVonId(rangId);
   if (art === 'farbe') return `Namensfarbe ${r.name}`;  // z. B. „Namensfarbe Herz“

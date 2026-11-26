@@ -1,29 +1,30 @@
-import { VERSION } from './config.js?v=0.18.0';
+import { VERSION } from './config.js?v=0.19.0';
 import {
   online, nameFehler, registrieren, anmelden, abmelden, sitzungHolen, profilLaden, profilSpeichern,
   bestenliste, spieleSeit, alleProfile, sprintEintragen, sprintBestenliste, rangVon, spielerAnzahl, spieleVon, sb,
   adminAnmelden, istAdminName, konfigLaden, adminEinrichten, einrichtungOffen, abzeichenVon, saisonAbschliessen, winterquestStand,
   freundeListe, freundAnfragen, freundAntworten, freundEntfernen,
-} from './server.js?v=0.18.0';
-import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.18.0';
-import { Raum, codeNeu, STANDARD, TIPPFEHLER_ABZUG } from './raum.js?v=0.18.0';
-import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.18.0';
+} from './server.js?v=0.19.0';
+import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.19.0';
+import { Raum, codeNeu, STANDARD, TIPPFEHLER_ABZUG } from './raum.js?v=0.19.0';
+import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.19.0';
 import {
   KATEGORIEN, KATEGORIE_REIHE, KATEGORIE_GRUPPEN, SPRINT_REIHE, mehrWert, bombeLaden, bombeBenutzt, bombeGrund, bombeZuletzt, bombeSvg, kategorieVon, optionSchluessel, richtigeWahl, umrisseDa, umrisseLaden,
   sprintFrage, pruefeFrage, fragenVorladen, kanon, ARTEN as GEMISCHT_ARTEN, gemischtArten, alleArten, varianteVon, zahlLesen, schaetzWertung, zahlText,
-} from './kategorien.js?v=0.18.0';
-import { LAENDER } from './laender.js?v=0.18.0';
-import { auswahlfeld } from './auswahlfeld.js?v=0.18.0';
-import { KATEGORIE_SYMBOL } from './symbole.js?v=0.18.0';
-import { konfetti } from './konfetti.js?v=0.18.0';
-import { karteBauen, karteLaden, auswerten } from './weltkarte.js?v=0.18.0';
-import { STUFEN, ERFOLGE, erfolgStand, emblem, wertungName, saisonName, saisonKurz, vitrineLesen, SKINS, skinVon, skinVonId, skinStand, skinBedingung } from './abzeichen.js?v=0.18.0';
+} from './kategorien.js?v=0.19.0';
+import { LAENDER } from './laender.js?v=0.19.0';
+import { auswahlfeld } from './auswahlfeld.js?v=0.19.0';
+import { KATEGORIE_SYMBOL } from './symbole.js?v=0.19.0';
+import { konfetti } from './konfetti.js?v=0.19.0';
+import { karteBauen, karteLaden, auswerten } from './weltkarte.js?v=0.19.0';
+import { STUFEN, ERFOLGE, erfolgStand, emblem, wertungName, saisonName, saisonKurz, vitrineLesen, SKINS, skinVon, skinVonId, skinStand, skinBedingung } from './abzeichen.js?v=0.19.0';
 import {
   RAENGE, BILDER, ARTEN, JOKER, SONDER, sonderVon, sonderFrei, WINTERQUEST, questGeschafft, ruhmInfo, stufeVon, stufeInfo, wappen, effektHtml, rahmenDeko, stilVon, istFrei, freiAb, neuFrei,
-  belohnungName, rangVonId, symbol, symbolSvg, SCHWELLEN, flockeSvg, bildVon, BILD_ARTEN } from './ruhm.js?v=0.18.0';
-import { freundeStart, freundeStopp, freundeOrt, istOnline, onlineAbo, einladungAbo, anfrageAbo, einladen, anfrageMelden } from './freunde.js?v=0.18.0';
-import { FIGUREN, FREIE_FIGUREN, KREISE, RINGE, figurSvg, figurAusEmoji, figurVonId, bildFrei, bildFreiAb, bildEintrag, suchtVon } from './figuren.js?v=0.18.0';
-import { EMOTES, emoteVonId, emoteFrei, emoteHinweis, emoteImg, chatHtml, emoteErgaenzen, emotesAbStufe } from './emotes.js?v=0.18.0';
+  belohnungName, rangVonId, symbol, symbolSvg, SCHWELLEN, flockeSvg, bildVon, BILD_ARTEN } from './ruhm.js?v=0.19.0';
+import { freundeStart, freundeStopp, freundeOrt, istOnline, onlineAbo, einladungAbo, anfrageAbo, einladen, anfrageMelden } from './freunde.js?v=0.19.0';
+import { FIGUREN, FREIE_FIGUREN, KREISE, RINGE, GESTEN, figurSvg, figurAusEmoji, figurVonId, bildFrei, bildFreiAb, bildEintrag, suchtVon } from './figuren.js?v=0.19.0';
+import { KOPF_TEILE, kopfLesen, kopfSchreiben, kopfBild, kopfWerte, zufallsStart, HELL } from './koepfe.js?v=0.19.0';
+import { EMOTES, emoteVonId, emoteFrei, emoteHinweis, emoteImg, chatHtml, emoteErgaenzen, emotesAbStufe } from './emotes.js?v=0.19.0';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -208,11 +209,12 @@ function emoteListeAufbauen() {
 const chatAvatar = (r, m) => { const p = m.id && r.bekannt?.get(m.id); return `<span class="chat-av">${avatarHtml(p ? { ...p, id: m.id } : { avatar: m.avatar, farbe: '#353B3F' })}</span>`; };
 
 // Profilbild: Figur (gewählt oder aus dem alten Emoji), Kreis (bewegt oder einfache Farbe), Rand
+// Profilbild: gezeichneter Kopf (aus dem Namen oder selbst zusammengestellt), dahinter Farbe oder bewegter Hintergrund, dazu Rand und Geste
 function avatarHtml(p, { bewegt = false } = {}) {
   const b = p && !p.gast && typeof p.ruhm === 'number' ? bildVon(p) : {};
-  const fig = b.figur || p?.figur || figurAusEmoji(p?.avatar);
-  const klassen = ['avatar', fig ? 'mit-figur' : '', b.kreis ? `kreis-${b.kreis}` : '', b.ring ? `ring-${b.ring}` : '', bewegt ? 'bewegt' : ''].filter(Boolean).join(' ');
-  return `<span class="${klassen}"${b.kreis ? '' : ` style="background:${farbe(p?.farbe)}"`}>${fig ? figurSvg(fig) : esc(p?.avatar || '🙂')}${b.kreis ? '<i class="kreis-ebene"></i>' : ''}</span>`;
+  const src = kopfBild(kopfLesen(p?.stil?.kopf, p?.name), { farbe: farbe(p?.farbe), geste: b.geste, ohneGrund: !!b.kreis });
+  const klassen = ['avatar', 'mit-kopf', b.kreis ? `kreis-${b.kreis}` : '', b.ring ? `ring-${b.ring}` : '', bewegt ? 'bewegt' : ''].filter(Boolean).join(' ');
+  return `<span class="${klassen}"><img class="kopf" src="${src}" alt="" draggable="false">${b.kreis ? '<i class="kreis-ebene"></i>' : ''}</span>`;
 }
 
 // ---------- Ruhm im Alltag: Namensfarbe, Titel, Wappen am Avatar, Hintergrund ----------
@@ -420,26 +422,36 @@ const pause = ms => new Promise(r => setTimeout(r, ms));
 
 // ---------- Anmelden ----------
 let anmeldeModus = 'anmelden';
-const auswahl = { avatar: zufall(AVATARE), farbe: zufall(FARBEN) };
+const auswahl = { avatar: zufall(AVATARE), farbe: zufall(FARBEN), kopf: '' };
 
 // Avatar- und Farbwahl (beim Registrieren und im Profil)
-function wahlBauen(avatarEl, farbEl, zustand) {
-  avatarEl.innerHTML = FREIE_FIGUREN.map(f => `<button type="button" data-a="${f.emoji}" aria-label="${f.name}" title="${f.name}">${figurSvg(f.id)}</button>`).join('');
-  farbEl.innerHTML = FARBEN.map(f => `<button type="button" data-f="${f}" style="background:${f}" aria-label="Farbe ${f}"></button>`).join('');
-  const markieren = () => {
-    avatarEl.style.setProperty('--wahl-farbe', zustand.farbe);
-    avatarEl.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b.dataset.a === zustand.avatar));
+// Beim Konto anlegen: der Kopf aus dem Namen und ein paar andere zur Auswahl, dazu die Farbe
+function wahlBauen(avatarEl, farbEl, zustand, nameEl) {
+  let andere = Array.from({ length: 5 }, zufallsStart);
+  const zeichnen = () => {
+    const name = nameEl?.value.trim() || '';
+    const koepfe = ['', ...andere.map(s => `s=${s}`)];
+    avatarEl.innerHTML = koepfe.map((k, i) => `<button type="button" data-k="${k}" aria-label="${i ? `Kopf ${i + 1}` : 'Kopf aus deinem Namen'}" aria-pressed="${k === zustand.kopf}"><img src="${kopfBild(kopfLesen(k, name), { farbe: zustand.farbe })}" alt=""></button>`).join('')
+      + '<button type="button" class="kopf-neu" data-neu="1" aria-label="Andere Köpfe zeigen" title="Andere Köpfe"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.9-3.5M4 4v4h4"/><path d="M4 13a8 8 0 0 0 14.9 3.5M20 20v-4h-4"/></svg></button>';
     farbEl.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b.dataset.f === zustand.farbe));
   };
-  avatarEl.onclick = e => { const b = e.target.closest('button'); if (b) { zustand.avatar = b.dataset.a; markieren(); } };
-  farbEl.onclick = e => { const b = e.target.closest('button'); if (b) { zustand.farbe = b.dataset.f; markieren(); } };
-  markieren();
-  return markieren;
+  farbEl.innerHTML = FARBEN.map(f => `<button type="button" data-f="${f}" style="background:${f}" aria-label="Farbe ${f}"></button>`).join('');
+  avatarEl.onclick = e => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    if (b.dataset.neu) { andere = Array.from({ length: 5 }, zufallsStart); if (zustand.kopf) zustand.kopf = ''; }
+    else zustand.kopf = b.dataset.k;
+    zeichnen();
+  };
+  farbEl.onclick = e => { const b = e.target.closest('button'); if (b) { zustand.farbe = b.dataset.f; zeichnen(); } };
+  nameEl?.addEventListener('input', () => { if (!avatarEl.closest('[hidden]')) zeichnen(); });
+  zeichnen();
+  return zeichnen;
 }
 
 let adminPwErst = null; // erste Eingabe beim Festlegen des Admin-Passworts
 function anmeldenAufbauen() {
-  wahlBauen($('avatar-wahl'), $('farb-wahl'), auswahl);
+  const koepfeZeichnen = wahlBauen($('avatar-wahl'), $('farb-wahl'), auswahl, document.querySelector('#anmelde-form [name=name]'));
 
   document.querySelectorAll('#s-anmelden .umschalter-knopf').forEach(b => {
     b.onclick = () => {
@@ -449,9 +461,10 @@ function anmeldenAufbauen() {
       });
       const neu = anmeldeModus === 'neu';
       document.querySelector('.nur-neu').hidden = !neu;
+      if (neu) koepfeZeichnen();
       $('anmelde-knopf').textContent = neu ? 'Konto anlegen' : 'Anmelden';
       document.querySelector('#anmelde-form [name=passwort]').autocomplete = neu ? 'new-password' : 'current-password';
-      $('anmelden-claudi').textContent = neu ? 'Such dir einen Avatar aus. Ein Passwort ab 4 Zeichen reicht.' : 'Claudi hat die Flaggen schon aufgehängt.';
+      $('anmelden-claudi').textContent = neu ? 'Such dir einen Kopf aus. Ein Passwort ab 4 Zeichen reicht.' : 'Claudi hat die Flaggen schon aufgehängt.';
       $('anmelde-fehler').textContent = '';
     };
   });
@@ -506,6 +519,10 @@ function anmeldenAufbauen() {
         ? await registrieren(name, passwort, auswahl.avatar, auswahl.farbe)
         : await anmelden(name, passwort);
       await profilHolen(user);
+      // anderer Kopf als der aus dem Namen gewählt: gleich mitspeichern
+      if (anmeldeModus === 'neu' && auswahl.kopf) {
+        try { const stil = { ...(ich.stil || {}), kopf: auswahl.kopf }; await profilSpeichern(ich.id, { stil }); ich = { ...ich, stil }; chipZeichnen(); } catch { /* bleibt der Kopf aus dem Namen */ }
+      }
       f.passwort.value = '';
       gast = false;
       try { localStorage.removeItem(GAST); } catch { /* egal */ }
@@ -773,11 +790,11 @@ function saisonKopf(von, bis, laeuft) {
   const tage = Math.ceil((bis - new Date()) / 86400000);
   const monat = `${String(von.getMonth() + 1).padStart(2, '0')}/${String(von.getFullYear()).slice(2)}`;
   $('besten-saison-ende').textContent = laeuft
-    ? `Läuft bis ${ende.getDate()}.${ende.getMonth() + 1}., ${tage <= 1 ? 'endet heute Nacht' : `noch ${tage} Tage`}`
+    ? `${tage <= 1 ? 'Endet heute Nacht' : `Noch ${tage} Tage`}, dann Medaillen für die Top 3`
     : `Beendet am ${ende.getDate()}.${ende.getMonth() + 1}.${ende.getFullYear()}`;
   $('besten-saison-ende').hidden = false;
   $('besten-abzeichen').innerHTML = [1, 2, 3].map(pl => `<figure title="Abzeichen für Platz ${pl}">${abzeichenSvg(pl, monat)}<figcaption>Platz ${pl}</figcaption></figure>`).join('');
-  $('besten-abzeichen').hidden = false;
+  $('besten-abzeichen').hidden = true; // die Medaillen sieht man im Profil
 }
 
 let bestenUhr = null;
@@ -806,23 +823,40 @@ async function bestenLaden() {
         fussText = `${w.anzahl} ${w.anzahl === 1 ? 'Spiel' : 'Spiele'} in dieser Saison`;
       }
       if (!fussText.endsWith('.')) fussText += '.';
-      if (laeuft) fussText += ' Die Top 3 am Monatsende bekommen das Abzeichen der Saison.';
       saisonKopf(von, bis, laeuft);
     }
     if (zeit === 'allzeit') { $('besten-saison-ende').hidden = true; $('besten-abzeichen').hidden = true; }
     if (besteSpalte !== spalte) return; // inzwischen anderer Reiter
-    const feld = (p, platz) => {
+    // Platz 1 bis 3 als Karten (in der Mitte der Erste), ab Platz 4 eine ruhige Liste mit Abstand zum Ersten
+    const max = Math.max(1, liste[0]?.wert || 1), meins = p => ich && p.id === ich.id;
+    const lr = p => { const r = hatRuhm(p) && stilVon(p).rahmen; return r ? ` lr-${r}` : ''; };
+    const karte = (p, platz) => {
       const [zahl, einheit] = SPALTE[spalte](p.wert);
-      const titel = titelVon(p), rahmen = hatRuhm(p) && stilVon(p).rahmen;
-      return `<li class="besten-feld${platz <= 3 ? ` top p${platz}` : ''}${ich && p.id === ich.id ? ' ich' : ''}${rahmen ? ` lr-${rahmen}` : ''}" style="--i:${platz - 1}">
-        <a data-spieler="${esc(p.id)}" data-platz="${platz}" role="button" tabindex="0">
-          <span class="rang">${platz}</span>
-          <span class="bf-avatar">${platz === 1 ? '<span class="krone" aria-hidden="true">👑</span>' : ''}${avatarMitWappen(p, 14)}</span>
-          <span class="bf-mitte"><span class="bf-name${nameKlasse(p)}">${esc(p.name)}</span>${titel ? `<span class="bf-titel titel-zeile nf-${titel.rang}">${esc(titel.text)}</span>` : ''}</span>
-          <span class="bf-wert">${zahl}<small>${einheit}</small></span>
+      return `<li class="bd-karte p${platz}${meins(p) ? ' ich' : ''}${lr(p)}">
+        <a data-spieler="${esc(p.id)}" data-platz="${platz}" role="button" tabindex="0" aria-label="Platz ${platz}: ${esc(p.name)}, ${zahl} ${einheit}">
+          <span class="bd-ecke" aria-hidden="true">${platz}${symbolSvg(['kreuz', 'herz', 'karo'][platz - 1])}</span>
+          <span class="bd-avatar">${avatarHtml(p, { bewegt: platz === 1 })}</span>
+          <span class="bd-name${nameKlasse(p)}">${esc(p.name)}</span>
+          <span class="bd-wert">${zahl}</span>
         </a></li>`;
     };
-    ol.innerHTML = liste.length ? liste.slice(0, 15).map((p, i) => feld(p, i + 1)).join('')
+    const feld = (p, platz) => {
+      const [zahl, einheit] = SPALTE[spalte](p.wert);
+      const titel = titelVon(p);
+      return `<li class="besten-feld${meins(p) ? ' ich' : ''}${lr(p)}">
+        <a data-spieler="${esc(p.id)}" data-platz="${platz}" role="button" tabindex="0" aria-label="Platz ${platz}: ${esc(p.name)}, ${zahl} ${einheit}">
+          <span class="rang">${platz}</span>
+          ${avatarHtml(p)}
+          <span class="bf-mitte"><span class="bf-zeile"><span class="bf-name${nameKlasse(p)}">${esc(p.name)}</span>${hatRuhm(p) ? wappen(p.ruhm, { groesse: 13 }) : ''}</span>${titel ? `<span class="bf-titel titel-zeile nf-${titel.rang}">${esc(titel.text)}</span>` : ''}</span>
+          <span class="bf-wert">${zahl}</span>
+          <i class="bf-abstand" style="--a:${Math.max(2, p.wert / max * 100).toFixed(1)}%" aria-hidden="true"></i>
+        </a></li>`;
+    };
+    const drei = $('besten-drei');
+    drei.innerHTML = liste.slice(0, 3).map((p, i) => karte(p, i + 1)).join('');
+    drei.hidden = !liste.length;
+    drei.dataset.anzahl = Math.min(3, liste.length);
+    ol.innerHTML = liste.length ? liste.slice(3, 15).map((p, i) => feld(p, i + 4)).join('')
       : `<li class="leer">${zeit === 'allzeit' ? 'Hier steht noch keiner. Spiel eine Runde, dann bist du der Erste.' : 'In dieser Saison steht hier noch keiner. Platz 1 ist frei.'}</li>`;
     // eigener Platz, wenn man nicht in den Top 15 steht
     ichBox.hidden = true;
@@ -833,7 +867,7 @@ async function bestenLaden() {
       else if (zeit === 'allzeit' && spalte !== 'sprint') { wert = ich[spalte] || 0; platz = await rangVon(spalte, wert); }
       else if (zeit === 'allzeit') wert = sprintRekord($('besten-kategorie').value);
       const [zahl, einheit] = SPALTE[spalte](wert);
-      ichBox.innerHTML = `<span class="rang">${platz ?? '–'}</span>${avatarMitWappen(ich, 14)}<span class="bf-name${nameKlasse(ich)}">Du</span><span class="bf-wert">${wert ? `${zahl}<small>${einheit}</small>` : '<small>noch nichts</small>'}</span>`;
+      ichBox.innerHTML = `<span class="rang">${platz ?? '–'}</span>${avatarHtml(ich)}<span class="bf-name${nameKlasse(ich)}">Du</span><span class="bf-wert">${wert ? zahl : '<small>noch nichts</small>'}</span>`;
       ichBox.hidden = false;
     }
     fuss.textContent = fussText;
@@ -883,9 +917,9 @@ async function spielerFenster(id, platz) {
     const spalteName = { punkte: 'Punkte', siege: 'Siege', sprint: 'Sprint' }[besteSpalte] || 'Punkte';
     const zeilen = SPRINT_REIHE.map(k => {
       const e = proKat.get(k), r = rekorde[k] || 0;
-      if (!e && !r) return `<tr class="leer"><th>${esc(KATEGORIEN[k].name)}</th><td>–</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>`;
+      if (!e && !r) return `<tr class="leer"><th>${esc(KATEGORIEN[k].name)}</th><td>–</td><td>–</td><td>–</td><td>–</td></tr>`;
       return `<tr><th>${esc(KATEGORIEN[k].name)}</th><td>${e ? e.n : '–'}</td><td class="${e?.siege ? 'gold' : ''}">${e ? e.siege : '–'}</td>
-        <td>${e ? z(Math.round(e.pkt / e.n)) : '–'}</td><td>${e ? z(e.best) : '–'}</td><td class="sf-sprint">${r ? `<b>${r}</b>` : '–'}</td></tr>`;
+        <td>${e ? `${prozent(e.siege, e.n)} %` : '–'}</td><td class="sf-sprint">${r ? `<b>${r}</b>` : '–'}</td></tr>`;
     }).join('');
     innen.innerHTML = `
       <header class="sf-kopf">
@@ -901,7 +935,7 @@ async function spielerFenster(id, platz) {
           ${med.length ? `<div class="sf-medaillen">${med.slice(0, 6).map(m => `<span tabindex="0" data-tip="Platz ${m.platz}, ${esc(wertungName(m.wertung))}" data-tip2="Saison ${esc(saisonName(m.saison))}">${abzeichenSvg(m.platz, saisonKurz(m.saison))}</span>`).join('')}</div>` : ''}</div>
         <div class="sf-rechts">
           <table class="sf-tabelle">
-            <thead><tr><th>Kategorie</th><th>Spiele</th><th>Siege</th><th>Ø Punkte</th><th>Bestes Spiel</th><th>Sprint-Rekord</th></tr></thead>
+            <thead><tr><th>Kategorie</th><th>Spiele</th><th>Siege</th><th>Siegquote</th><th>Sprint-Rekord</th></tr></thead>
             <tbody>${zeilen}</tbody>
           </table>
           <p class="sf-erklaerung">${allzeit
@@ -922,14 +956,16 @@ async function spielerFenster(id, platz) {
 }
 
 function budeAufbauen() {
-  $('besten-liste').addEventListener('click', e => {
-    const a = e.target.closest('[data-spieler]');
-    if (a) spielerFenster(a.dataset.spieler, a.dataset.platz);
-  });
-  $('besten-liste').addEventListener('keydown', e => {
-    const a = e.target.closest('[data-spieler]');
-    if (a && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); spielerFenster(a.dataset.spieler, a.dataset.platz); }
-  });
+  for (const id of ['besten-liste', 'besten-drei']) {
+    $(id).addEventListener('click', e => {
+      const a = e.target.closest('[data-spieler]');
+      if (a) spielerFenster(a.dataset.spieler, a.dataset.platz);
+    });
+    $(id).addEventListener('keydown', e => {
+      const a = e.target.closest('[data-spieler]');
+      if (a && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); spielerFenster(a.dataset.spieler, a.dataset.platz); }
+    });
+  }
   $('spieler-fenster').addEventListener('click', e => {
     const d = $('spieler-fenster');
     if (e.target === d) { d.close(); return; }
@@ -1398,7 +1434,7 @@ function anpassenZeichnen() {
   hochkarteZeichnen();
 }
 async function stilAnlegen(neu, meldung = 'Angelegt.') {
-  const stil = Object.fromEntries(Object.entries({ ...bildVon(ich), skin: skinVon(ich), ...neu }).filter(([, v]) => v));
+  const stil = Object.fromEntries(Object.entries({ ...bildVon(ich), skin: skinVon(ich), kopf: ich.stil?.kopf, ...neu }).filter(([, v]) => v));
   try {
     await profilSpeichern(ich.id, { stil });
     ich = { ...ich, stil };
@@ -1409,20 +1445,20 @@ async function stilAnlegen(neu, meldung = 'Angelegt.') {
   } catch (e) { toast(e.message); }
 }
 // Ruhmesweg als Tabelle: Zeilen sind die Kartenfarben (Ränge), Spalten Bube bis Ass, jede Stufe schaltet eine Sache frei
-const FREI_NACH_STUFE = ['Namensfarbe + Bildrand', 'Titel + Bildhintergrund + Emote', 'Karten-Effekt + Figur', 'Rahmen + Hintergrund + Emote'];
+const FREI_NACH_STUFE = ['Namensfarbe + Bildrand', 'Titel + Bildhintergrund + Emote', 'Karten-Effekt + Geste', 'Rahmen + Hintergrund + Emote'];
 const emoteAb = i => emotesAbStufe(i).map(e => `, ${e.code}`).join('');
 function ruhmeswegZeichnen() {
   const jetzt = stufeVon(ich.ruhm || 0), zahl = n => n.toLocaleString('de-DE');
   const zustand = i => i < jetzt ? 'erreicht' : i === jetzt ? 'aktuell' : 'gesperrt';
   const bild = (liste, r) => esc(liste.find(e => e.rang === r.id)?.name || '');
-  const belohnung = (r, f) => [`${esc(r.name)}, Rand ${bild(RINGE, r)}`, `„${esc(r.titel)}“, ${bild(KREISE, r)}`, `${esc(r.effekt)}, ${bild(FIGUREN, r)}`, `${esc(r.rahmen)}, ${esc(r.hintergrund)}`][f] + emoteAb(RAENGE.indexOf(r) * 4 + f);
+  const belohnung = (r, f) => [`${esc(r.name)}, Rand ${bild(RINGE, r)}`, `„${esc(r.titel)}“, ${bild(KREISE, r)}`, `${esc(r.effekt)}, Geste ${bild(GESTEN, r)}`, `${esc(r.rahmen)}, ${esc(r.hintergrund)}`][f] + emoteAb(RAENGE.indexOf(r) * 4 + f);
   const kopf = `<div class="rw-ecke"></div>${BILDER.map((b, f) => `<div class="rw-kopf"><b>${b.name}</b><small>${FREI_NACH_STUFE[f]}</small></div>`).join('')}`;
   const zeilen = RAENGE.slice(0, 4).map((r, ri) => `<div class="rw-rang nf-${r.id}"><span class="rw-farbe ${r.rot ? 'rot' : ''}">${symbolSvg(r.id)}</span>${r.name}</div>${[0, 1, 2, 3].map(f => {
     const i = ri * 4 + f;
     return `<div class="rw-zelle ${zustand(i)}" style="--rang:${r.farbe}">${wappen(0, { stufe: i, groesse: 28 })}<span><b>${zahl(SCHWELLEN[i])}</b><small>${belohnung(r, f)}</small></span>${i === jetzt ? '<i class="rw-du">du</i>' : ''}</div>`;
   }).join('')}`).join('');
   const joker = RAENGE[4];
-  const jz = `<div class="rw-rang nf-joker">Joker</div><div class="rw-zelle rw-joker ${zustand(JOKER)}" style="--rang:${joker.farbe}">${wappen(0, { stufe: JOKER, groesse: 28 })}<span><b>${zahl(SCHWELLEN[JOKER])}</b><small>Alles im Joker-Stil: schillernder Name, „${esc(joker.titel)}“, Holo-Effekt, Regenbogenrahmen und Hintergrund, dazu Figur Hofnarr mit Holo-Kreis und Regenbogenrand${emoteAb(JOKER).replace(', ', ' und Emote ')}</small></span>${jetzt === JOKER ? '<i class="rw-du">du</i>' : ''}</div>`;
+  const jz = `<div class="rw-rang nf-joker">Joker</div><div class="rw-zelle rw-joker ${zustand(JOKER)}" style="--rang:${joker.farbe}">${wappen(0, { stufe: JOKER, groesse: 28 })}<span><b>${zahl(SCHWELLEN[JOKER])}</b><small>Alles im Joker-Stil: schillernder Name, „${esc(joker.titel)}“, Holo-Effekt, Regenbogenrahmen und Hintergrund, dazu Geste ${esc(GESTEN.find(g => g.rang === 'joker').name)}, Holo-Hintergrund und Regenbogenrand${emoteAb(JOKER).replace(', ', ' und Emote ')}</small></span>${jetzt === JOKER ? '<i class="rw-du">du</i>' : ''}</div>`;
   $('ruhmesweg').innerHTML = kopf + zeilen + jz;
 }
 
@@ -1627,35 +1663,60 @@ function skinKachelnZeichnen() {
 }
 
 // ---------- Profil ----------
-const profilWahl = { avatar: '', farbe: '', figur: '', kreis: '', ring: '' };
+const profilWahl = { avatar: '', farbe: '', kopf: null, kreis: '', ring: '', geste: '' };
 
-// ---------- Profilbild-Editor: Figur, Hintergrund (Farbe oder bewegt), Rand ----------
+// ---------- Profilbild-Editor: Kopf (Teile, würfeln), Geste, Hintergrund (Farbe, hell oder bewegt), Rand ----------
 const besterPlatz = () => { const p = (meineMedaillen || []).map(m => m.platz).filter(Boolean); return p.length ? Math.min(...p) : null; };
 function bildBedingung(art, e) {
   if (e.medaille) return e.medaille === 1 ? 'nur für einen Saisonsieg' : `für Platz ${e.medaille} oder besser in einer Saison`;
   return `frei ab ${stufeInfo(bildFreiAb(art, e)).name}`;
 }
+const wahlStil = () => ({ ...stilVon(ich), kopf: kopfSchreiben(profilWahl.kopf), kreis: profilWahl.kreis, ring: profilWahl.ring, geste: profilWahl.geste });
+const PFEIL_L = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>';
+const PFEIL_R = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>';
 function bildEditorZeichnen() {
-  const stufe = stufeVon(ich.ruhm || 0), best = besterPlatz();
+  const stufe = stufeVon(ich.ruhm || 0), best = besterPlatz(), t = profilWahl.kopf, werte = kopfWerte(t);
   const kachel = (art, e, innen, gewaehlt) => {
     const frei = bildFrei(art, e.id, stufe, best);
-    return `<button type="button" class="pb-wahl${frei ? '' : ' gesperrt'}" data-art="${art}" data-id="${e.id}" aria-pressed="${gewaehlt}" title="${esc(e.name)}${art === 'figur' && suchtVon(e.id) ? `, süchtig nach ${esc(suchtVon(e.id))}` : ''}${frei ? '' : `, ${esc(bildBedingung(art, e))}`}">${innen}${frei ? '' : '<span class="pb-schloss" aria-hidden="true">🔒</span>'}</button>`;
+    return `<button type="button" class="pb-wahl${frei ? '' : ' gesperrt'}" data-art="${art}" data-id="${e.id}" aria-pressed="${gewaehlt}" title="${esc(e.name)}${frei ? '' : `, ${esc(bildBedingung(art, e))}`}">${innen}${frei ? '' : '<span class="pb-schloss" aria-hidden="true">🔒</span>'}</button>`;
   };
-  const grund = profilWahl.kreis ? '#3A4046' : profilWahl.farbe;
-  $('pb-figuren').innerHTML = FIGUREN.map(f => kachel('figur', f, `<span class="avatar mit-figur" style="background:${grund}">${figurSvg(f.id)}</span>`, profilWahl.figur === f.id)).join('');
-  $('pb-kreise').innerHTML = FARBEN.map(f => `<button type="button" class="pb-wahl" data-art="farbe" data-id="${f}" aria-pressed="${!profilWahl.kreis && profilWahl.farbe === f}" title="Einfarbig"><span class="avatar" style="background:${f}"></span></button>`).join('')
+  $('pb-kopf').innerHTML = `<div class="pk-teile">${KOPF_TEILE.map(x => {
+    const n = werte[x.id], anzahl = x.werte.length;
+    const text = x.ohne ? (n ? `${n} / ${anzahl}` : x.ohne) : `${n + 1} / ${anzahl}`;
+    return `<div class="pk-zeile"><span>${x.name}</span><button type="button" class="pk-pfeil" data-teil="${x.id}" data-d="-1" aria-label="${x.name} zurück">${PFEIL_L}</button><b>${text}</b><button type="button" class="pk-pfeil" data-teil="${x.id}" data-d="1" aria-label="${x.name} weiter">${PFEIL_R}</button></div>`;
+  }).join('')}</div>
+    <div class="pk-knoepfe"><button type="button" class="knopf zweit klein" data-kopf="wuerfeln">Neu würfeln</button><button type="button" class="textknopf" data-kopf="name">Kopf aus meinem Namen</button></div>`;
+  const grund = { farbe: profilWahl.farbe, ohneGrund: !!profilWahl.kreis };
+  $('pb-gesten').innerHTML = `<button type="button" class="pb-wahl" data-art="geste" data-id="" aria-pressed="${!profilWahl.geste}" title="Keine Geste"><span class="avatar mit-kopf"${grund.ohneGrund ? ' style="background:#3A4046"' : ''}><img class="kopf" src="${kopfBild(t, grund)}" alt=""></span></button>`
+    + GESTEN.map(g => kachel('geste', g, `<span class="avatar mit-kopf"${grund.ohneGrund ? ' style="background:#3A4046"' : ''}><img class="kopf" src="${kopfBild(t, { ...grund, geste: g.id })}" alt=""></span>`, profilWahl.geste === g.id)).join('');
+  const hell = t.k === 'h' && !profilWahl.kreis;
+  $('pb-kreise').innerHTML = FARBEN.map(f => `<button type="button" class="pb-wahl" data-art="farbe" data-id="${f}" aria-pressed="${!profilWahl.kreis && !hell && profilWahl.farbe === f}" title="Einfarbig"><span class="avatar" style="background:${f}"></span></button>`).join('')
+    + `<button type="button" class="pb-wahl" data-art="hell" data-id="hell" aria-pressed="${hell}" title="Hell"><span class="avatar" style="background:${HELL}"></span></button>`
     + KREISE.map(k => kachel('kreis', k, `<span class="avatar kreis-${k.id} bewegt"><i class="kreis-ebene"></i></span>`, profilWahl.kreis === k.id)).join('');
   $('pb-ringe').innerHTML = `<button type="button" class="pb-wahl" data-art="ring" data-id="" aria-pressed="${!profilWahl.ring}" title="Kein Rand"><span class="avatar pb-keiner"></span></button>`
     + RINGE.map(r => kachel('ring', r, `<span class="avatar ring-${r.id} bewegt" style="background:#30363B"></span>`, profilWahl.ring === r.id)).join('');
-  const fig = figurVonId(profilWahl.figur);
-  const vorschau = { ...ich, avatar: fig?.emoji || profilWahl.avatar, farbe: profilWahl.farbe, stil: { ...stilVon(ich), figur: profilWahl.figur, kreis: profilWahl.kreis, ring: profilWahl.ring } };
+  const vorschau = { ...ich, farbe: profilWahl.farbe, stil: wahlStil() };
   $('pb-vorschau').innerHTML = avatarHtml(vorschau, { bewegt: true });
-  $('pb-was').innerHTML = `<b>${esc(fig?.name || 'Altes Bild')}</b>${fig && suchtVon(fig.id) ? `<small>süchtig nach ${esc(suchtVon(fig.id))}</small>` : ''}<small>${esc(profilWahl.kreis ? bildEintrag('kreis', profilWahl.kreis).name : 'Einfarbig')}, ${esc(profilWahl.ring ? `Rand ${bildEintrag('ring', profilWahl.ring).name}` : 'ohne Rand')}</small>`;
+  const geste = GESTEN.find(g => g.id === profilWahl.geste);
+  $('pb-was').innerHTML = `<b>Dein Kopf</b><small>${esc(profilWahl.kreis ? bildEintrag('kreis', profilWahl.kreis).name : hell ? 'Hell' : 'Einfarbig')}, ${esc(profilWahl.ring ? `Rand ${bildEintrag('ring', profilWahl.ring).name}` : 'ohne Rand')}${geste ? `, Geste ${esc(geste.name)}` : ''}</small>`;
 }
 function bildWahl(t) {
   const art = t.dataset.art, id = t.dataset.id;
   if (t.classList.contains('gesperrt')) { const e = bildEintrag(art, id); toast(`${e.name}: ${bildBedingung(art, e)}.`); return; }
-  if (art === 'farbe') { profilWahl.farbe = id; profilWahl.kreis = ''; } else profilWahl[art] = id;
+  if (art === 'farbe') { profilWahl.farbe = id; profilWahl.kreis = ''; delete profilWahl.kopf.k; }
+  else if (art === 'hell') { profilWahl.kreis = ''; profilWahl.kopf.k = 'h'; }
+  else profilWahl[art] = id;
+  bildEditorZeichnen();
+}
+function kopfAendern(t) {
+  const k = profilWahl.kopf;
+  if (t.dataset.kopf === 'wuerfeln') profilWahl.kopf = { s: zufallsStart(), ...(k.k ? { k: k.k } : {}) };
+  else if (t.dataset.kopf === 'name') profilWahl.kopf = { ...kopfLesen('', ich.name), ...(k.k ? { k: k.k } : {}) };
+  else if (t.dataset.teil) {
+    const x = KOPF_TEILE.find(y => y.id === t.dataset.teil), anzahl = x.werte.length + (x.ohne ? 1 : 0);
+    const jetzt = kopfWerte(k)[x.id];
+    k[x.id] = (jetzt + Number(t.dataset.d) + anzahl) % anzahl;
+  } else return;
   bildEditorZeichnen();
 }
 let profilAbruf = 0;
@@ -1668,11 +1729,12 @@ const prozent = (a, b) => (b ? Math.round((a / b) * 100) : 0);
 function profilAufbauen() {
   $('profil-bearbeiten').onclick = () => {
     const b = bildVon(ich);
-    Object.assign(profilWahl, { avatar: ich.avatar, farbe: farbe(ich.farbe), figur: b.figur || figurAusEmoji(ich.avatar) || '', kreis: b.kreis || '', ring: b.ring || '' });
+    Object.assign(profilWahl, { avatar: ich.avatar, farbe: farbe(ich.farbe), kopf: kopfLesen(ich.stil?.kopf, ich.name), kreis: b.kreis || '', ring: b.ring || '', geste: b.geste || '' });
     bildEditorZeichnen();
     $('profil-editor').hidden = false;
   };
-  for (const el of ['pb-figuren', 'pb-kreise', 'pb-ringe']) $(el).addEventListener('click', e => { const t = e.target.closest('[data-art]'); if (t) bildWahl(t); });
+  for (const el of ['pb-gesten', 'pb-kreise', 'pb-ringe']) $(el).addEventListener('click', e => { const t = e.target.closest('[data-art]'); if (t) bildWahl(t); });
+  $('pb-kopf').addEventListener('click', e => { const t = e.target.closest('[data-kopf], [data-teil]'); if (t) kopfAendern(t); });
   $('profil-abbrechen').onclick = () => { $('profil-editor').hidden = true; };
   $('profil-reiter').onclick = e => { const b = e.target.closest('[data-tab]'); if (b) profilTab(b.dataset.tab); };
   abzZiehenAufbauen();
@@ -1714,9 +1776,10 @@ function profilAufbauen() {
     stilAnlegen({ ...stilVon(ich), [anpassenArt]: b.dataset.rang }, 'Angelegt.');
   };
   $('profil-speichern').onclick = async () => {
-    // Freie Figuren stehen im Emoji (wirkt überall, auch in alten Listen), besondere zusätzlich geprüft im Stil
-    const fig = figurVonId(profilWahl.figur), avatar = fig ? fig.emoji : profilWahl.avatar;
-    const stil = Object.fromEntries(Object.entries({ ...stilVon(ich), skin: skinVon(ich), figur: fig && (fig.rang || fig.medaille) ? fig.id : '', kreis: profilWahl.kreis, ring: profilWahl.ring }).filter(([, v]) => v));
+    // Kopf aus dem Namen ohne Änderungen braucht keinen Eintrag; die alte Figur fällt weg
+    const avatar = profilWahl.avatar;
+    const kopf = kopfSchreiben(profilWahl.kopf) === kopfSchreiben(kopfLesen('', ich.name)) ? '' : kopfSchreiben(profilWahl.kopf);
+    const stil = Object.fromEntries(Object.entries({ ...wahlStil(), skin: skinVon(ich), kopf }).filter(([, v]) => v));
     try {
       await profilSpeichern(ich.id, { avatar, farbe: profilWahl.farbe, stil });
       ich = { ...ich, avatar, farbe: profilWahl.farbe, stil };
@@ -1950,10 +2013,11 @@ async function profilZeigen(id) {
   profilTab(eigenes ? profilTabJetzt : 'uebersicht');
   if (eigenes) { anpassenZeichnen(); ruhmeswegZeichnen(); }
 
-  const schnitt = p.spiele ? Math.round(p.punkte / p.spiele) : 0;
+  // Punkte pro Treffer hängt nicht an der Rundenzahl und zeigt, wie schnell jemand ist
+  const proTreffer = p.richtig ? Math.round(p.punkte / p.richtig) : 0;
   const werte = [
     ['Spiele', p.spiele], ['Siege', p.siege, true], ['Siegquote', `${prozent(p.siege, p.spiele)}<small>%</small>`], ['Punkte', p.punkte.toLocaleString('de-DE')],
-    ['Ø Punkte pro Spiel', schnitt], ['Richtige Antworten', p.richtig],
+    ['Punkte pro Treffer', proTreffer || '–'], ['Richtige Antworten', p.richtig],
     ['Bester Sprint', Math.max(0, p.sprint_rekord || 0, ...Object.values(p.rekorde || {})), true], ['Sprints gespielt', p.sprints],
   ];
   $('profil-werte').innerHTML = werte.map(([dt, dd, hervor]) => `<div${hervor ? ' class="hervor"' : ''}><dt>${dt}</dt><dd>${dd}</dd></div>`).join('');
@@ -1978,7 +2042,7 @@ async function profilZeigen(id) {
     const kats = [...proKat].sort((a, b) => b[1].n - a[1].n);
     $('profil-kategorien').innerHTML = kats.length ? kats.map(([k, e], i) => `
       <li><span>${esc(KATEGORIEN[k]?.name || k)}${i === 0 && kats.length > 1 ? ' <span class="neben">(am liebsten)</span>' : ''}</span>
-        <span class="neben">${e.n} ${e.n === 1 ? 'Spiel' : 'Spiele'}, ${e.siege} ${e.siege === 1 ? 'Sieg' : 'Siege'}, Ø ${Math.round(e.pkt / e.n)} Punkte</span></li>`).join('')
+        <span class="neben">${e.n} ${e.n === 1 ? 'Spiel' : 'Spiele'}, ${e.siege} ${e.siege === 1 ? 'Sieg' : 'Siege'} (${prozent(e.siege, e.n)} %)</span></li>`).join('')
       : '<li class="leer">Noch keine Raum-Spiele.</li>';
     $('profil-spiele').innerHTML = meine.length ? meine.slice(0, 10).map(g => `
       <li><span${g.platz === 1 && g.von > 1 ? ' class="platz-1"' : ''}>${g.von > 1 ? `Platz ${g.platz} von ${g.von}` : 'Allein gespielt'}</span>

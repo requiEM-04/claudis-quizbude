@@ -21,7 +21,7 @@ async def registrieren(pg, name, avatar):
     await pg.click('[data-modus=neu]')
     await pg.fill('#anmelde-form [name=name]', name)
     await pg.fill('#anmelde-form [name=passwort]', 'test1234')
-    await pg.click(f'#avatar-wahl [data-a="{avatar}"]')
+    await pg.click('#avatar-wahl button[data-k=""]')
     await pg.click('#anmelde-knopf')
     await pg.wait_for_selector('#s-bude:not([hidden])', timeout=5000)
 
