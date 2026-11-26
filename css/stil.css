@@ -2149,6 +2149,15 @@ body:has(.abz-geist) { cursor: grabbing; }
 .kachel-gruppe { flex: 0 1 auto; width: calc(var(--n) * var(--kw) + (var(--n) - 1) * var(--abstand)); max-width: 100%; min-width: 0; }
 .gruppe-titel { display: flex; align-items: center; gap: 10px; margin: 0 0 9px; font: 800 .86rem var(--schrift); color: var(--text-2); letter-spacing: .01em; }
 .gruppe-titel::after { content: ""; flex: 1; height: 1px; background: var(--linie); }
+/* Gruppenfarben: Titel mit Farbpunkt, Kacheln mit farbiger Oberkante (Bude und Sprint-Liste) */
+.gruppe-geo { --akzent: #8FB3A2; }
+.gruppe-woerter { --akzent: #E3B66B; }
+.gruppe-wissen { --akzent: #9DB8D9; }
+.gruppe-alles { --akzent: #D99A9A; }
+.kachel-gruppe .gruppe-titel, .sl-gruppe .gruppe-titel { color: var(--akzent, var(--text-2)); }
+.kachel-gruppe .gruppe-titel::before, .sl-gruppe .gruppe-titel::before { content: ""; flex: none; width: 9px; height: 9px; border-radius: 3px; background: var(--akzent, var(--text-3)); }
+.kachel-gruppe .kachel { border-top: 3px solid color-mix(in srgb, var(--akzent, var(--linie)) 70%, transparent); }
+.kachel-gruppe .kachel:hover { border-color: color-mix(in srgb, var(--akzent, var(--sand)) 55%, transparent); border-top-color: var(--akzent, var(--sand)); }
 .gruppe-kacheln { display: grid; grid-template-columns: repeat(auto-fill, var(--kw)); gap: var(--abstand); }
 .gruppe-kacheln .kachel { width: var(--kw); min-width: 0; }
 @media (max-width: 619px) { .kachel-gruppe { width: 100%; } .gruppe-kacheln { grid-template-columns: repeat(2, minmax(0, 1fr)); } .gruppe-kacheln .kachel { width: auto; } }

@@ -2,7 +2,7 @@
 
 ## Aktuell (25.11.2026)
 
-- **Version:** 0.17.0
+- **Version:** 0.17.1
 - **Live:** https://requiem-04.github.io/claudis-quizbude/ (Repo `requiEM-04/claudis-quizbude`, Branch `main`, GitHub Pages)
 - **Server:** Supabase-Projekt `quizbude` (Ref `jgvjjjiwfjxynbzjaxsg`, Frankfurt), E-Mail-Bestätigung aus, Realtime mit öffentlichen Kanälen.
 - **Inhalt:** Konten (Name + Passwort ab 4 Zeichen), Räume mit 4-Buchstaben-Code (live über Realtime), Flaggenraten (tippen oder 4 zur Auswahl), Flaggen-Sprint (60 s), Bestenliste (Siege, Punkte, Sprint), „Zuletzt gespielt".
@@ -185,12 +185,12 @@
   - **Figuren süchtig** (Colins Wunsch, für alle): jede hängt an etwas anderem, mit eigenen Augen (gerötet, Augenringe, halb zu, aufgerissen) und Gegenstand. Fuchs Kaffee, Frosch Kiffen, Panda Bambus, Eule Energy-Drinks, Krake Zocken, Pinguin Bier, Katze Katzenminze, Igel Donuts, Schildkröte Serien, Dino Burger, Biene Honig, Koala Eukalyptus, Wal Vapen, Papagei Handy, Quizbot Strom, Herzdrache Lollis, Sternwolf Musik, Phönix Chili, Hofnarr Glücksspiel, Löwe Zigarren. Bewusst nichts mit Spritzen oder harten Drogen.
   - Colin: **kein Shop**. Mehr Kosmetik zum Freispielen ist gewünscht, Chat-Sticker als gute Idee genannt.
 
+- **Neu in 0.17.1:** Gruppenfarben (Colin mochte vom Startseiten-Entwurf 3b nur die Farben, der Rest bleibt wie er war): Geografie Salbei `#8FB3A2`, Wörter Gold `#E3B66B`, Wissen und Schätzen Blau `#9DB8D9`, Alles zusammen Rosé `#D99A9A` (`--akzent` über `.gruppe-<id>`). Gruppentitel mit Farbpunkt in Bude und Sprint-Liste, Kacheln mit farbiger Oberkante, beim Drüberfahren Rand in der Gruppenfarbe.
 - **Neu in 0.17.0:**
   - **Sprint-Auswahl als Liste mit Vorschau** (Colin hat aus vier UI-Vorschlägen diesen gewählt): links alle Sprint-Kategorien nach Gruppen (`SPRINT_LISTE` in app.js, Hauptstädte nur einmal), je Zeile Symbol, Rekord, Saisonplatz und „Übung“-Marke. Rechts die gewählte Kategorie groß (Kachelbild, Rekord, Saisonplatz, Bestwert der Saison, kurze Regel für Karte/Größer/Mehr/Schätzen/Bombe/Wissen/Gemischt), darunter nur die Einstellungen, die für sie gelten (Richtung, Region, Variante, Gemischt-Auswahl), „Standard einstellen“ bei Übung, Startknopf und die Top 5 der Saison plus eigener Platz. Die alte Leiste für alle Kategorien, „Mehr Einstellungen“ und das Saison-Raster darunter sind weg.
   - Gewählte Kategorie bleibt gespeichert (`quizbude.sprintWahl`), nach einem Sprint steht wieder die gespielte Kategorie da. Tastatur: ↑/↓/Pos1/Ende wählen, Enter auf der gewählten Zeile startet, Doppelklick startet auch. Unter 900 px steht die Vorschau direkt unter der gewählten Zeile, sticky nur ab 900 × 860 px.
   - Weltkarte verschwindet jetzt auch, wenn man einen Karten-Sprint oder -Raum mittendrin verlässt (vorher blieb sie hinter der nächsten Seite stehen).
   - Fußzeile überdeckt am Handy und am PC nichts mehr (mehr Platz unten in `main`).
-  - Offener Vorschlag: Startseite 3b (große Überschrift und Flaggen bleiben, darunter drei Schnellstart-Karten, Gruppenfarben), Entwurf liegt nur als Bild vor.
 - **Neu in 0.16.0:**
   - **Spielleiter**: Gastgeber kann im Warteraum „Leitet nur, spielt nicht mit“ wählen (`einst.leiter` = seine ID). Dann Start erst ab 2 Mitspielern (`startBereit` zählt den Spielleiter nicht), keine Eingabe/Knöpfe für ihn (auch `raten`/`waehlen`/`pinSetzen`/`schaetzen` geben „zu“, der Host ignoriert Treffer von ihm), Stand „x von y haben geantwortet“, Lösung auf Knopfdruck nur für ihn, nicht im Endstand und nicht in der Bestenliste, Auflösung wartet nicht auf ihn. In der Spielerliste als „Spielleiter“ unten.
   - **Kacheln in Gruppen** (`KATEGORIE_GRUPPEN` in kategorien.js: Geografie, Wörter, Wissen und Schätzen, Alles zusammen; `KATEGORIE_REIHE` folgt daraus). Kleine Gruppen stehen nebeneinander (Kachelbreite `--kw` über Container-Einheiten), gleiche Höhe in einer Reihe, auf dem Handy zwei Spalten je Gruppe.
