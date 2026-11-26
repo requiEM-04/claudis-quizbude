@@ -2050,3 +2050,78 @@ button.dock-link { border: 0; background: none; cursor: pointer; }
 .abz-geist { position: fixed; left: 0; top: 0; z-index: 1000; width: 72px; height: 72px; display: grid; place-items: center; pointer-events: none; filter: drop-shadow(0 14px 18px rgba(0,0,0,.6)); }
 .abz-geist svg { width: 72px; height: 72px; }
 body:has(.abz-geist) { cursor: grabbing; }
+
+/* ---------- Mehr oder weniger ---------- */
+.bild-mehr { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: stretch; gap: 14px; width: min(100%, 640px); }
+.mw-karte { display: grid; align-content: center; justify-items: center; gap: 10px; min-height: 150px; padding: 18px 16px; border-radius: var(--r-gross, 20px); background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02)); border: 1px solid var(--linie-stark); text-align: center; animation: mw-rein .4s cubic-bezier(.2, .9, .3, 1) both; }
+.mw-rechts { animation-delay: .08s; border-style: dashed; }
+.mw-name { font: 800 clamp(1.05rem, 2.2vw, 1.45rem)/1.2 var(--display); }
+.mw-wert { font: 800 clamp(1.5rem, 3.4vw, 2.3rem)/1 var(--display); color: var(--sand); font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+.mw-frage { color: var(--text-3); }
+.mw-zahl { display: none; }
+.bild-mehr.offen .mw-frage, [data-phase="aufloesung"] .mw-frage { display: none; }
+.bild-mehr.offen .mw-zahl, [data-phase="aufloesung"] .mw-zahl { display: inline; animation: mw-auf .45s cubic-bezier(.2, 1.4, .4, 1) both; }
+.bild-mehr.offen .mw-rechts, [data-phase="aufloesung"] .mw-rechts { border-style: solid; border-color: rgba(205,182,140,.5); }
+.mw-vs { align-self: center; font: 800 .85rem var(--display); color: var(--text-3); text-transform: lowercase; }
+@keyframes mw-rein { from { opacity: 0; transform: translateY(8px); } }
+@keyframes mw-auf { from { opacity: 0; transform: scale(.7); } }
+.optionen.mw-knoepfe { grid-template-columns: 1fr 1fr; width: min(100%, 520px); gap: 12px; }
+.optionen.mw-knoepfe button { display: flex; align-items: center; justify-content: center; gap: 10px; font: 800 1.1rem var(--display); }
+.optionen.mw-knoepfe svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.optionen.mw-knoepfe button[data-c="mehr"] svg { color: var(--salbei); }
+.optionen.mw-knoepfe button[data-c="weniger"] svg { color: var(--rose); }
+.optionen.mw-knoepfe button.gewinner { border-color: rgba(143,179,162,.6); background: rgba(143,179,162,.1); }
+.optionen.mw-knoepfe button.richtig { border-color: var(--salbei); background: rgba(143,179,162,.18); }
+.optionen.mw-knoepfe button.falsch { border-color: var(--rose); background: rgba(207,142,142,.14); }
+@media (max-width: 520px) { .bild-mehr { grid-template-columns: 1fr; } .mw-vs { justify-self: center; } .mw-karte { min-height: 110px; } }
+@media (prefers-reduced-motion: reduce) { .mw-karte, .mw-zahl { animation: none !important; } }
+.kb-mehr svg { height: 66px; width: auto; filter: drop-shadow(0 8px 12px rgba(0,0,0,.5)); overflow: visible; }
+.kb-mehr .k1 { fill: #2A2F35; stroke: var(--sand); stroke-width: 2; }
+.kb-mehr .k2 { fill: #24282D; stroke: rgba(205,182,140,.55); stroke-width: 2; stroke-dasharray: 5 4; }
+.kb-mehr .w { font: 800 19px var(--display); fill: var(--sand); }
+.kb-mehr .e { font: 700 11px var(--schrift); fill: var(--text-2); }
+.kb-mehr .hoch, .kb-mehr .runter { fill: none; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; transition: transform .35s cubic-bezier(.2, 1.4, .4, 1); }
+.kb-mehr .hoch { stroke: #8FB3A2; } .kb-mehr .runter { stroke: #CF8E8E; }
+#kachel-raster .kb-mehr svg { height: 44px; }
+.sprint-karte .kb-mehr svg { height: 88px; }
+.kachel:hover .kb-mehr .hoch { transform: translateY(-3px); }
+.kachel:hover .kb-mehr .runter { transform: translateY(3px); }
+/* ---------- Bombe: Silbe auf der Bombe, Zündschnur brennt ab ---------- */
+.bild-bombe { display: grid; place-items: center; }
+.bombe { width: clamp(190px, 26vw, 270px); height: auto; overflow: visible; }
+.bombe .kugel { fill: #262B30; stroke: var(--sand); stroke-width: 3; }
+.bombe .glanz { fill: none; stroke: rgba(255,255,255,.22); stroke-width: 5; stroke-linecap: round; }
+.bombe .kappe { fill: var(--sand); }
+.bombe .silbe { font-family: var(--display); font-weight: 800; fill: #F4E8CC; letter-spacing: .03em; }
+.bombe .lunte { fill: none; stroke: #B39C72; stroke-width: 3.5; stroke-linecap: round; stroke-dasharray: 100 100; animation: lunte-brennt var(--z, 15s) linear forwards; }
+.bombe .funke { offset-rotate: 0deg; offset-distance: 100%; animation: funke-wandert var(--z, 15s) linear forwards; }
+.bombe .funke circle { fill: #FFC857; filter: drop-shadow(0 0 4px #FF9A3C) drop-shadow(0 0 10px #FF7A1A); animation: funke-flackert .18s steps(2) infinite; }
+.bombe .funke path { stroke: #FFE29A; stroke-width: 2; stroke-linecap: round; animation: funke-flackert .23s steps(2) infinite reverse; }
+.bombe .bumm { font-family: var(--display); font-weight: 800; font-size: 30px; fill: #FFC857; opacity: 0; }
+.bombe .koerper { transform-origin: 58px 76px; animation: bombe-zittern .5s ease-in-out calc(var(--z, 15s) * .7) infinite; }
+@keyframes lunte-brennt { to { stroke-dashoffset: 100; } }
+@keyframes funke-wandert { to { offset-distance: 0%; } }
+@keyframes funke-flackert { 50% { opacity: .55; transform: scale(.8); } }
+@keyframes bombe-zittern { 25% { transform: rotate(-2deg); } 75% { transform: rotate(2deg); } }
+/* Zeit um und nicht alle hatten ein Wort: es knallt */
+[data-phase="aufloesung"]:not([data-entschaerft="1"]) .bombe .koerper { animation: bombe-weg .35s ease-out forwards; }
+[data-phase="aufloesung"]:not([data-entschaerft="1"]) .bombe .funke, [data-phase="aufloesung"] .bombe .lunte { display: none; }
+[data-phase="aufloesung"]:not([data-entschaerft="1"]) .bombe .bumm { animation: bumm .6s cubic-bezier(.2, 1.4, .4, 1) forwards; }
+[data-phase="aufloesung"][data-entschaerft="1"] .bombe .funke { display: none; }
+[data-phase="aufloesung"][data-entschaerft="1"] .bombe .koerper { animation: none; }
+@keyframes bombe-weg { to { transform: scale(1.35); opacity: 0; } }
+@keyframes bumm { from { opacity: 0; transform: scale(.4); transform-origin: 64px 66px; } to { opacity: 1; transform: scale(1.5); transform-origin: 64px 66px; } }
+.kb-bombe .bombe { width: 84px; }
+#kachel-raster .kb-bombe .bombe { width: 52px; }
+.sprint-karte .kb-bombe .bombe { width: 118px; }
+.kb-bombe .bombe .lunte { animation: none; }
+.kb-bombe .bombe .funke { animation: none; offset-distance: 100%; }
+.kb-bombe .bombe .koerper { animation: none; }
+.kachel:hover .kb-bombe .bombe .koerper { animation: bombe-zittern .4s ease-in-out infinite; }
+.kurz-silbe { font: 800 1.1rem var(--display); color: var(--sand); letter-spacing: .05em; }
+@media (prefers-reduced-motion: reduce) { .bombe .koerper, .bombe .funke circle, .bombe .funke path { animation: none !important; } }
+.schaetz-loesung { display: grid; justify-items: center; gap: 4px; margin-top: 6px; padding: 12px 22px; border-radius: 16px; border: 1px solid var(--linie-stark); background: rgba(255,255,255,.04); animation: mw-auf .35s cubic-bezier(.2, 1.4, .4, 1) both; }
+.schaetz-loesung b { font: 800 clamp(1.5rem, 3.4vw, 2.2rem)/1.1 var(--display); color: var(--sand); }
+.schaetz-loesung span { color: var(--text-2); font-weight: 700; font-size: .92rem; }
+.schaetz-loesung.gut { border-color: rgba(143,179,162,.6); background: rgba(143,179,162,.1); }
+.schaetz-loesung.schlecht { border-color: rgba(207,142,142,.45); }

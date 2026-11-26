@@ -9,6 +9,8 @@ export const KATEGORIE_SYMBOL = {
   stadtland: svg('<path d="M3 21h18"/><path d="M5 21V9l4-3v15"/><path d="M9 21V4l6 3v14"/><path d="M15 21V11l4 2v8"/>'),
   nachbarn: svg('<path d="M3 6.5 8 4l4 2.5 4-2.5 5 2.5v13L16 22l-4-2.5L8 22l-5-2.5Z"/><path d="M12 6.5v13"/>'),
   buchstaben: svg('<rect x="3" y="6" width="8" height="8" rx="1.8"/><rect x="13" y="10" width="8" height="8" rx="1.8"/><path d="M5.5 12l1.5-4 1.5 4M6 10.8h2M15.5 16v-4h1.8a1 1 0 0 1 0 2h-1.8"/>'),
+  bombe: svg('<circle cx="10.5" cy="14" r="6.5"/><path d="M15 9.5l2-2M17 7.5c1-1.5 2.5-1.5 3.5-3"/>'),
+  mehr: svg('<path d="M8 20V5M4 9l4-4 4 4"/><path d="M16 4v15M12 15l4 4 4-4"/>'),
   schaetzen: svg('<path d="M5 9.5c2.2-1.7 4.3-1.7 7 0s4.8 1.7 7 0M5 14.5c2.2-1.7 4.3-1.7 7 0s4.8 1.7 7 0"/>'),
   groesser: svg('<rect x="4" y="12" width="6" height="8" rx="1.2"/><rect x="14" y="4" width="6" height="16" rx="1.2"/>'),
   wissen: svg('<circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 0 1 4.8 1c0 1.7-2.4 2.2-2.4 3.7"/><path d="M12 17.2h.01"/>'),

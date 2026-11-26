@@ -21,6 +21,7 @@ ANTWORTEN = """async (falsch) => {
     return f.k + ' wahl ' + k;
   }
   let text = falsch ? 'Atlantis' : (f.k === 'hauptstaedte' ? LAND[f.c].stadt : LAND[f.c]?.name);
+  if (f.k === 'bombe') { const B = (await import('./js/bombe-woerter.js?v=' + v)).BEISPIELE.split(' '); text = falsch ? 'Atlantis' : B.find(w => w.includes(f.s.toLowerCase()) && w !== f.s.toLowerCase() && !m.bombeBenutzt.has(w)); }
   if (f.k === 'schaetzen') { const S = (await import('./js/schaetzen.js?v=' + v)).SCHAETZEN; text = falsch ? '1' : String(S[f.n].a).replace('.', ','); }
   const inp = document.getElementById('rate-eingabe'); inp.value = text; document.getElementById('rate-form').requestSubmit();
   return f.k + ' tippe ' + text;
@@ -67,7 +68,7 @@ async def main():
         print('Lobby:', (await B.inner_text('#raum-liste')).replace('\n', ' | '))
         code = (await A.inner_text('#raum-code')).strip()
         await B.goto(BASIS + '?sitzung=2#/raum/' + code); await B.wait_for_selector('#p-warten:not([hidden])')
-        for kat in ['gemischt', 'flaggen', 'umrisse', 'hauptstaedte', 'nachbarn', 'buchstaben', 'groesser', 'schaetzen', 'wissen']:
+        for kat in ['gemischt', 'flaggen', 'umrisse', 'hauptstaedte', 'nachbarn', 'buchstaben', 'bombe', 'groesser', 'mehr', 'schaetzen', 'wissen']:
             await waehle(A, '#einst-kategorie', kat); await A.wait_for_timeout(300)
             await waehle(A, '#einst [data-e=runden]', '10' if kat == 'gemischt' else '5')
             await waehle(A, '#einst [data-e=zeit]', '10'); await A.wait_for_timeout(300)

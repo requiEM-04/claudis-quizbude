@@ -1,28 +1,28 @@
-import { VERSION } from './config.js?v=0.14.2';
+import { VERSION } from './config.js?v=0.15.0';
 import {
   online, nameFehler, registrieren, anmelden, abmelden, sitzungHolen, profilLaden, profilSpeichern,
   bestenliste, spieleSeit, alleProfile, sprintEintragen, sprintBestenliste, rangVon, spielerAnzahl, spieleVon, sb,
   adminAnmelden, istAdminName, konfigLaden, adminEinrichten, einrichtungOffen, abzeichenVon, saisonAbschliessen, winterquestStand,
   freundeListe, freundAnfragen, freundAntworten, freundEntfernen,
-} from './server.js?v=0.14.2';
-import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.14.2';
-import { Raum, codeNeu, STANDARD, TIPPFEHLER_ABZUG } from './raum.js?v=0.14.2';
-import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.14.2';
+} from './server.js?v=0.15.0';
+import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.15.0';
+import { Raum, codeNeu, STANDARD, TIPPFEHLER_ABZUG } from './raum.js?v=0.15.0';
+import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.15.0';
 import {
-  KATEGORIEN, KATEGORIE_REIHE, SPRINT_REIHE, kategorieVon, optionSchluessel, richtigeWahl, umrisseDa, umrisseLaden,
+  KATEGORIEN, KATEGORIE_REIHE, SPRINT_REIHE, mehrWert, bombeLaden, bombeBenutzt, bombeGrund, bombeZuletzt, bombeSvg, kategorieVon, optionSchluessel, richtigeWahl, umrisseDa, umrisseLaden,
   sprintFrage, pruefeFrage, fragenVorladen, kanon, ARTEN as GEMISCHT_ARTEN, gemischtArten, alleArten, varianteVon, zahlLesen, schaetzWertung, zahlText,
-} from './kategorien.js?v=0.14.2';
-import { LAENDER } from './laender.js?v=0.14.2';
-import { auswahlfeld } from './auswahlfeld.js?v=0.14.2';
-import { KATEGORIE_SYMBOL } from './symbole.js?v=0.14.2';
-import { konfetti } from './konfetti.js?v=0.14.2';
-import { karteBauen, karteLaden, auswerten } from './weltkarte.js?v=0.14.2';
-import { STUFEN, ERFOLGE, erfolgStand, emblem, wertungName, saisonName, saisonKurz, vitrineLesen, SKINS, skinVon, skinVonId, skinStand, skinBedingung } from './abzeichen.js?v=0.14.2';
+} from './kategorien.js?v=0.15.0';
+import { LAENDER } from './laender.js?v=0.15.0';
+import { auswahlfeld } from './auswahlfeld.js?v=0.15.0';
+import { KATEGORIE_SYMBOL } from './symbole.js?v=0.15.0';
+import { konfetti } from './konfetti.js?v=0.15.0';
+import { karteBauen, karteLaden, auswerten } from './weltkarte.js?v=0.15.0';
+import { STUFEN, ERFOLGE, erfolgStand, emblem, wertungName, saisonName, saisonKurz, vitrineLesen, SKINS, skinVon, skinVonId, skinStand, skinBedingung } from './abzeichen.js?v=0.15.0';
 import {
   RAENGE, BILDER, ARTEN, JOKER, SONDER, sonderVon, sonderFrei, WINTERQUEST, questGeschafft, ruhmInfo, stufeVon, stufeInfo, wappen, effektHtml, rahmenDeko, stilVon, istFrei, freiAb, neuFrei,
-  belohnungName, rangVonId, symbol, symbolSvg, SCHWELLEN, flockeSvg, bildVon, BILD_ARTEN } from './ruhm.js?v=0.14.2';
-import { freundeStart, freundeStopp, freundeOrt, istOnline, onlineAbo, einladungAbo, anfrageAbo, einladen, anfrageMelden } from './freunde.js?v=0.14.2';
-import { FIGUREN, FREIE_FIGUREN, KREISE, RINGE, figurSvg, figurAusEmoji, figurVonId, bildFrei, bildFreiAb, bildEintrag, suchtVon } from './figuren.js?v=0.14.2';
+  belohnungName, rangVonId, symbol, symbolSvg, SCHWELLEN, flockeSvg, bildVon, BILD_ARTEN } from './ruhm.js?v=0.15.0';
+import { freundeStart, freundeStopp, freundeOrt, istOnline, onlineAbo, einladungAbo, anfrageAbo, einladen, anfrageMelden } from './freunde.js?v=0.15.0';
+import { FIGUREN, FREIE_FIGUREN, KREISE, RINGE, figurSvg, figurAusEmoji, figurVonId, bildFrei, bildFreiAb, bildEintrag, suchtVon } from './figuren.js?v=0.15.0';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -112,6 +112,16 @@ function duellAufdecken(box, f, gewaehlt) {
     if (urteil) urteil.textContent = gross ? '✓ größer' : gewaehlt === b.dataset.c ? '✗ kleiner' : 'kleiner';
   });
 }
+// Mehr oder weniger: rechte Karte aufdecken, richtige Richtung markieren
+function mehrAufdecken(box, bild, f, gewaehlt) {
+  bild.querySelector('.bild-mehr')?.classList.add('offen');
+  box.querySelectorAll('button').forEach(b => {
+    b.disabled = true;
+    const ok = richtigeWahl(f, b.dataset.c);
+    b.classList.toggle('gewinner', ok);
+    if (gewaehlt != null && b.dataset.c === gewaehlt) b.classList.add(ok ? 'richtig' : 'falsch');
+  });
+}
 const groessererName = f => LAND[LAND[f.c].flaeche >= LAND[f.d].flaeche ? f.c : f.d].name;
 
 let toastTimer;
@@ -168,7 +178,7 @@ async function winterLaden() {
     if (neu.length) toast(`Tagesaufgabe geschafft: +${neu.reduce((x, a) => x + a.flocken, 0)} Schneeflocken`);
   }
 }
-const KAT_KURZ = { flaggen: 'Flaggen', karte: 'Weltkarte', umrisse: 'Umrisse', hauptstaedte: 'Hauptstädte', stadtland: 'Hauptstadt → Land', nachbarn: 'Nachbarn', buchstaben: 'Buchstabensalat', groesser: 'Größer oder kleiner', schaetzen: 'Schätzfragen', wissen: 'Allgemeinwissen', gemischt: 'Gemischt' };
+const KAT_KURZ = { flaggen: 'Flaggen', karte: 'Weltkarte', umrisse: 'Umrisse', hauptstaedte: 'Hauptstädte', stadtland: 'Hauptstadt → Land', nachbarn: 'Nachbarn', buchstaben: 'Buchstabensalat', bombe: 'Bombe', groesser: 'Größer oder kleiner', mehr: 'Mehr oder weniger', schaetzen: 'Schätzfragen', wissen: 'Allgemeinwissen', gemischt: 'Gemischt' };
 function aufgabeText(a) {
   const z = Number(a.ziel).toLocaleString('de-DE');
   switch (a.typ) {
@@ -964,7 +974,7 @@ function weltkarte(id) {
 for (const id of ['raum-weltkarte', 'sprint-weltkarte']) document.body.prepend($(id));
 const kartenmodus = an => document.body.classList.toggle('kartenmodus', !!an);
 const kmText = a => a.km === 0 ? 'Getroffen!' : `${a.km.toLocaleString('de-DE')} km daneben`;
-const eingabeText = f => f.k === 'hauptstaedte' ? 'Welche Stadt?' : f.k === 'schaetzen' ? 'Deine Schätzung' : 'Welches Land?';
+const eingabeText = f => f.k === 'hauptstaedte' ? 'Welche Stadt?' : f.k === 'schaetzen' ? 'Deine Schätzung' : f.k === 'bombe' ? `Ein Wort mit ${f.s}` : 'Welches Land?';
 function eingabeVorbereiten(eingabe, f) {
   eingabe.placeholder = eingabeText(f);
   eingabe.inputMode = f.k === 'schaetzen' ? 'decimal' : 'text';
@@ -983,6 +993,8 @@ function kachelBild(k) {
     case 'nachbarn': return '<img class="kb-nachbarn" src="bilder/nachbarn-vorschau.svg" alt="">';
     case 'buchstaben': return `<span class="kb-salat">${[['L', 2], ['I', 1], ['H', 2], ['C', 4], ['E', 1]].map(([b, w], i) => `<b style="--w:${(i - 2) * 17}deg">${b}<sub>${w}</sub></b>`).join('')}</span>`;
     case 'schaetzen': { const id = 'kbg' + (++kbGlasNr); return KB_GLAS.replaceAll('kbg-innen', id); }
+    case 'bombe': return `<span class="kb-bombe">${bombeSvg('UNG')}</span>`;
+    case 'mehr': return '<span class="kb-mehr" aria-hidden="true"><svg viewBox="0 0 120 84"><g transform="rotate(-7 32 44)"><rect x="8" y="16" width="48" height="58" rx="9" class="k1"/><text x="32" y="45" text-anchor="middle" class="w">828</text><text x="32" y="60" text-anchor="middle" class="e">m</text></g><g transform="rotate(6 88 40)"><rect x="64" y="12" width="48" height="58" rx="9" class="k2"/><path d="M88 22v16M81 29l7-7 7 7" class="hoch"/><path d="M88 60V44M81 53l7 7 7-7" class="runter"/></g></svg></span>';
     case 'groesser': return `<span class="kb-duell">${f('CA')}<b>oder</b>${f('BR')}</span>`;
     case 'wissen': return '<span class="kb-text kb-gross">?</span>';
     case 'emoji': return '<span class="kb-emoji">🦁👑</span>';
@@ -1851,11 +1863,11 @@ function raumAufbauen() {
       eingabe.classList.add('richtig'); eingabe.disabled = true;
       const f = raum.tippfehler || 0;
       rm.className = 'rueckmeldung gut';
-      rm.textContent = f ? `Richtig, aber ${f === 1 ? '1 Tippfehler' : `${f} Tippfehler`}: −${f * TIPPFEHLER_ABZUG} Punkte.` : zufall(SPRUCH.richtig);
+      rm.textContent = raum.frage?.k === 'bombe' ? `${bombeZuletzt.charAt(0).toUpperCase() + bombeZuletzt.slice(1)} zählt!` : f ? `Richtig, aber ${f === 1 ? '1 Tippfehler' : `${f} Tippfehler`}: −${f * TIPPFEHLER_ABZUG} Punkte.` : zufall(SPRUCH.richtig);
     } else if (r === 'knapp') {
       rm.className = 'rueckmeldung'; rm.textContent = zufall(SPRUCH.knapp); wackeln(eingabe);
     } else if (r === 'falsch') {
-      rm.className = 'rueckmeldung schlecht'; rm.textContent = zufall(SPRUCH.falsch); wackeln(eingabe); eingabe.select();
+      rm.className = 'rueckmeldung schlecht'; rm.textContent = raum.frage?.k === 'bombe' && bombeGrund ? bombeGrund : zufall(SPRUCH.falsch); wackeln(eingabe); eingabe.select();
     }
   };
   $('optionen').onclick = e => {
@@ -1864,6 +1876,12 @@ function raumAufbauen() {
     const f = raum.frage;
     const r = raum.waehlen(b.dataset.c);
     const rm = $('rueckmeldung');
+    if (r !== 'zu' && f?.k === 'mehr') {
+      mehrAufdecken($('optionen'), $('frage-bild'), f, b.dataset.c);
+      rm.className = 'rueckmeldung ' + (r === 'richtig' ? 'gut' : 'schlecht');
+      rm.textContent = `${r === 'richtig' ? 'Richtig' : 'Falsch'}. ${kategorieVon(f).loesung(f)}.`;
+      return;
+    }
     if (r !== 'zu' && f?.k === 'groesser') {
       duellAufdecken($('optionen'), f, b.dataset.c);
       rm.className = 'rueckmeldung ' + (r === 'richtig' ? 'gut' : 'schlecht');
@@ -1937,7 +1955,7 @@ function raumZeichnen() {
     if (r.einst.kategorie === 'stadtland') $('einst-kategorie').value = 'hauptstaedte';
     document.querySelector('.einst-richtung').hidden = !stadtKat;
     document.querySelector('.einst-ziel').hidden = r.einst.kategorie !== 'karte';
-    document.querySelector('.einst-modus').hidden = r.einst.kategorie === 'karte' || !!kat.zahl;
+    document.querySelector('.einst-modus').hidden = r.einst.kategorie === 'karte' || !!kat.zahl || !!kat.nurTippen;
     $('einst-richtung').value = r.einst.kategorie === 'stadtland' ? 'stadt' : 'land';
     if (!kat.tippen) { $('einst-modus').value = 'auswahl'; $('einst-modus').disabled = true; }
     einstFelder.forEach(f => f.aktualisieren());
@@ -2003,6 +2021,7 @@ function raumZeichnen() {
       $('rueckmeldung').textContent = `Richtig! +${mein?.pkt ?? ''}${mein?.rang === 1 ? ', als Erstes' : ''}${mein?.abzug ? ` (−${mein.abzug} für Tippfehler)` : ''}`;
     }
     $('frage-bild').dataset.phase = r.phase;
+    $('frage-bild').dataset.entschaerft = r.phase === 'aufloesung' && r.geloest.size >= r.spieler.size ? '1' : '';
     if (r.phase === 'aufloesung' && gezeichnet.phase !== 'aufloesung-' + r.idx) {
       const fl = $('zeitleiste-fuellung');
       fl.style.transition = 'none'; fl.style.width = '0%';
@@ -2018,6 +2037,7 @@ function raumZeichnen() {
         karteLaden().then(() => weltkarte('raum-weltkarte').loesung(f.c, f.t, pins, LAND[f.c]?.stadt));
       }
       if (f.k === 'groesser') duellAufdecken($('optionen'), f, null);
+      else if (f.k === 'mehr') mehrAufdecken($('optionen'), $('frage-bild'), f, null);
       else document.querySelectorAll('#optionen button').forEach(b => {
         b.disabled = true;
         if (richtigeWahl(f, b.dataset.c)) b.classList.add('richtig');
@@ -2240,7 +2260,8 @@ async function sprintStart(kategorie = 'flaggen') {
   $('sprint-hinweis').textContent = `${KATEGORIEN[kategorie].name}${uebung ? ` (${uebung}, Übung)` : ''}: gleich geht's los`;
   $('sprint-bild').innerHTML = `<p class="countdown" id="sprint-countdown">${SPRINT_COUNTDOWN}</p>`;
   // Während des Countdowns schon Umrisse und die ersten Bilder laden
-  const laden = Promise.all([['umrisse', 'gemischt'].includes(kategorie) ? umrisseLaden() : null, ['karte', 'nachbarn', 'gemischt'].includes(kategorie) ? karteLaden() : null]);
+  bombeBenutzt.clear();
+  const laden = Promise.all([['umrisse', 'gemischt'].includes(kategorie) ? umrisseLaden() : null, ['karte', 'nachbarn', 'gemischt'].includes(kategorie) ? karteLaden() : null, kategorie === 'bombe' ? bombeLaden() : null]);
   laden.then(() => { if (sprint === s) while (s.vorrat.length < 2) sprintZiehen(); });
   for (let i = SPRINT_COUNTDOWN; i >= 1; i--) {
     if (sprint !== s) return;
@@ -2313,15 +2334,18 @@ function sprintSchaetzen() {
   if (!w) { rm.className = 'rueckmeldung schlecht'; rm.textContent = 'Das ist keine Zahl. Zum Beispiel 1.500 oder 2,5 Mio.'; wackeln(eingabe); return; }
   s.pauseSeit = performance.now();
   const loesung = kategorieVon(f).loesung(f);
-  if (w.treffer) { trefferMerken(s); s.punkte++; punktePop(); rm.className = 'rueckmeldung gut'; rm.textContent = `Stark! ${loesung}, du lagst ${w.abweichung} daneben.`; }
-  else { s.verpasst.push(f); s.serie = 0; rm.className = 'rueckmeldung schlecht'; rm.textContent = `Richtig wären ${loesung}. Du lagst ${w.abweichung} daneben.`; }
+  // Auflösung groß unter der Frage, bleibt kurz stehen, dann erst die nächste Frage
+  $('sprint-bild').querySelector('.bild-schaetzen')?.insertAdjacentHTML('beforeend', `<div class="schaetz-loesung ${w.treffer ? 'gut' : 'schlecht'}"><b>${esc(loesung)}</b><span>Du: ${esc(zahlText(wert))}, ${esc(w.abweichung)} daneben</span></div>`);
+  if (w.treffer) { trefferMerken(s); s.punkte++; punktePop(); rm.className = 'rueckmeldung gut'; rm.textContent = 'Stark, das zählt!'; }
+  else { s.verpasst.push(f); s.serie = 0; rm.className = 'rueckmeldung schlecht'; rm.textContent = 'Zu weit weg.'; }
   eingabe.disabled = true;
   setTimeout(() => {
     eingabe.disabled = false;
+    rm.textContent = ''; rm.className = 'rueckmeldung';
     if (sprint !== s || !s.laeuft) return;
     s.ende += performance.now() - s.pauseSeit; s.pauseSeit = null;
     if (s.frage === f) sprintNaechste();
-  }, w.treffer ? 1500 : 2300);
+  }, w.treffer ? 1900 : 2600);
 }
 
 function punktePop() {
@@ -2513,15 +2537,30 @@ function sprintAufbauen() {
     const eingabe = $('sprint-eingabe');
     const r = pruefeFrage(sprint.frage, eingabe.value);
     const rm = $('sprint-rueck');
+    if (r === 'richtig' && sprint.frage.k === 'bombe') { sprint.frage.w = bombeZuletzt; bombeBenutzt.add(bombeZuletzt); }
     if (r === 'richtig') sprintTreffer();
     else if (r === 'knapp') { rm.className = 'rueckmeldung'; rm.textContent = zufall(SPRUCH.knapp); wackeln(eingabe); }
-    else if (r === 'falsch') { sprint.versucht = true; rm.className = 'rueckmeldung schlecht'; rm.textContent = zufall(SPRUCH.falsch); wackeln(eingabe); eingabe.select(); }
+    else if (r === 'falsch') { sprint.versucht = true; rm.className = 'rueckmeldung schlecht'; rm.textContent = sprint.frage.k === 'bombe' && bombeGrund ? bombeGrund : zufall(SPRUCH.falsch); wackeln(eingabe); eingabe.select(); }
   };
   $('sprint-optionen').onclick = e => {
     const b = e.target.closest('button');
     const s = sprint;
     if (!b || !s?.laeuft || !s.frage?.o || b.disabled || s.pauseSeit) return;
     const f = s.frage;
+    if (f.k === 'mehr') {
+      const ok = richtigeWahl(f, b.dataset.c);
+      s.pauseSeit = performance.now();
+      mehrAufdecken($('sprint-optionen'), $('sprint-bild'), f, b.dataset.c);
+      const rm = $('sprint-rueck');
+      if (ok) { trefferMerken(s); s.punkte++; punktePop(); rm.className = 'rueckmeldung gut'; rm.textContent = `Richtig. ${kategorieVon(f).loesung(f)}.`; }
+      else { s.ende -= SPRINT_FALSCH; s.verpasst.push(f); s.serie = 0; rm.className = 'rueckmeldung schlecht'; rm.textContent = `Falsch. ${kategorieVon(f).loesung(f)}. Minus 5 Sekunden.`; }
+      setTimeout(() => {
+        if (sprint !== s || !s.laeuft) return;
+        s.ende += performance.now() - s.pauseSeit; s.pauseSeit = null;
+        if (s.frage === f) sprintNaechste();
+      }, ok ? 1100 : 1900);
+      return;
+    }
     if (f.k === 'groesser') {
       // Auflösung zeigen, die Uhr steht so lange
       const ok = richtigeWahl(f, b.dataset.c);

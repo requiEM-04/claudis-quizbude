@@ -1,11 +1,11 @@
-import { sb, spielEintragen, spielLoggen } from './server.js?v=0.14.2';
-import { stilVon, bildVon } from './ruhm.js?v=0.14.2';
-import { letzteTippfehler } from './abgleich.js?v=0.14.2';
-import { auswerten } from './weltkarte.js?v=0.14.2';
+import { sb, spielEintragen, spielLoggen } from './server.js?v=0.15.0';
+import { stilVon, bildVon } from './ruhm.js?v=0.15.0';
+import { letzteTippfehler } from './abgleich.js?v=0.15.0';
+import { auswerten } from './weltkarte.js?v=0.15.0';
 export const TIPPFEHLER_ABZUG = 10; // Punkte Abzug je Tippfehler bei einer richtigen Antwort
-import { fragenBauen, pruefeFrage, richtigeWahl, fragenVorladen, KATEGORIEN, kategorieVon, zahlLesen, schaetzWertung } from './kategorien.js?v=0.14.2';
-import { lobbyMelden, lobbyAbmelden } from './lobby.js?v=0.14.2';
-import { chatErlaubt, textPruefen } from './filter.js?v=0.14.2';
+import { fragenBauen, pruefeFrage, richtigeWahl, fragenVorladen, KATEGORIEN, kategorieVon, zahlLesen, schaetzWertung, bombeBenutzt, bombeZuletzt } from './kategorien.js?v=0.15.0';
+import { lobbyMelden, lobbyAbmelden } from './lobby.js?v=0.15.0';
+import { chatErlaubt, textPruefen } from './filter.js?v=0.15.0';
 
 export const STANDARD = { kategorie: 'flaggen', runden: 10, zeit: 15, auswahl: 'alle', modus: 'tippen', chat: 'eingeschraenkt', sichtbar: 'offen', ziel: 'beides', variante: null, arten: null };
 const COUNTDOWN = 3000;
@@ -249,6 +249,7 @@ export class Raum {
           unentschieden: false,
         });
         this.countdownEnde = performance.now() + COUNTDOWN;
+        bombeBenutzt.clear();
         this.vorladen();
         if (this.binHost) this.lobbyAktualisieren();
         break;
@@ -263,7 +264,7 @@ export class Raum {
           const rang = this.vergeben.size;
           const fehler = Math.min(2, Math.max(0, Number(p.fehler) || 0));
           const abzug = fehler * TIPPFEHLER_ABZUG;
-          this.senden('geloest', { i: p.i, id: p.von, pkt: Math.max(1, punkteFuer(p.ms, this.dauer, rang) - abzug), rang, abzug });
+          this.senden('geloest', { i: p.i, id: p.von, pkt: Math.max(1, punkteFuer(p.ms, this.dauer, rang) - abzug), rang, abzug, ...(typeof p.wort === 'string' && { wort: p.wort.slice(0, 40) }) });
         }
         break;
       case 'pin': // Weltkarte: Wertung nach Entfernung, rechnet der Spieler selbst aus (gleiche Daten bei allen)
@@ -290,8 +291,10 @@ export class Raum {
         this.geloest.set(p.id, { pkt: p.pkt, rang: p.rang, abzug: p.abzug || 0, ...(p.karte && { km: p.km, lon: p.lon, lat: p.lat, treffer: p.treffer }), ...(p.schaetz && { wert: p.wert, treffer: p.treffer }) });
         this.punkte.set(p.id, (this.punkte.get(p.id) || 0) + p.pkt);
         if (p.id === this.ich.id) { this.meinStatus = 'geloest'; if (p.treffer !== false) this.meineTreffer++; }
+        if (p.wort) bombeBenutzt.add(p.wort);
         if (p.schaetz) this.systemZeile(`${this.bekannt.get(p.id)?.name || 'Jemand'} hat geschätzt.`);
-        else if (!p.karte) this.systemZeile(`${this.bekannt.get(p.id)?.name || 'Jemand'} hat's! +${p.pkt}${p.abzug ? ` (−${p.abzug} für Tippfehler)` : ''}`);
+        else if (p.wort) this.systemZeile(`${this.bekannt.get(p.id)?.name || 'Jemand'}: ${p.wort.charAt(0).toUpperCase() + p.wort.slice(1)} +${p.pkt}`);
+        else if (!p.karte && !p.wort) this.systemZeile(`${this.bekannt.get(p.id)?.name || 'Jemand'} hat's! +${p.pkt}${p.abzug ? ` (−${p.abzug} für Tippfehler)` : ''}`);
         if (this.binHost) this.allePruefen();
         break;
       case 'gesperrt':
@@ -413,7 +416,9 @@ export class Raum {
     if (ergebnis === 'richtig') {
       this.meinStatus = 'wartet';
       this.tippfehler = letzteTippfehler;
-      this.senden('treffer', { i: this.idx, ms: performance.now() - this.start, fehler: letzteTippfehler });
+      const wort = this.frage.k === 'bombe' ? bombeZuletzt : undefined;
+      if (wort) bombeBenutzt.add(wort);
+      this.senden('treffer', { i: this.idx, ms: performance.now() - this.start, fehler: this.frage.k === 'bombe' ? 0 : letzteTippfehler, ...(wort && { wort }) });
     } else if (ergebnis === 'falsch') {
       // knappe Versuche bleiben privat, die würden die Lösung fast verraten
       const t = text.trim().slice(0, 40);

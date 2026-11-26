@@ -1,12 +1,14 @@
-import { LAENDER } from './laender.js?v=0.14.2';
-import { WISSEN, WISSEN_THEMEN } from './wissen.js?v=0.14.2';
-import { EMOJI, EMOJI_THEMEN } from './emoji.js?v=0.14.2';
-import { kanon } from './kanon.js?v=0.14.2';
-import { LAND, AUSWAHL, pruefe, mischen, flaggeUrl, abgleichen } from './abgleich.js?v=0.14.2';
-import { karteLaden, ringeAlle } from './weltkarte.js?v=0.14.2';
-import { nachbarKarte } from './nachbarkarte.js?v=0.14.2';
-import { GRENZEN } from './grenzen.js?v=0.14.2';
-import { SCHAETZEN, SCHAETZ_THEMEN } from './schaetzen.js?v=0.14.2';
+import { LAENDER } from './laender.js?v=0.15.0';
+import { WISSEN, WISSEN_THEMEN } from './wissen.js?v=0.15.0';
+import { EMOJI, EMOJI_THEMEN } from './emoji.js?v=0.15.0';
+import { kanon } from './kanon.js?v=0.15.0';
+import { LAND, AUSWAHL, pruefe, mischen, flaggeUrl, abgleichen } from './abgleich.js?v=0.15.0';
+import { karteLaden, ringeAlle } from './weltkarte.js?v=0.15.0';
+import { nachbarKarte } from './nachbarkarte.js?v=0.15.0';
+import { GRENZEN } from './grenzen.js?v=0.15.0';
+import { SCHAETZEN, SCHAETZ_THEMEN } from './schaetzen.js?v=0.15.0';
+import { MEHR_THEMEN } from './mehr.js?v=0.15.0';
+import { SILBEN } from './silben.js?v=0.15.0';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const zahl = n => n.toLocaleString('de-DE');
@@ -16,7 +18,7 @@ let UMRISSE = null;
 let umrisseLaeuft = null;
 export function umrisseLaden() {
   if (UMRISSE) return Promise.resolve(UMRISSE);
-  umrisseLaeuft ||= import('./umrisse.js?v=0.14.2').then(m => { UMRISSE = m.UMRISSE; return UMRISSE; });
+  umrisseLaeuft ||= import('./umrisse.js?v=0.15.0').then(m => { UMRISSE = m.UMRISSE; return UMRISSE; });
   return umrisseLaeuft;
 }
 export const umrisseDa = () => !!UMRISSE;
@@ -99,6 +101,79 @@ export function schaetzWertung(f, wert) {
   const prozent = q.s ? null : Math.round((wert - q.a) / q.a * 100);
   return { pkt: Math.round(150 * nah), treffer, nah, abweichung: q.s ? `${wert > q.a ? '+' : ''}${(wert - q.a).toLocaleString('de-DE', { maximumFractionDigits: 2 })}` : `${prozent > 0 ? '+' : ''}${prozent.toLocaleString('de-DE')} %` };
 }
+
+// ---------- Bombe: Wort mit der Silbe tippen ----------
+// Die Wortliste ist groß und kommt erst, wenn Bombe gespielt wird
+let BOMBE = null, bombeLaeuft = null;
+export function bombeLaden() {
+  bombeLaeuft ||= import('./bombe-woerter.js?v=0.15.0').then(m => {
+    const woerter = new Set(); let vorher = '';
+    for (const z of m.WOERTER.split('\n')) { const w = vorher.slice(0, z.charCodeAt(0) - 48) + z.slice(1); woerter.add(w); vorher = w; }
+    BOMBE = { woerter, beispiele: m.BEISPIELE.split(' ') };
+    return BOMBE;
+  });
+  return bombeLaeuft;
+}
+export const bombeDa = () => !!BOMBE;
+export const bombeBenutzt = new Set();   // in diesem Spiel schon genommene Wörter
+export let bombeGrund = '';              // warum das letzte Wort nicht zählte
+export let bombeZuletzt = '';            // das zuletzt gefundene Wort
+const BOMBE_STUFE = { leicht: s => s[1] >= 250, mittel: s => s[1] >= 90 && s[1] < 250, schwer: s => s[1] < 90 && s[0].length === 3, alle: () => true };
+function bombeFinden(text) {
+  const t = String(text).trim().toLowerCase().replace(/[\s-]+/g, '');
+  const umlaut = x => x.replace(/ae/g, 'ä').replace(/oe/g, 'ö').replace(/ue/g, 'ü');
+  const varianten = [t, umlaut(t), t.replace(/ss/g, 'ß'), umlaut(t).replace(/ss/g, 'ß')];
+  for (const v of varianten) if (BOMBE.woerter.has(v)) return v;
+  // zusammengesetzte Wörter aus bekannten Teilen (bis zu drei, auch mit Fugen-s): Wohnungs|bau|gesellschaft
+  for (const v of varianten) if (v.length <= 40 && zusammen(v, 3)) return v;
+  return null;
+}
+function zusammen(w, teile) {
+  if (BOMBE.woerter.has(w)) return true;
+  if (teile <= 1) return false;
+  for (let i = 3; i <= w.length - 3; i++) {
+    const links = w.slice(0, i), rest = w.slice(i);
+    if ((BOMBE.woerter.has(links) || (links.endsWith('s') && BOMBE.woerter.has(links.slice(0, -1)))) && zusammen(rest, teile - 1)) return true;
+  }
+  return false;
+}
+function bombePruefen(text, f) {
+  const silbe = f.s.toLowerCase();
+  bombeGrund = '';
+  if (String(text).trim().length < 2) return 'leer';
+  if (!BOMBE) { bombeGrund = 'Die Wörter laden noch, gleich nochmal.'; return 'falsch'; }
+  const w = bombeFinden(text);
+  if (!w) { bombeGrund = String(text).toLowerCase().includes(silbe) ? 'Das Wort kenne ich nicht.' : `Da fehlt „${f.s}“.`; return 'falsch'; }
+  if (!w.includes(silbe)) { bombeGrund = `Da fehlt „${f.s}“.`; return 'falsch'; }
+  if (w === silbe) { bombeGrund = 'Nur die Silbe zählt nicht.'; return 'falsch'; }
+  if (bombeBenutzt.has(w)) { bombeGrund = 'Das Wort war schon dran.'; return 'falsch'; }
+  bombeZuletzt = w;
+  return 'richtig';
+}
+const gross = w => w.charAt(0).toUpperCase() + w.slice(1);
+function bombeBeispiele(f, anzahl = 3) {
+  if (!BOMBE) return [];
+  const silbe = f.s.toLowerCase();
+  return BOMBE.beispiele.filter(w => w.includes(silbe) && w !== silbe && !bombeBenutzt.has(w)).slice(0, 40).sort(() => Math.random() - 0.5).slice(0, anzahl);
+}
+// Bombe mit Silbe; die Zündschnur brennt in z Sekunden ab
+export function bombeSvg(silbe, z = 15) {
+  const L = 'M86 34C96 22 104 26 108 16S116 6 118 4';
+  const fs = silbe.length > 3 ? 26 : 32;
+  return `<svg class="bombe" viewBox="0 0 128 128" style="--z:${z}s" role="img" aria-label="Bombe mit der Silbe ${silbe}">`
+    + `<path class="lunte" d="${L}" pathLength="100"/>`
+    + `<g class="koerper"><circle cx="58" cy="76" r="42" class="kugel"/><path d="M30 60a32 32 0 0 1 22-22" class="glanz"/>`
+    + `<rect x="74" y="28" width="22" height="16" rx="3" transform="rotate(40 85 36)" class="kappe"/>`
+    + `<text x="58" y="${76 + fs * .36}" text-anchor="middle" class="silbe" style="font-size:${fs}px">${silbe}</text></g>`
+    + `<g class="funke" style="offset-path:path('${L}')"><circle r="5"/><path d="M-9 0H9M0-9V9M-6-6l12 12M-6 6L6-6"/></g>`
+    + `<text x="64" y="74" text-anchor="middle" class="bumm">BUMM!</text></svg>`;
+}
+
+// ---------- Mehr oder weniger ----------
+const MEHR_DINGE = Object.entries(MEHR_THEMEN).flatMap(([t, th]) => th.dinge.map(([name, wert]) => ({ t, name, wert })));
+export const mehrWert = (d, th = MEHR_THEMEN[d.t]) => th.jahr ? String(d.wert) : `${th.ca ? 'rund ' : ''}${d.wert.toLocaleString('de-DE')} ${th.einheit}`;
+const mehrRichtig = f => (MEHR_DINGE[f.m].wert > MEHR_DINGE[f.n].wert ? 'mehr' : 'weniger');
+const PFEIL = { mehr: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>', weniger: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12l7 7 7-7"/></svg>' };
 
 function stadtPruefen(text, l) {
   return abgleichen(text, l.stadtAntworten, a => {
@@ -256,13 +331,53 @@ export const KATEGORIEN = {
     pool: a => SCHAETZEN.map((q, n) => ({ ...q, n })).filter(q => a === 'alle' || q.t === a),
     frage: q => ({ k: 'schaetzen', n: q.n }),
     hinweis: f => `${SCHAETZ_THEMEN[SCHAETZEN[f.n].t]}: schätz so genau wie möglich`,
-    bild: f => `<div class="bild-schaetzen"><p class="bild-frage">${esc(SCHAETZEN[f.n].f)}</p><span class="schaetz-einheit">Antwort in ${esc(SCHAETZEN[f.n].e)}</span></div>`,
+    bild: f => `<div class="bild-schaetzen"><p class="bild-frage">${esc(SCHAETZEN[f.n].f)}</p><span class="schaetz-einheit">Einheit: ${esc(SCHAETZEN[f.n].e)}</span></div>`,
     option: () => '',
     pruefe: () => 'falsch',
     richtig: () => false,
     loesung: f => `${zahlText(SCHAETZEN[f.n].a)} ${SCHAETZEN[f.n].e}`,
     info: f => SCHAETZEN[f.n].i || '',
     kurz: f => `<span class="kurz-frage">${esc(SCHAETZEN[f.n].f)}</span><b>${zahlText(SCHAETZEN[f.n].a)} ${esc(SCHAETZEN[f.n].e)}</b>`,
+  },
+
+  bombe: {
+    name: 'Bombe', text: 'Ein Wort mit der Silbe, bevor es knallt', tippen: true, nurTippen: true, zeit: 15,
+    auswahlen: { leicht: 'Leicht: häufige Silben', mittel: 'Mittel', schwer: 'Schwer: seltene Silben', alle: 'Alle Silben' }, standard: 'leicht',
+    pool: a => SILBEN.map((x, n) => ({ s: x[0], z: x[1], n })).filter(x => (BOMBE_STUFE[a] || BOMBE_STUFE.leicht)([x.s, x.z])),
+    frage: (x, _mitOptionen, _ziel, opt = {}) => ({ k: 'bombe', s: x.s.toUpperCase(), z: opt.zeit || 15 }),
+    hinweis: () => 'Tippe ein Wort, in dem die Silbe steckt. Jedes Wort zählt nur einmal.',
+    bild: f => `<div class="bild-bombe">${bombeSvg(f.s, f.z)}</div>`,
+    option: () => '',
+    pruefe: (text, f) => bombePruefen(text, f),
+    richtig: () => false,
+    loesung: f => { const b = bombeBeispiele(f); return b.length ? `Zum Beispiel: ${b.map(gross).join(', ')}` : `Silbe ${f.s}`; },
+    kurz: f => `<span class="kurz-silbe">${esc(f.s)}</span><b>${esc(f.w ? gross(f.w) : (bombeBeispiele(f, 1).map(gross)[0] || ''))}</b>`,
+  },
+
+  mehr: {
+    name: 'Mehr oder weniger', text: 'Höher, länger oder früher?', tippen: false, zeit: 10,
+    auswahlen: { alle: 'Alle Themen', ...Object.fromEntries(Object.entries(MEHR_THEMEN).map(([k, t]) => [k, t.titel])) }, standard: 'alle',
+    pool: a => MEHR_DINGE.map((d, n) => ({ ...d, n })).filter(d => a === 'alle' || d.t === a),
+    frage: d => {
+      const th = MEHR_THEMEN[d.t];
+      const passt = x => x.name !== d.name && (th.jahr ? Math.abs(x.wert - d.wert) >= th.abstand : Math.max(x.wert, d.wert) / Math.min(x.wert, d.wert) >= th.abstand);
+      const b = mischen(MEHR_DINGE.filter(x => x.t === d.t && passt(x)))[0];
+      return { k: 'mehr', n: d.n, m: MEHR_DINGE.indexOf(b), o: ['mehr', 'weniger'] };
+    },
+    hinweis: f => MEHR_THEMEN[MEHR_DINGE[f.n].t].frage,
+    bild: f => {
+      const a = MEHR_DINGE[f.n], b = MEHR_DINGE[f.m];
+      return `<div class="bild-mehr"><div class="mw-karte"><span class="mw-name">${esc(a.name)}</span><b class="mw-wert">${esc(mehrWert(a))}</b></div>`
+        + `<span class="mw-vs" aria-hidden="true">vs</span>`
+        + `<div class="mw-karte mw-rechts"><span class="mw-name">${esc(b.name)}</span><b class="mw-wert"><span class="mw-frage">?</span><span class="mw-zahl">${esc(mehrWert(b))}</span></b></div></div>`;
+    },
+    option: (key, f) => { const th = MEHR_THEMEN[MEHR_DINGE[f.n].t]; return `${PFEIL[key]}<span>${key === 'mehr' ? th.mehr : th.weniger}</span>`; },
+    optionKlasse: 'mw-knoepfe',
+    pruefe: () => 'falsch',
+    richtig: (key, f) => key === mehrRichtig(f),
+    loesung: f => { const b = MEHR_DINGE[f.m], th = MEHR_THEMEN[b.t]; return `${th[mehrRichtig(f)]}: ${b.name}, ${mehrWert(b)}`; },
+    info: f => `${MEHR_DINGE[f.n].name}: ${mehrWert(MEHR_DINGE[f.n])}`,
+    kurz: f => { const a = MEHR_DINGE[f.n], b = MEHR_DINGE[f.m]; return `<span class="kurz-frage">${esc(b.name)} gegen ${esc(a.name)} (${esc(mehrWert(a))})</span><b>${esc(MEHR_THEMEN[b.t][mehrRichtig(f)])}: ${esc(mehrWert(b))}</b>`; },
   },
 
   groesser: {
@@ -347,13 +462,13 @@ function aufdeckenHtml(f) {
 const groesseres = f => (LAND[f.c].flaeche >= LAND[f.d].flaeche ? f.c : f.d);
 
 // Emoji-Rätsel ist vorerst raus (wird inhaltlich überarbeitet), die Weltkarte steht direkt nach Flaggen
-export const KATEGORIE_REIHE = ['flaggen', 'karte', 'umrisse', 'hauptstaedte', 'nachbarn', 'buchstaben', 'groesser', 'schaetzen', 'wissen', 'gemischt'];
+export const KATEGORIE_REIHE = ['flaggen', 'karte', 'umrisse', 'hauptstaedte', 'nachbarn', 'buchstaben', 'bombe', 'groesser', 'mehr', 'schaetzen', 'wissen', 'gemischt'];
 // Was in „Gemischt“ vorkommen kann; ohne eigene Auswahl alle
-export const ARTEN = ['flaggen', 'umrisse', 'hauptstaedte', 'stadtland', 'nachbarn', 'buchstaben', 'groesser', 'schaetzen', 'wissen'];
+export const ARTEN = ['flaggen', 'umrisse', 'hauptstaedte', 'stadtland', 'nachbarn', 'buchstaben', 'groesser', 'mehr', 'schaetzen', 'wissen'];
 export const gemischtArten = arten => { const a = (Array.isArray(arten) ? arten : ARTEN).filter(k => ARTEN.includes(k)); return a.length ? a : ARTEN; };
 export const alleArten = arten => gemischtArten(arten).length === ARTEN.length;
 // Kategorien mit Sprint-Rekord und eigener Sprint-Bestenliste (Hauptstädte gibt es in zwei Richtungen)
-export const SPRINT_REIHE = ['flaggen', 'karte', 'umrisse', 'hauptstaedte', 'stadtland', 'nachbarn', 'buchstaben', 'groesser', 'schaetzen', 'wissen', 'gemischt'];
+export const SPRINT_REIHE = ['flaggen', 'karte', 'umrisse', 'hauptstaedte', 'stadtland', 'nachbarn', 'buchstaben', 'bombe', 'groesser', 'mehr', 'schaetzen', 'wissen', 'gemischt'];
 // gewählte Variante einer Kategorie, sonst die Standardvariante
 export const varianteVon = (kat, v) => (kat?.varianten ? (v in kat.varianten.werte ? v : kat.varianten.standard) : null);
 
@@ -366,13 +481,14 @@ export function sprintFrage(kategorie, stand, benutzt, region = null, opt = {}) 
   const leicht = kat.land && (stand < 8 || (stand < 16 && Math.random() < 0.5));
   const id = x => `${k}:${x.code ?? x.n}`;
   // mit Region (Übung): nur Länder dieser Region, sonst erst bekannte, dann alle
-  let pool = (kat.land && region ? kat.pool(region, v) : kat.pool(leicht ? 'bekannt' : 'alle', v)).filter(x => !benutzt.has(id(x)));
+  const stufe = k === 'bombe' ? (stand < 8 ? 'leicht' : stand < 18 ? 'mittel' : 'schwer') : leicht ? 'bekannt' : 'alle';
+  let pool = (kat.land && region ? kat.pool(region, v) : kat.pool(stufe, v)).filter(x => !benutzt.has(id(x)));
   if (!pool.length && kat.land && region) { for (const b of [...benutzt]) if (b.startsWith(k + ':')) benutzt.delete(b); pool = kat.pool(region, v); }
   if (!pool.length) pool = kat.pool('alle', v).filter(x => !benutzt.has(id(x)));
   if (!pool.length) { for (const b of [...benutzt]) if (b.startsWith(k + ':')) benutzt.delete(b); pool = kat.pool('alle', v); }
   const x = pool[Math.floor(Math.random() * pool.length)];
   benutzt.add(id(x));
-  return kat.frage(x, !kat.tippen || kategorie === 'gemischt', undefined, { v: v ?? undefined, zeit: 8 });
+  return kat.frage(x, !kat.tippen || kategorie === 'gemischt', undefined, { v: v ?? undefined, zeit: k === 'bombe' ? 12 : 8 });
 }
 
 export function fragenBauen({ kategorie = 'flaggen', auswahl, runden, modus, ziel, variante, arten: gewaehlt, zeit }) {
@@ -393,7 +509,7 @@ export function fragenBauen({ kategorie = 'flaggen', auswahl, runden, modus, zie
   const kat = KATEGORIEN[kategorie];
   const v = varianteVon(kat, variante);
   const pool = mischen(kat.pool(auswahl in kat.auswahlen ? auswahl : kat.standard, v));
-  const mitOptionen = !kat.zahl && (!kat.tippen || modus === 'auswahl');
+  const mitOptionen = !kat.zahl && !kat.nurTippen && (!kat.tippen || modus === 'auswahl');
   return pool.slice(0, Math.min(runden, pool.length)).map(x => kat.frage(x, mitOptionen, ziel, { v: v ?? undefined, zeit }));
 }
 
@@ -412,7 +528,7 @@ export function fragenVorladen(fragen) {
   }
   const karte = fragen.some(f => f.k === 'karte' || f.k === 'nachbarn');
   for (const c of bilder) { const img = new Image(); img.src = flaggeUrl(c); }
-  return Promise.all([umrisse ? umrisseLaden() : null, karte ? karteLaden() : null]);
+  return Promise.all([umrisse ? umrisseLaden() : null, karte ? karteLaden() : null, fragen.some(f => f.k === 'bombe') ? bombeLaden() : null]);
 }
 
 export { kanon };
