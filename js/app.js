@@ -1,28 +1,28 @@
-import { VERSION } from './config.js?v=0.15.0';
+import { VERSION } from './config.js?v=0.15.1';
 import {
   online, nameFehler, registrieren, anmelden, abmelden, sitzungHolen, profilLaden, profilSpeichern,
   bestenliste, spieleSeit, alleProfile, sprintEintragen, sprintBestenliste, rangVon, spielerAnzahl, spieleVon, sb,
   adminAnmelden, istAdminName, konfigLaden, adminEinrichten, einrichtungOffen, abzeichenVon, saisonAbschliessen, winterquestStand,
   freundeListe, freundAnfragen, freundAntworten, freundEntfernen,
-} from './server.js?v=0.15.0';
-import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.15.0';
-import { Raum, codeNeu, STANDARD, TIPPFEHLER_ABZUG } from './raum.js?v=0.15.0';
-import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.15.0';
+} from './server.js?v=0.15.1';
+import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.15.1';
+import { Raum, codeNeu, STANDARD, TIPPFEHLER_ABZUG } from './raum.js?v=0.15.1';
+import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.15.1';
 import {
   KATEGORIEN, KATEGORIE_REIHE, SPRINT_REIHE, mehrWert, bombeLaden, bombeBenutzt, bombeGrund, bombeZuletzt, bombeSvg, kategorieVon, optionSchluessel, richtigeWahl, umrisseDa, umrisseLaden,
   sprintFrage, pruefeFrage, fragenVorladen, kanon, ARTEN as GEMISCHT_ARTEN, gemischtArten, alleArten, varianteVon, zahlLesen, schaetzWertung, zahlText,
-} from './kategorien.js?v=0.15.0';
-import { LAENDER } from './laender.js?v=0.15.0';
-import { auswahlfeld } from './auswahlfeld.js?v=0.15.0';
-import { KATEGORIE_SYMBOL } from './symbole.js?v=0.15.0';
-import { konfetti } from './konfetti.js?v=0.15.0';
-import { karteBauen, karteLaden, auswerten } from './weltkarte.js?v=0.15.0';
-import { STUFEN, ERFOLGE, erfolgStand, emblem, wertungName, saisonName, saisonKurz, vitrineLesen, SKINS, skinVon, skinVonId, skinStand, skinBedingung } from './abzeichen.js?v=0.15.0';
+} from './kategorien.js?v=0.15.1';
+import { LAENDER } from './laender.js?v=0.15.1';
+import { auswahlfeld } from './auswahlfeld.js?v=0.15.1';
+import { KATEGORIE_SYMBOL } from './symbole.js?v=0.15.1';
+import { konfetti } from './konfetti.js?v=0.15.1';
+import { karteBauen, karteLaden, auswerten } from './weltkarte.js?v=0.15.1';
+import { STUFEN, ERFOLGE, erfolgStand, emblem, wertungName, saisonName, saisonKurz, vitrineLesen, SKINS, skinVon, skinVonId, skinStand, skinBedingung } from './abzeichen.js?v=0.15.1';
 import {
   RAENGE, BILDER, ARTEN, JOKER, SONDER, sonderVon, sonderFrei, WINTERQUEST, questGeschafft, ruhmInfo, stufeVon, stufeInfo, wappen, effektHtml, rahmenDeko, stilVon, istFrei, freiAb, neuFrei,
-  belohnungName, rangVonId, symbol, symbolSvg, SCHWELLEN, flockeSvg, bildVon, BILD_ARTEN } from './ruhm.js?v=0.15.0';
-import { freundeStart, freundeStopp, freundeOrt, istOnline, onlineAbo, einladungAbo, anfrageAbo, einladen, anfrageMelden } from './freunde.js?v=0.15.0';
-import { FIGUREN, FREIE_FIGUREN, KREISE, RINGE, figurSvg, figurAusEmoji, figurVonId, bildFrei, bildFreiAb, bildEintrag, suchtVon } from './figuren.js?v=0.15.0';
+  belohnungName, rangVonId, symbol, symbolSvg, SCHWELLEN, flockeSvg, bildVon, BILD_ARTEN } from './ruhm.js?v=0.15.1';
+import { freundeStart, freundeStopp, freundeOrt, istOnline, onlineAbo, einladungAbo, anfrageAbo, einladen, anfrageMelden } from './freunde.js?v=0.15.1';
+import { FIGUREN, FREIE_FIGUREN, KREISE, RINGE, figurSvg, figurAusEmoji, figurVonId, bildFrei, bildFreiAb, bildEintrag, suchtVon } from './figuren.js?v=0.15.1';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -2609,6 +2609,14 @@ document.addEventListener('keydown', e => {
   if (!imSprint && !imRaum) return;
   const ziel = e.target;
   const tippt = ziel instanceof HTMLInputElement || ziel instanceof HTMLTextAreaElement;
+  // Mehr oder weniger: Pfeil hoch = mehr (höher, später …), Pfeil runter = weniger
+  const frageJetzt = imSprint ? sprint.frage : raum?.frage;
+  if (frageJetzt?.k === 'mehr' && (e.key === 'ArrowUp' || e.key === 'ArrowDown') && !tippt && !e.altKey && !e.ctrlKey && !e.metaKey) {
+    const k = document.querySelector(`${imSprint ? '#sprint-optionen' : '#optionen'} button[data-c="${e.key === 'ArrowUp' ? 'mehr' : 'weniger'}"]`);
+    e.preventDefault();
+    if (k && !k.disabled) k.click();
+    return;
+  }
   if (imSprint) {
     if (e.altKey && e.key.toLowerCase() === 'd') { e.preventDefault(); sprintUeberspringen(); return; }
     if (e.key === 'ArrowRight' && !e.altKey && !e.ctrlKey && !e.shiftKey) {

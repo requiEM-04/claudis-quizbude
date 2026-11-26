@@ -2125,3 +2125,5 @@ body:has(.abz-geist) { cursor: grabbing; }
 .schaetz-loesung span { color: var(--text-2); font-weight: 700; font-size: .92rem; }
 .schaetz-loesung.gut { border-color: rgba(143,179,162,.6); background: rgba(143,179,162,.1); }
 .schaetz-loesung.schlecht { border-color: rgba(207,142,142,.45); }
+.mw-taste { margin-left: 4px; padding: 1px 7px; border-radius: 6px; border: 1px solid var(--linie-stark); font: 700 .78rem var(--schrift); color: var(--text-3); background: rgba(255,255,255,.04); }
+@media (hover: none) { .mw-taste { display: none; } }
