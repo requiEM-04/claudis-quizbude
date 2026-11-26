@@ -1,28 +1,28 @@
-import { VERSION } from './config.js?v=0.14.0';
+import { VERSION } from './config.js?v=0.14.1';
 import {
   online, nameFehler, registrieren, anmelden, abmelden, sitzungHolen, profilLaden, profilSpeichern,
   bestenliste, spieleSeit, alleProfile, sprintEintragen, sprintBestenliste, rangVon, spielerAnzahl, spieleVon, sb,
   adminAnmelden, istAdminName, konfigLaden, adminEinrichten, einrichtungOffen, abzeichenVon, saisonAbschliessen, winterquestStand,
   freundeListe, freundAnfragen, freundAntworten, freundEntfernen,
-} from './server.js?v=0.14.0';
-import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.14.0';
-import { Raum, codeNeu, STANDARD, TIPPFEHLER_ABZUG } from './raum.js?v=0.14.0';
-import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.14.0';
+} from './server.js?v=0.14.1';
+import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.14.1';
+import { Raum, codeNeu, STANDARD, TIPPFEHLER_ABZUG } from './raum.js?v=0.14.1';
+import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.14.1';
 import {
   KATEGORIEN, KATEGORIE_REIHE, SPRINT_REIHE, kategorieVon, optionSchluessel, richtigeWahl, umrisseDa, umrisseLaden,
   sprintFrage, pruefeFrage, fragenVorladen, kanon, ARTEN as GEMISCHT_ARTEN, gemischtArten, alleArten, varianteVon, zahlLesen, schaetzWertung, zahlText, schildHtml,
-} from './kategorien.js?v=0.14.0';
-import { LAENDER } from './laender.js?v=0.14.0';
-import { auswahlfeld } from './auswahlfeld.js?v=0.14.0';
-import { KATEGORIE_SYMBOL } from './symbole.js?v=0.14.0';
-import { konfetti } from './konfetti.js?v=0.14.0';
-import { karteBauen, karteLaden, auswerten } from './weltkarte.js?v=0.14.0';
-import { STUFEN, ERFOLGE, erfolgStand, emblem, wertungName, saisonName, saisonKurz, vitrineLesen, SKINS, skinVon, skinVonId, skinStand, skinBedingung } from './abzeichen.js?v=0.14.0';
+} from './kategorien.js?v=0.14.1';
+import { LAENDER } from './laender.js?v=0.14.1';
+import { auswahlfeld } from './auswahlfeld.js?v=0.14.1';
+import { KATEGORIE_SYMBOL } from './symbole.js?v=0.14.1';
+import { konfetti } from './konfetti.js?v=0.14.1';
+import { karteBauen, karteLaden, auswerten } from './weltkarte.js?v=0.14.1';
+import { STUFEN, ERFOLGE, erfolgStand, emblem, wertungName, saisonName, saisonKurz, vitrineLesen, SKINS, skinVon, skinVonId, skinStand, skinBedingung } from './abzeichen.js?v=0.14.1';
 import {
   RAENGE, BILDER, ARTEN, JOKER, SONDER, sonderVon, sonderFrei, WINTERQUEST, questGeschafft, ruhmInfo, stufeVon, stufeInfo, wappen, effektHtml, rahmenDeko, stilVon, istFrei, freiAb, neuFrei,
-  belohnungName, rangVonId, symbol, symbolSvg, SCHWELLEN, flockeSvg, bildVon, BILD_ARTEN } from './ruhm.js?v=0.14.0';
-import { freundeStart, freundeStopp, freundeOrt, istOnline, onlineAbo, einladungAbo, anfrageAbo, einladen, anfrageMelden } from './freunde.js?v=0.14.0';
-import { FIGUREN, FREIE_FIGUREN, KREISE, RINGE, figurSvg, figurAusEmoji, figurVonId, bildFrei, bildFreiAb, bildEintrag, suchtVon } from './figuren.js?v=0.14.0';
+  belohnungName, rangVonId, symbol, symbolSvg, SCHWELLEN, flockeSvg, bildVon, BILD_ARTEN } from './ruhm.js?v=0.14.1';
+import { freundeStart, freundeStopp, freundeOrt, istOnline, onlineAbo, einladungAbo, anfrageAbo, einladen, anfrageMelden } from './freunde.js?v=0.14.1';
+import { FIGUREN, FREIE_FIGUREN, KREISE, RINGE, figurSvg, figurAusEmoji, figurVonId, bildFrei, bildFreiAb, bildEintrag, suchtVon } from './figuren.js?v=0.14.1';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -903,7 +903,7 @@ function kachelnHtml(mitRekord) {
     return `
     <button class="kachel${mitRekord ? ' sprint-karte' : ''}" data-k="${k}">
       <span class="kachel-bild" aria-hidden="true">${kachelBild(k)}</span>
-      <span class="kachel-name">${esc(KATEGORIEN[k].name).replace('Allgemeinwissen', 'Allgemein&shy;wissen').replace('Buchstabensalat', 'Buchstaben&shy;salat')}</span>
+      <span class="kachel-name">${esc(KATEGORIEN[k].name).replace('Allgemeinwissen', 'Allgemein&shy;wissen').replace('Buchstabensalat', 'Buchstaben&shy;salat').replace('Autokennzeichen', 'Auto&shy;kennzeichen')}</span>
       <span class="kachel-text">${esc(KATEGORIEN[kk].text)}</span>
       ${mitRekord ? `<span class="sk-rekord${rekord ? '' : ' leer'}"><b>${rekord || '–'}</b><small>${rekord ? 'dein Rekord' : 'noch kein Rekord'}</small></span>` : ''}
     </button>`;
@@ -970,6 +970,9 @@ function eingabeVorbereiten(eingabe, f) {
   eingabe.inputMode = f.k === 'schaetzen' ? 'decimal' : 'text';
 }
 
+// Bonbonglas für die Schätzfragen-Kachel (wie viele sind drin?)
+let kbGlasNr = 0;
+const KB_GLAS = '<svg class="kb-glas" viewBox="0 0 64 74" aria-hidden="true"><path d="M21 14h22v3c6 2 9 6 9 12v34c0 6-4 9-9 9H21c-5 0-9-3-9-9V29c0-6 3-10 9-12z" fill="rgba(255,255,255,.05)"/><clipPath id="kbg-innen"><path d="M21 17c-6 2-8 6-8 12v34c0 5 3 8 8 8h22c5 0 8-3 8-8V29c0-6-2-10-8-12z"/></clipPath><g clip-path="url(#kbg-innen)"><circle cx="18.9" cy="64.1" r="3.3" fill="#B39C72"/><circle cx="25.7" cy="64.0" r="3.3" fill="#9DB8D9"/><circle cx="32.1" cy="64.4" r="3.3" fill="#9CC4A8"/><circle cx="39.6" cy="64.4" r="3.3" fill="#CDB68C"/><circle cx="22.3" cy="57.9" r="3.3" fill="#9DB8D9"/><circle cx="29.7" cy="58.7" r="3.3" fill="#CDB68C"/><circle cx="36.2" cy="58.3" r="3.3" fill="#9CC4A8"/><circle cx="43.0" cy="58.6" r="3.3" fill="#DCC8A2"/><circle cx="19.2" cy="53.3" r="3.3" fill="#CDB68C"/><circle cx="25.1" cy="52.4" r="3.3" fill="#DCC8A2"/><circle cx="32.8" cy="53.2" r="3.3" fill="#D99A9A"/><circle cx="39.3" cy="53.3" r="3.3" fill="#9DB8D9"/><circle cx="22.0" cy="46.9" r="3.3" fill="#CDB68C"/><circle cx="29.5" cy="47.1" r="3.3" fill="#D99A9A"/><circle cx="35.9" cy="47.3" r="3.3" fill="#B39C72"/><circle cx="42.1" cy="46.9" r="3.3" fill="#B39C72"/><circle cx="18.6" cy="41.3" r="3.3" fill="#CDB68C"/><circle cx="25.9" cy="41.1" r="3.3" fill="#CDB68C"/><circle cx="33.2" cy="41.4" r="3.3" fill="#CDB68C"/><circle cx="40.0" cy="40.9" r="3.3" fill="#DCC8A2"/><circle cx="23.1" cy="35.4" r="3.3" fill="#9CC4A8"/><circle cx="30.0" cy="35.9" r="3.3" fill="#CDB68C"/><circle cx="36.1" cy="35.6" r="3.3" fill="#E3B66B"/><circle cx="42.4" cy="35.4" r="3.3" fill="#D99A9A"/></g><path d="M21 14h22v3c6 2 9 6 9 12v34c0 6-4 9-9 9H21c-5 0-9-3-9-9V29c0-6 3-10 9-12z" fill="none" stroke="#DCC8A2" stroke-width="1.6" stroke-linejoin="round"/><path d="M16.5 30c0-4 1.5-7 5-8.5M16.5 36v18" stroke="rgba(255,255,255,.55)" stroke-width="1.6" stroke-linecap="round" fill="none"/><rect x="18" y="6" width="28" height="9" rx="2.5" fill="#CDB68C"/><path d="M18 9.5h28" stroke="#B39C72" stroke-width="1"/><circle cx="54" cy="12" r="8" fill="#1F2327" stroke="#CDB68C" stroke-width="1.4"/><text x="54" y="16" text-anchor="middle" font-size="11" font-weight="800" fill="#CDB68C" font-family="system-ui, sans-serif">?</text></svg>';
 function kachelBild(k) {
   const f = c => `<img src="${flaggeUrl(c)}" alt="">`;
   switch (k) {
@@ -979,8 +982,8 @@ function kachelBild(k) {
     case 'hauptstaedte': return '<span class="kb-text">Wien?</span>';
     case 'nachbarn': return '<img class="kb-nachbarn" src="bilder/nachbarn-vorschau.svg" alt="">';
     case 'buchstaben': return `<span class="kb-salat">${[['L', 2], ['I', 1], ['H', 2], ['C', 4], ['E', 1]].map(([b, w], i) => `<b style="--w:${(i - 2) * 17}deg">${b}<sub>${w}</sub></b>`).join('')}</span>`;
-    case 'kennzeichen': return `<span class="kb-kfz">${schildHtml('QB', true)}</span>`;
-    case 'schaetzen': return '<span class="kb-schaetz"><b>≈</b><i>?</i></span>';
+    case 'kennzeichen': return `<span class="kb-kfz">${schildHtml('QB')}</span>`;
+    case 'schaetzen': { const id = 'kbg' + (++kbGlasNr); return KB_GLAS.replaceAll('kbg-innen', id); }
     case 'groesser': return `<span class="kb-duell">${f('CA')}<b>oder</b>${f('BR')}</span>`;
     case 'wissen': return '<span class="kb-text kb-gross">?</span>';
     case 'emoji': return '<span class="kb-emoji">🦁👑</span>';
@@ -1462,6 +1465,7 @@ function profilAufbauen() {
   for (const el of ['pb-figuren', 'pb-kreise', 'pb-ringe']) $(el).addEventListener('click', e => { const t = e.target.closest('[data-art]'); if (t) bildWahl(t); });
   $('profil-abbrechen').onclick = () => { $('profil-editor').hidden = true; };
   $('profil-reiter').onclick = e => { const b = e.target.closest('[data-tab]'); if (b) profilTab(b.dataset.tab); };
+  abzZiehenAufbauen();
   for (const el of ['abz-raster', 'abz-medaillen', 'abz-vitrine']) $(el).addEventListener('click', e => {
     const b = e.target.closest('[data-v]');
     if (!b) return;
@@ -1534,8 +1538,8 @@ function abzeichenZeichnen() {
   const liste = vitrineLesen(ich, extra, meineMedaillen);
   $('abz-vitrine').innerHTML = [0, 1, 2].map(i => {
     const v = liste[i];
-    return v ? `<button class="abz-platz voll" data-v="${esc(v.id)}" title="Von der Karte nehmen">${v.art === 'e' ? emblem(v.e, v.stufe, 66) : abzeichenSvg(v.platz, saisonKurz(v.saison))}<span>${esc(v.art === 'e' ? v.e.name : wertungName(v.wertung))}</span><small>runternehmen</small></button>`
-      : `<div class="abz-platz"><span class="abz-leer">${i + 1}</span><small>frei</small></div>`;
+    return v ? `<button class="abz-platz voll" data-i="${i}" data-v="${esc(v.id)}" title="Ziehen zum Verschieben, klicken zum Runternehmen">${v.art === 'e' ? emblem(v.e, v.stufe, 66) : abzeichenSvg(v.platz, saisonKurz(v.saison))}<span>${esc(v.art === 'e' ? v.e.name : wertungName(v.wertung))}</span><small>runternehmen</small></button>`
+      : `<div class="abz-platz" data-i="${i}"><span class="abz-leer">${i + 1}</span><small>frei</small></div>`;
   }).join('');
   $('abz-medaillen').innerHTML = meineMedaillen.length ? meineMedaillen.map(m => {
     const id = `s:${m.saison}:${m.wertung}:${m.platz}`, an = vit.includes(id);
@@ -1554,6 +1558,80 @@ function abzeichenZeichnen() {
   }).join('');
 }
 
+// Vitrine per Ziehen: Abzeichen auf einen Platz ziehen sortiert um; aus der Liste darunter (mit der Maus) legt es auf genau diesen Platz
+let abzZug = null, abzKlickSperre = false;
+function abzZiehenAufbauen() {
+  document.addEventListener('pointerdown', e => {
+    if (e.button !== 0 || !ich) return;
+    const quelle = e.target.closest('#abz-vitrine .abz-platz.voll') || (e.pointerType !== 'touch' && e.target.closest('#abz-raster .abz-kachel:not(.gesperrt), #abz-medaillen .abz-medaille'));
+    if (!quelle) return;
+    abzZug = { quelle, id: quelle.dataset.v, x: e.clientX, y: e.clientY, pid: e.pointerId, aktiv: false, ziel: null };
+  });
+  document.addEventListener('pointermove', e => {
+    const z = abzZug;
+    if (!z || e.pointerId !== z.pid) return;
+    if (!z.aktiv) {
+      if (Math.hypot(e.clientX - z.x, e.clientY - z.y) < 8) return;
+      z.aktiv = true;
+      z.geist = document.createElement('div');
+      z.geist.className = 'abz-geist';
+      const bild = z.quelle.querySelector('svg'); if (bild) z.geist.append(bild.cloneNode(true));
+      document.body.append(z.geist);
+      z.quelle.classList.add('zieht');
+      $('abz-vitrine').classList.add('beim-ziehen');
+      try { z.quelle.setPointerCapture?.(e.pointerId); } catch { /* egal */ }
+    }
+    e.preventDefault();
+    z.geist.style.transform = `translate(${e.clientX - 36}px, ${e.clientY - 36}px)`;
+    const ziel = document.elementFromPoint(e.clientX, e.clientY)?.closest('#abz-vitrine .abz-platz') || null;
+    if (ziel !== z.ziel) { z.ziel?.classList.remove('drueber'); ziel?.classList.add('drueber'); z.ziel = ziel; }
+  });
+  const ende = e => {
+    const z = abzZug;
+    if (!z || e.pointerId !== z.pid) return;
+    abzZug = null;
+    if (!z.aktiv) return;
+    z.geist.remove(); z.quelle.classList.remove('zieht'); z.ziel?.classList.remove('drueber');
+    $('abz-vitrine').classList.remove('beim-ziehen');
+    abzKlickSperre = true; setTimeout(() => { abzKlickSperre = false; }, 60);
+    if (e.type === 'pointercancel' || !z.ziel) return;
+    vitrineAufPlatz(z.id, Number(z.ziel.dataset.i));
+  };
+  document.addEventListener('pointerup', ende);
+  document.addEventListener('pointercancel', ende);
+  // nach dem Ziehen kein Klick hinterher (der würde das Abzeichen sonst runternehmen)
+  document.addEventListener('click', e => { if (abzKlickSperre) { e.stopPropagation(); e.preventDefault(); abzKlickSperre = false; } }, true);
+}
+
+async function vitrineAufPlatz(id, platz) {
+  const alt = Array.isArray(ich.vitrine) ? ich.vitrine.filter(v => typeof v === 'string').slice(0, 3) : [];
+  const von = alt.indexOf(id);
+  let neu;
+  if (von >= 0) { // umsortieren
+    if (von === platz || (platz >= alt.length && von === alt.length - 1)) return;
+    neu = alt.filter(v => v !== id);
+    neu.splice(Math.min(platz, neu.length), 0, id);
+  } else { // neu drauflegen, bei vollem Platz das alte ersetzen
+    if (id.startsWith('e:')) {
+      const e = ERFOLGE.find(x => `e:${x.id}` === id);
+      if (!e || !erfolgStand(e, ich, { medaillen: meineMedaillen.length }).stufe) { toast('Das Abzeichen hast du noch nicht.'); return; }
+    }
+    neu = alt.slice();
+    if (platz < neu.length) neu[platz] = id; else neu.push(id);
+  }
+  await vitrineSpeichern(neu, von >= 0 ? 'Umsortiert.' : 'Liegt jetzt auf deiner Karte.');
+}
+
+async function vitrineSpeichern(neu, text) {
+  try {
+    await profilSpeichern(ich.id, { vitrine: neu });
+    ich = { ...ich, vitrine: neu };
+    if (profilP?.id === ich.id) profilP = { ...profilP, vitrine: neu };
+    abzeichenZeichnen(); hochkarteZeichnen();
+    toast(text);
+  } catch (e) { toast(e.message); }
+}
+
 async function vitrineUmschalten(id) {
   const alt = Array.isArray(ich.vitrine) ? ich.vitrine.filter(v => typeof v === 'string') : [];
   let neu;
@@ -1566,13 +1644,7 @@ async function vitrineUmschalten(id) {
     if (alt.length >= 3) { toast('Auf die Karte passen drei. Nimm erst eins runter.'); return; }
     neu = [...alt, id];
   }
-  try {
-    await profilSpeichern(ich.id, { vitrine: neu });
-    ich = { ...ich, vitrine: neu };
-    if (profilP?.id === ich.id) profilP = { ...profilP, vitrine: neu };
-    abzeichenZeichnen(); hochkarteZeichnen();
-    toast(neu.length > alt.length ? 'Liegt jetzt auf deiner Karte.' : 'Von der Karte genommen.');
-  } catch (e) { toast(e.message); }
+  await vitrineSpeichern(neu, neu.length > alt.length ? 'Liegt jetzt auf deiner Karte.' : 'Von der Karte genommen.');
 }
 
 // Neue Abzeichen-Stufe erreicht? Kurzer Hinweis (beim ersten Mal nur merken)

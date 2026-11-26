@@ -1,13 +1,13 @@
-import { LAENDER } from './laender.js?v=0.14.0';
-import { WISSEN, WISSEN_THEMEN } from './wissen.js?v=0.14.0';
-import { EMOJI, EMOJI_THEMEN } from './emoji.js?v=0.14.0';
-import { kanon } from './kanon.js?v=0.14.0';
-import { LAND, AUSWAHL, pruefe, mischen, flaggeUrl, abgleichen } from './abgleich.js?v=0.14.0';
-import { karteLaden, ringeAlle } from './weltkarte.js?v=0.14.0';
-import { nachbarKarte } from './nachbarkarte.js?v=0.14.0';
-import { GRENZEN } from './grenzen.js?v=0.14.0';
-import { KENNZEICHEN } from './kennzeichen.js?v=0.14.0';
-import { SCHAETZEN, SCHAETZ_THEMEN } from './schaetzen.js?v=0.14.0';
+import { LAENDER } from './laender.js?v=0.14.1';
+import { WISSEN, WISSEN_THEMEN } from './wissen.js?v=0.14.1';
+import { EMOJI, EMOJI_THEMEN } from './emoji.js?v=0.14.1';
+import { kanon } from './kanon.js?v=0.14.1';
+import { LAND, AUSWAHL, pruefe, mischen, flaggeUrl, abgleichen } from './abgleich.js?v=0.14.1';
+import { karteLaden, ringeAlle } from './weltkarte.js?v=0.14.1';
+import { nachbarKarte } from './nachbarkarte.js?v=0.14.1';
+import { GRENZEN } from './grenzen.js?v=0.14.1';
+import { KENNZEICHEN } from './kennzeichen.js?v=0.14.1';
+import { SCHAETZEN, SCHAETZ_THEMEN } from './schaetzen.js?v=0.14.1';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const zahl = n => n.toLocaleString('de-DE');
@@ -17,7 +17,7 @@ let UMRISSE = null;
 let umrisseLaeuft = null;
 export function umrisseLaden() {
   if (UMRISSE) return Promise.resolve(UMRISSE);
-  umrisseLaeuft ||= import('./umrisse.js?v=0.14.0').then(m => { UMRISSE = m.UMRISSE; return UMRISSE; });
+  umrisseLaeuft ||= import('./umrisse.js?v=0.14.1').then(m => { UMRISSE = m.UMRISSE; return UMRISSE; });
   return umrisseLaeuft;
 }
 export const umrisseDa = () => !!UMRISSE;
@@ -104,7 +104,7 @@ function kfzFalsche(x, anzahl, nurHaupt) {
   for (const y of nah.concat(rest)) { if (orte.has(y.ort)) continue; orte.add(y.ort); aus.push(y.code); if (aus.length === anzahl) break; }
   return aus;
 }
-export const schildHtml = (code, klein = false) => `<span class="kfz${klein ? ' klein' : ''}" aria-label="Kennzeichen ${esc(code)}"><span class="kfz-eu" aria-hidden="true"><svg viewBox="-10 -10 20 20">${Array.from({ length: 12 }, (_, i) => `<circle cx="${(Math.cos(i * Math.PI / 6) * 6).toFixed(2)}" cy="${(Math.sin(i * Math.PI / 6) * 6).toFixed(2)}" r="1.15"/>`).join('')}</svg><b>D</b></span><span class="kfz-text">${esc(code)}</span>${klein ? '' : `<span class="kfz-siegel" aria-hidden="true"><i></i><i></i></span><span class="kfz-text">${schildRest(code)}</span>`}</span>`;
+export const schildHtml = (code, klein = false) => `<span class="kfz${klein ? ' klein' : ''}" aria-label="Kennzeichen ${esc(code)}"><span class="kfz-eu" aria-hidden="true"><svg viewBox="-10 -10 20 20">${Array.from({ length: 12 }, (_, i) => `<circle cx="${(Math.cos(i * Math.PI / 6) * 6.6).toFixed(2)}" cy="${(Math.sin(i * Math.PI / 6) * 6.6).toFixed(2)}" r="1.7"/>`).join('')}</svg><b>D</b></span><span class="kfz-text">${esc(code)}</span>${klein ? '' : `<span class="kfz-siegel" aria-hidden="true"><i></i><i></i></span><span class="kfz-text">${code === 'QB' ? 'Z 26' : schildRest(code)}</span>`}</span>`;
 
 // ---------- Schätzfragen ----------
 // Zahl aus der Eingabe lesen: 1.234, 1,5, 2 Mio, 3,5 Mrd, 10k

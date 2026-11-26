@@ -2,7 +2,7 @@
 
 ## Aktuell (25.11.2026)
 
-- **Version:** 0.14.0
+- **Version:** 0.14.1
 - **Live:** https://requiem-04.github.io/claudis-quizbude/ (Repo `requiEM-04/claudis-quizbude`, Branch `main`, GitHub Pages)
 - **Server:** Supabase-Projekt `quizbude` (Ref `jgvjjjiwfjxynbzjaxsg`, Frankfurt), E-Mail-Bestätigung aus, Realtime mit öffentlichen Kanälen.
 - **Inhalt:** Konten (Name + Passwort ab 4 Zeichen), Räume mit 4-Buchstaben-Code (live über Realtime), Flaggenraten (tippen oder 4 zur Auswahl), Flaggen-Sprint (60 s), Bestenliste (Siege, Punkte, Sprint), „Zuletzt gespielt".
@@ -185,6 +185,7 @@
   - **Figuren süchtig** (Colins Wunsch, für alle): jede hängt an etwas anderem, mit eigenen Augen (gerötet, Augenringe, halb zu, aufgerissen) und Gegenstand. Fuchs Kaffee, Frosch Kiffen, Panda Bambus, Eule Energy-Drinks, Krake Zocken, Pinguin Bier, Katze Katzenminze, Igel Donuts, Schildkröte Serien, Dino Burger, Biene Honig, Koala Eukalyptus, Wal Vapen, Papagei Handy, Quizbot Strom, Herzdrache Lollis, Sternwolf Musik, Phönix Chili, Hofnarr Glücksspiel, Löwe Zigarren. Bewusst nichts mit Spritzen oder harten Drogen.
   - Colin: **kein Shop**. Mehr Kosmetik zum Freispielen ist gewünscht, Chat-Sticker als gute Idee genannt.
 
+- **Neu in 0.14.1:** Abzeichen „Auf deiner Karte“ per Ziehen sortieren (Pointer-Events, auch am Handy; aus der Liste mit der Maus direkt auf einen Platz, voller Platz wird ersetzt; Klick nimmt weiterhin runter). Kachelbilder: Autokennzeichen als schräges Schild „QB Z 26“, Schätzfragen als Bonbonglas (clipPath-ID je Kachel eindeutig), Titel „Auto-kennzeichen“ bricht um.
 - **Neu in 0.14.0:**
   - **Varianten** je Kategorie (`varianten` in kategorien.js, Raum-Einstellung `variante`, im Sprint unter „Mehr Einstellungen“): Buchstabensalat Leicht/Mittel/Schwer (Leicht: kurze Namen, erster Buchstabe steht vorne und ist golden; Schwer: lange/komplexe Namen, alle Wörter in einem Haufen; Stufe über `salatStufe`), Nachbarn Leicht (Karte) / Schwer (ohne Karte), Flaggen „Stück für Stück aufdecken“ (30 Kärtchen, Reihenfolge aus dem Ländercode, Dauer 75 % der Fragezeit, im Sprint 8 s; bei der Auflösung ganz offen), Autokennzeichen Richtung Kürzel/Ort/Gemischt.
   - **Gemischt**: Kategorien an- und abwählen (Raum: `einst.arten`, null = alle; Sprint: `quizbude.sprintArten` im localStorage). Gemischt enthält jetzt auch Hauptstadt → Land, Autokennzeichen und Schätzfragen.
