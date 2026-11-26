@@ -1,30 +1,30 @@
-import { VERSION } from './config.js?v=0.19.0';
+import { VERSION } from './config.js?v=0.19.1';
 import {
   online, nameFehler, registrieren, anmelden, abmelden, sitzungHolen, profilLaden, profilSpeichern,
   bestenliste, spieleSeit, alleProfile, sprintEintragen, sprintBestenliste, rangVon, spielerAnzahl, spieleVon, sb,
   adminAnmelden, istAdminName, konfigLaden, adminEinrichten, einrichtungOffen, abzeichenVon, saisonAbschliessen, winterquestStand,
   freundeListe, freundAnfragen, freundAntworten, freundEntfernen,
-} from './server.js?v=0.19.0';
-import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.19.0';
-import { Raum, codeNeu, STANDARD, TIPPFEHLER_ABZUG } from './raum.js?v=0.19.0';
-import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.19.0';
+} from './server.js?v=0.19.1';
+import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.19.1';
+import { Raum, codeNeu, STANDARD, TIPPFEHLER_ABZUG } from './raum.js?v=0.19.1';
+import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.19.1';
 import {
   KATEGORIEN, KATEGORIE_REIHE, KATEGORIE_GRUPPEN, SPRINT_REIHE, mehrWert, bombeLaden, bombeBenutzt, bombeGrund, bombeZuletzt, bombeSvg, kategorieVon, optionSchluessel, richtigeWahl, umrisseDa, umrisseLaden,
   sprintFrage, pruefeFrage, fragenVorladen, kanon, ARTEN as GEMISCHT_ARTEN, gemischtArten, alleArten, varianteVon, zahlLesen, schaetzWertung, zahlText,
-} from './kategorien.js?v=0.19.0';
-import { LAENDER } from './laender.js?v=0.19.0';
-import { auswahlfeld } from './auswahlfeld.js?v=0.19.0';
-import { KATEGORIE_SYMBOL } from './symbole.js?v=0.19.0';
-import { konfetti } from './konfetti.js?v=0.19.0';
-import { karteBauen, karteLaden, auswerten } from './weltkarte.js?v=0.19.0';
-import { STUFEN, ERFOLGE, erfolgStand, emblem, wertungName, saisonName, saisonKurz, vitrineLesen, SKINS, skinVon, skinVonId, skinStand, skinBedingung } from './abzeichen.js?v=0.19.0';
+} from './kategorien.js?v=0.19.1';
+import { LAENDER } from './laender.js?v=0.19.1';
+import { auswahlfeld } from './auswahlfeld.js?v=0.19.1';
+import { KATEGORIE_SYMBOL } from './symbole.js?v=0.19.1';
+import { konfetti } from './konfetti.js?v=0.19.1';
+import { karteBauen, karteLaden, auswerten } from './weltkarte.js?v=0.19.1';
+import { STUFEN, ERFOLGE, erfolgStand, emblem, wertungName, saisonName, saisonKurz, vitrineLesen, SKINS, skinVon, skinVonId, skinStand, skinBedingung } from './abzeichen.js?v=0.19.1';
 import {
   RAENGE, BILDER, ARTEN, JOKER, SONDER, sonderVon, sonderFrei, WINTERQUEST, questGeschafft, ruhmInfo, stufeVon, stufeInfo, wappen, effektHtml, rahmenDeko, stilVon, istFrei, freiAb, neuFrei,
-  belohnungName, rangVonId, symbol, symbolSvg, SCHWELLEN, flockeSvg, bildVon, BILD_ARTEN } from './ruhm.js?v=0.19.0';
-import { freundeStart, freundeStopp, freundeOrt, istOnline, onlineAbo, einladungAbo, anfrageAbo, einladen, anfrageMelden } from './freunde.js?v=0.19.0';
-import { FIGUREN, FREIE_FIGUREN, KREISE, RINGE, GESTEN, figurSvg, figurAusEmoji, figurVonId, bildFrei, bildFreiAb, bildEintrag, suchtVon } from './figuren.js?v=0.19.0';
-import { KOPF_TEILE, kopfLesen, kopfSchreiben, kopfBild, kopfWerte, zufallsStart, HELL } from './koepfe.js?v=0.19.0';
-import { EMOTES, emoteVonId, emoteFrei, emoteHinweis, emoteImg, chatHtml, emoteErgaenzen, emotesAbStufe } from './emotes.js?v=0.19.0';
+  belohnungName, rangVonId, symbol, symbolSvg, SCHWELLEN, flockeSvg, bildVon, BILD_ARTEN } from './ruhm.js?v=0.19.1';
+import { freundeStart, freundeStopp, freundeOrt, istOnline, onlineAbo, einladungAbo, anfrageAbo, einladen, anfrageMelden } from './freunde.js?v=0.19.1';
+import { FIGUREN, FREIE_FIGUREN, KREISE, RINGE, GESTEN, figurSvg, figurAusEmoji, figurVonId, bildFrei, bildFreiAb, bildEintrag, suchtVon } from './figuren.js?v=0.19.1';
+import { KOPF_TEILE, kopfLesen, kopfSchreiben, kopfBild, kopfWerte, zufallsStart, HELL } from './koepfe.js?v=0.19.1';
+import { EMOTES, emoteVonId, emoteFrei, emoteHinweis, emoteImg, chatHtml, emoteErgaenzen, emotesAbStufe } from './emotes.js?v=0.19.1';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -1680,12 +1680,21 @@ function bildEditorZeichnen() {
     const frei = bildFrei(art, e.id, stufe, best);
     return `<button type="button" class="pb-wahl${frei ? '' : ' gesperrt'}" data-art="${art}" data-id="${e.id}" aria-pressed="${gewaehlt}" title="${esc(e.name)}${frei ? '' : `, ${esc(bildBedingung(art, e))}`}">${innen}${frei ? '' : '<span class="pb-schloss" aria-hidden="true">🔒</span>'}</button>`;
   };
+  const grundBild = { farbe: profilWahl.farbe, ohneGrund: !!profilWahl.kreis };
+  const altScroll = document.querySelector('#pb-kopf .pk-liste')?.scrollTop || 0;
   $('pb-kopf').innerHTML = `<div class="pk-teile">${KOPF_TEILE.map(x => {
-    const n = werte[x.id], anzahl = x.werte.length;
+    const n = werte[x.id], anzahl = x.werte.length, offen = kopfListe === x.id;
     const text = x.ohne ? (n ? `${n} / ${anzahl}` : x.ohne) : `${n + 1} / ${anzahl}`;
-    return `<div class="pk-zeile"><span>${x.name}</span><button type="button" class="pk-pfeil" data-teil="${x.id}" data-d="-1" aria-label="${x.name} zurück">${PFEIL_L}</button><b>${text}</b><button type="button" class="pk-pfeil" data-teil="${x.id}" data-d="1" aria-label="${x.name} weiter">${PFEIL_R}</button></div>`;
+    // aufklappbare Liste: alle Möglichkeiten gleich am eigenen Kopf
+    const liste = offen ? `<div class="pk-liste" role="listbox" aria-label="${x.name} wählen">${Array.from({ length: anzahl + (x.ohne ? 1 : 0) }, (_, i) => {
+      const bild = kopfBild({ ...t, [x.id]: i }, grundBild);
+      return `<button type="button" class="pk-option" role="option" data-teil-wahl="${x.id}" data-n="${i}" aria-selected="${i === n}" title="${x.ohne && i === 0 ? x.ohne : `${x.name} ${x.ohne ? i : i + 1}`}"><img src="${bild}" alt=""${grundBild.ohneGrund ? ' style="background:#3A4046"' : ''}>${x.ohne && i === 0 ? `<small>${x.ohne}</small>` : ''}</button>`;
+    }).join('')}</div>` : '';
+    return `<div class="pk-zeile${offen ? ' offen' : ''}"><span>${x.name}</span><button type="button" class="pk-pfeil" data-teil="${x.id}" data-d="-1" aria-label="${x.name} zurück">${PFEIL_L}</button><button type="button" class="pk-wert" data-liste="${x.id}" aria-expanded="${offen}" title="Alle ${x.name === 'Brille' ? 'Brillen' : x.name === 'Bart' ? 'Bärte' : x.name === 'Frisur' ? 'Frisuren' : 'Oberteile'} zeigen">${text}<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button><button type="button" class="pk-pfeil" data-teil="${x.id}" data-d="1" aria-label="${x.name} weiter">${PFEIL_R}</button></div>${liste}`;
   }).join('')}</div>
     <div class="pk-knoepfe"><button type="button" class="knopf zweit klein" data-kopf="wuerfeln">Neu würfeln</button><button type="button" class="textknopf" data-kopf="name">Kopf aus meinem Namen</button></div>`;
+  const liste = document.querySelector('#pb-kopf .pk-liste');
+  if (liste) liste.scrollTop = altScroll;
   const grund = { farbe: profilWahl.farbe, ohneGrund: !!profilWahl.kreis };
   $('pb-gesten').innerHTML = `<button type="button" class="pb-wahl" data-art="geste" data-id="" aria-pressed="${!profilWahl.geste}" title="Keine Geste"><span class="avatar mit-kopf"${grund.ohneGrund ? ' style="background:#3A4046"' : ''}><img class="kopf" src="${kopfBild(t, grund)}" alt=""></span></button>`
     + GESTEN.map(g => kachel('geste', g, `<span class="avatar mit-kopf"${grund.ohneGrund ? ' style="background:#3A4046"' : ''}><img class="kopf" src="${kopfBild(t, { ...grund, geste: g.id })}" alt=""></span>`, profilWahl.geste === g.id)).join('');
@@ -1708,8 +1717,11 @@ function bildWahl(t) {
   else profilWahl[art] = id;
   bildEditorZeichnen();
 }
+let kopfListe = null; // welche Teile-Liste gerade aufgeklappt ist
 function kopfAendern(t) {
   const k = profilWahl.kopf;
+  if (t.dataset.liste) { kopfListe = kopfListe === t.dataset.liste ? null : t.dataset.liste; bildEditorZeichnen(); document.querySelector(`#pb-kopf [data-liste="${t.dataset.liste}"]`)?.focus(); return; }
+  if (t.dataset.teilWahl) { k[t.dataset.teilWahl] = Number(t.dataset.n); bildEditorZeichnen(); document.querySelector(`#pb-kopf [data-teil-wahl="${t.dataset.teilWahl}"][data-n="${t.dataset.n}"]`)?.focus({ preventScroll: true }); return; }
   if (t.dataset.kopf === 'wuerfeln') profilWahl.kopf = { s: zufallsStart(), ...(k.k ? { k: k.k } : {}) };
   else if (t.dataset.kopf === 'name') profilWahl.kopf = { ...kopfLesen('', ich.name), ...(k.k ? { k: k.k } : {}) };
   else if (t.dataset.teil) {
@@ -1730,11 +1742,12 @@ function profilAufbauen() {
   $('profil-bearbeiten').onclick = () => {
     const b = bildVon(ich);
     Object.assign(profilWahl, { avatar: ich.avatar, farbe: farbe(ich.farbe), kopf: kopfLesen(ich.stil?.kopf, ich.name), kreis: b.kreis || '', ring: b.ring || '', geste: b.geste || '' });
+    kopfListe = null;
     bildEditorZeichnen();
     $('profil-editor').hidden = false;
   };
   for (const el of ['pb-gesten', 'pb-kreise', 'pb-ringe']) $(el).addEventListener('click', e => { const t = e.target.closest('[data-art]'); if (t) bildWahl(t); });
-  $('pb-kopf').addEventListener('click', e => { const t = e.target.closest('[data-kopf], [data-teil]'); if (t) kopfAendern(t); });
+  $('pb-kopf').addEventListener('click', e => { const t = e.target.closest('[data-kopf], [data-teil], [data-liste], [data-teil-wahl]'); if (t) kopfAendern(t); });
   $('profil-abbrechen').onclick = () => { $('profil-editor').hidden = true; };
   $('profil-reiter').onclick = e => { const b = e.target.closest('[data-tab]'); if (b) profilTab(b.dataset.tab); };
   abzZiehenAufbauen();

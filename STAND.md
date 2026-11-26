@@ -2,7 +2,7 @@
 
 ## Aktuell (25.11.2026)
 
-- **Version:** 0.19.0
+- **Version:** 0.19.1
 - **Live:** https://requiem-04.github.io/claudis-quizbude/ (Repo `requiEM-04/claudis-quizbude`, Branch `main`, GitHub Pages)
 - **Server:** Supabase-Projekt `quizbude` (Ref `jgvjjjiwfjxynbzjaxsg`, Frankfurt), E-Mail-Bestätigung aus, Realtime mit öffentlichen Kanälen.
 - **Inhalt:** Konten (Name + Passwort ab 4 Zeichen), Räume mit 4-Buchstaben-Code (live über Realtime), Flaggenraten (tippen oder 4 zur Auswahl), Flaggen-Sprint (60 s), Bestenliste (Siege, Punkte, Sprint), „Zuletzt gespielt".
@@ -185,6 +185,7 @@
   - **Figuren süchtig** (Colins Wunsch, für alle): jede hängt an etwas anderem, mit eigenen Augen (gerötet, Augenringe, halb zu, aufgerissen) und Gegenstand. Fuchs Kaffee, Frosch Kiffen, Panda Bambus, Eule Energy-Drinks, Krake Zocken, Pinguin Bier, Katze Katzenminze, Igel Donuts, Schildkröte Serien, Dino Burger, Biene Honig, Koala Eukalyptus, Wal Vapen, Papagei Handy, Quizbot Strom, Herzdrache Lollis, Sternwolf Musik, Phönix Chili, Hofnarr Glücksspiel, Löwe Zigarren. Bewusst nichts mit Spritzen oder harten Drogen.
   - Colin: **kein Shop**. Mehr Kosmetik zum Freispielen ist gewünscht, Chat-Sticker als gute Idee genannt (umgesetzt als Emotes in 0.18.0).
 
+- **Neu in 0.19.1:** Profilbild-Editor: Klick auf den Wert bei Frisur, Brille, Bart oder Oberteil klappt eine Liste mit allen Möglichkeiten am eigenen Kopf auf (feste 50-px-Kacheln, Scrollstand bleibt beim Wählen, nur eine Liste offen).
 - **Neu in 0.19.0:**
   - **Köpfe statt Figuren als Profilbild** (Colin fand die Figuren und die Bestenliste zu kindlich): gezeichnete Köpfe aus Notionists (Zoish, CC0) über DiceBear (MIT), gebündelt in `vendor/koepfe.js` (esbuild aus @dicebear/core 9 + @dicebear/notionists 9, 372 KB, 122 KB gzip), Wrapper `js/koepfe.js`. Ohne Wahl entsteht der Kopf aus dem Namen (FNV-Startwert), eigene Wahl steht als kurzer Text in `profile.stil.kopf` (`s=…;h=…;g=…;b=…;o=…;k=h`). Avatare sind jetzt abgerundete Kacheln (28 %), Ränder per Maske auch für Gold/Silber/Bronze/Joker.
   - Konto anlegen: Kopf aus dem Namen plus fünf andere zur Auswahl (Knopf für neue), gewählter Kopf wird nach dem Anlegen gespeichert. Profilbild-Editor: Frisur/Brille/Bart/Oberteil durchklicken, „Neu würfeln“, „Kopf aus meinem Namen“, Hintergrund Farbe, Hell oder bewegt, Rand, Geste.

@@ -1848,6 +1848,18 @@ body.kartenmodus .winterwelt { display: none; }
 .pk-pfeil { display: grid; place-items: center; height: 30px; border: 1px solid var(--linie); border-radius: 9px; background: var(--tief); color: var(--text); font: 800 1.05rem/1 var(--display); cursor: pointer; transition: background-color .12s, border-color .12s; }
 .pk-pfeil:hover { background: var(--flaeche-hoch); border-color: var(--linie-stark); }
 .pk-knoepfe { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.pk-zeile { grid-template-columns: minmax(0, 1fr) 30px 92px 30px; }
+.pk-wert { display: inline-flex; align-items: center; justify-content: center; gap: 5px; height: 30px; padding: 0 6px; border: 1px solid transparent; border-radius: 9px; background: none; color: var(--text); font: 800 .86rem var(--display); font-variant-numeric: tabular-nums; cursor: pointer; transition: background-color .12s, border-color .12s; }
+.pk-wert svg { color: var(--text-3); transition: transform .15s; }
+.pk-wert:hover { background: var(--flaeche-hoch); }
+.pk-wert[aria-expanded="true"] { border-color: var(--sand); }
+.pk-wert[aria-expanded="true"] svg { transform: rotate(180deg); color: var(--sand); }
+.pk-liste { display: grid; grid-template-columns: repeat(auto-fill, 50px); grid-auto-rows: 50px; justify-content: space-between; gap: 6px; max-height: 236px; overflow-y: auto; margin: 2px 0 8px; padding: 8px; border-radius: 12px; background: var(--tief); border: 1px solid var(--linie); scrollbar-width: thin; }
+.pk-option { position: relative; width: 50px; height: 50px; padding: 0; border: 0; border-radius: 28%; overflow: hidden; background: none; cursor: pointer; box-shadow: inset 0 0 0 1px rgba(255,255,255,.06); transition: box-shadow .12s; }
+.pk-option img { display: block; width: 100%; height: 100%; }
+.pk-option:hover { box-shadow: 0 0 0 2px var(--linie-stark); }
+.pk-option[aria-selected="true"] { box-shadow: 0 0 0 2px var(--sand); }
+.pk-option small { position: absolute; left: 0; right: 0; bottom: 3px; text-align: center; font: 800 .62rem var(--schrift); color: #1B1E21; text-shadow: 0 0 3px rgba(255,255,255,.8); }
 .pb-raster { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
 .pb-raster.rund { grid-template-columns: repeat(6, minmax(0, 1fr)); }
 .pb-wahl { position: relative; aspect-ratio: 1; padding: 3px; border: 0; border-radius: 30%; background: none; cursor: pointer; display: grid; place-items: center; transition: box-shadow .15s; }
