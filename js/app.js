@@ -1,28 +1,28 @@
-import { VERSION } from './config.js?v=0.13.0';
+import { VERSION } from './config.js?v=0.13.1';
 import {
   online, nameFehler, registrieren, anmelden, abmelden, sitzungHolen, profilLaden, profilSpeichern,
   bestenliste, spieleSeit, alleProfile, sprintEintragen, sprintBestenliste, rangVon, spielerAnzahl, spieleVon, sb,
   adminAnmelden, istAdminName, konfigLaden, adminEinrichten, einrichtungOffen, abzeichenVon, saisonAbschliessen, winterquestStand,
   freundeListe, freundAnfragen, freundAntworten, freundEntfernen,
-} from './server.js?v=0.13.0';
-import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.13.0';
-import { Raum, codeNeu, STANDARD, TIPPFEHLER_ABZUG } from './raum.js?v=0.13.0';
-import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.13.0';
+} from './server.js?v=0.13.1';
+import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.13.1';
+import { Raum, codeNeu, STANDARD, TIPPFEHLER_ABZUG } from './raum.js?v=0.13.1';
+import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.13.1';
 import {
   KATEGORIEN, KATEGORIE_REIHE, SPRINT_REIHE, kategorieVon, optionSchluessel, richtigeWahl, umrisseDa, umrisseLaden,
   sprintFrage, pruefeFrage, fragenVorladen, kanon,
-} from './kategorien.js?v=0.13.0';
-import { LAENDER } from './laender.js?v=0.13.0';
-import { auswahlfeld } from './auswahlfeld.js?v=0.13.0';
-import { KATEGORIE_SYMBOL } from './symbole.js?v=0.13.0';
-import { konfetti } from './konfetti.js?v=0.13.0';
-import { karteBauen, karteLaden, auswerten } from './weltkarte.js?v=0.13.0';
-import { STUFEN, ERFOLGE, erfolgStand, emblem, wertungName, saisonName, saisonKurz, vitrineLesen, SKINS, skinVon, skinVonId, skinStand, skinBedingung } from './abzeichen.js?v=0.13.0';
+} from './kategorien.js?v=0.13.1';
+import { LAENDER } from './laender.js?v=0.13.1';
+import { auswahlfeld } from './auswahlfeld.js?v=0.13.1';
+import { KATEGORIE_SYMBOL } from './symbole.js?v=0.13.1';
+import { konfetti } from './konfetti.js?v=0.13.1';
+import { karteBauen, karteLaden, auswerten } from './weltkarte.js?v=0.13.1';
+import { STUFEN, ERFOLGE, erfolgStand, emblem, wertungName, saisonName, saisonKurz, vitrineLesen, SKINS, skinVon, skinVonId, skinStand, skinBedingung } from './abzeichen.js?v=0.13.1';
 import {
   RAENGE, BILDER, ARTEN, JOKER, SONDER, sonderVon, sonderFrei, WINTERQUEST, questGeschafft, ruhmInfo, stufeVon, stufeInfo, wappen, effektHtml, rahmenDeko, stilVon, istFrei, freiAb, neuFrei,
-  belohnungName, rangVonId, symbol, symbolSvg, SCHWELLEN, flockeSvg, bildVon, BILD_ARTEN } from './ruhm.js?v=0.13.0';
-import { freundeStart, freundeStopp, freundeOrt, istOnline, onlineAbo, einladungAbo, anfrageAbo, einladen, anfrageMelden } from './freunde.js?v=0.13.0';
-import { FIGUREN, FREIE_FIGUREN, KREISE, RINGE, figurSvg, figurAusEmoji, figurVonId, bildFrei, bildFreiAb, bildEintrag, suchtVon } from './figuren.js?v=0.13.0';
+  belohnungName, rangVonId, symbol, symbolSvg, SCHWELLEN, flockeSvg, bildVon, BILD_ARTEN } from './ruhm.js?v=0.13.1';
+import { freundeStart, freundeStopp, freundeOrt, istOnline, onlineAbo, einladungAbo, anfrageAbo, einladen, anfrageMelden } from './freunde.js?v=0.13.1';
+import { FIGUREN, FREIE_FIGUREN, KREISE, RINGE, figurSvg, figurAusEmoji, figurVonId, bildFrei, bildFreiAb, bildEintrag, suchtVon } from './figuren.js?v=0.13.1';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -1969,6 +1969,10 @@ function raumZeichnen() {
 let neueVersion = null;
 const ZURUECK = 'quizbude.zurueck';
 const VERSUCH = 'quizbude.update';
+const LEISE = 'quizbude.leise';
+// Wann hat man zuletzt etwas gemacht? Neu geladen wird erst, wenn der Tab im Hintergrund ist oder 15 s Ruhe war.
+let zuletztAktiv = performance.now();
+for (const t of ['pointerdown', 'pointermove', 'keydown', 'wheel', 'touchstart', 'scroll']) addEventListener(t, () => { zuletztAktiv = performance.now(); }, { passive: true, capture: true });
 
 // Nachricht an alle (kommt aus dem Admin-Bereich), lässt sich wegklicken
 async function nachrichtPruefen() {
@@ -2013,12 +2017,14 @@ function zustandMerken() {
       scroll: Math.round(scrollY), hash: location.hash || '#/',
       lernen: { art: lernenArt, region: lernenRegion, suche: $('lernen-suche').value },
       besten: { spalte: besteSpalte, kategorie: $('besten-kategorie').value },
+      profilTab: profilTabJetzt, anpassenArt,
     }));
   } catch { /* egal */ }
 }
 
 function updateWennRuhig() {
   if (!neueVersion || !ruhigGenug()) return;
+  if (!document.hidden && performance.now() - zuletztAktiv < 15000) return;
   let versuch = null;
   try { versuch = JSON.parse(sessionStorage.getItem(VERSUCH) || 'null'); } catch { /* egal */ }
   const zahl = versuch?.ziel === neueVersion ? versuch.zahl : 0;
@@ -2026,13 +2032,11 @@ function updateWennRuhig() {
   try { sessionStorage.setItem(VERSUCH, JSON.stringify({ ziel: neueVersion, zahl: zahl + 1 })); } catch { /* egal */ }
   zustandMerken();
   neueVersion = null;
-  toast('Neue Version da, lade kurz neu …');
-  setTimeout(() => {
-    if (zahl === 0) { location.reload(); return; }
-    // Beim zweiten Versuch am Zwischenspeicher vorbei
-    const u = new URL(location.href); u.searchParams.set('neu', versuch.ziel);
-    location.replace(u.toString());
-  }, 700);
+  try { sessionStorage.setItem(LEISE, '1'); } catch { /* egal */ }
+  if (zahl === 0) { location.reload(); return; }
+  // Beim zweiten Versuch am Zwischenspeicher vorbei
+  const u = new URL(location.href); u.searchParams.set('neu', versuch.ziel);
+  location.replace(u.toString());
 }
 
 function zustandWiederherstellen() {
@@ -2053,11 +2057,13 @@ function zustandWiederherstellen() {
     document.querySelectorAll('#besten-reiter .umschalter-knopf').forEach(x => { x.classList.toggle('aktiv', x.dataset.spalte === besteSpalte); x.setAttribute('aria-selected', x.dataset.spalte === besteSpalte); });
     if (z.besten.kategorie && KATEGORIEN[z.besten.kategorie]) { $('besten-kategorie').value = z.besten.kategorie; bestenFeld?.aktualisieren(); }
   }
-  if (z.hash === (location.hash || '#/') && z.scroll) setTimeout(() => scrollTo(0, z.scroll), 400);
+  if (z.anpassenArt) anpassenArt = z.anpassenArt;
+  if (z.profilTab && z.hash?.startsWith('#/profil')) setTimeout(() => { if (!$('s-profil').hidden) profilTab(z.profilTab); }, 700);
+  if (z.hash === (location.hash || '#/') && z.scroll) setTimeout(() => scrollTo(0, z.scroll), z.profilTab ? 900 : 400);
 }
 
 window.addEventListener('pagehide', () => zustandMerken());
-document.addEventListener('visibilitychange', () => { if (!document.hidden) versionPruefen(); });
+document.addEventListener('visibilitychange', () => { if (document.hidden) updateWennRuhig(); else versionPruefen(); });
 setInterval(versionPruefen, 60000);
 setInterval(updateWennRuhig, 3000); // falls die neue Version schon bekannt ist und es gerade ruhig wird
 
@@ -2446,9 +2452,9 @@ function route(erzwingen = false) {
 // ---------- Ladebildschirm: kurz Schriften, Bilder und Effekte vorbereiten ----------
 const bildLaden = src => new Promise(r => { const i = new Image(); i.onload = i.onerror = () => r(); i.src = src; });
 const naechstesBild = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
-function ladeSchritt(text, anteil) {
-  $('lade-text').textContent = text;
-  $('lade-fuellung').style.transform = `scaleX(${anteil})`;
+function ladeSchritt(_text, anteil) {
+  const f = $('lade-fuellung');
+  if (f) f.style.transform = `scaleX(${anteil})`;
 }
 async function vorbereiten() {
   ladeSchritt('Schriften laden …', .2);
@@ -2467,15 +2473,21 @@ async function vorbereiten() {
   ladeSchritt('Los geht’s', 1);
 }
 async function ladeEnde(vorbereitung, start) {
+  if (!$('lade')) return;
   await Promise.race([vorbereitung, pause(2500)]);
-  const rest = 650 - (performance.now() - start); // nicht nur aufblitzen
-  if (rest > 0) await pause(rest);
+  // Das Logo kommt erst nach 0,25 s. Ist es schon zu sehen, bleibt es kurz stehen statt aufzublitzen.
+  const dauer = performance.now() - start;
+  if (dauer > 250 && dauer < 750) await pause(750 - dauer);
   $('lade').classList.add('weg');
-  setTimeout(() => $('lade').remove(), 600);
+  setTimeout(() => $('lade')?.remove(), 600);
 }
 
 async function los() {
   const ladeStart = performance.now();
+  // Nach einem Update im Hintergrund: kein Ladebildschirm, man ist sofort wieder da, wo man war
+  let leise = false;
+  try { leise = sessionStorage.getItem(LEISE) === '1'; sessionStorage.removeItem(LEISE); } catch { /* egal */ }
+  if (leise) $('lade')?.remove();
   const vorbereitung = vorbereiten().catch(() => {});
   $('version').textContent = VERSION;
   anmeldenAufbauen();

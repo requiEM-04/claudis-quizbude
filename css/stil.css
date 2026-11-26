@@ -1527,43 +1527,9 @@ body.kartenmodus main .effekt * { animation-play-state: paused; }
 @media (prefers-reduced-motion: reduce) { .effekt, .effekt * { animation: none !important; } }
 
 /* ---------- Ladebildschirm ---------- */
-.lade {
-  position: fixed; inset: 0; z-index: 100; display: grid; place-items: center;
-  background: radial-gradient(ellipse 60% 50% at 50% 45%, #23292B, #15181A 70%);
-  transition: opacity .45s ease, visibility 0s linear .45s;
-  animation: lade-notaus 0s linear 9s forwards; /* falls etwas hängt: nach 9 s trotzdem weg */
-}
-.lade.weg { opacity: 0; visibility: hidden; pointer-events: none; }
-.lade.weg .lade-tisch { transform: scale(1.04); }
-@keyframes lade-notaus { to { opacity: 0; visibility: hidden; pointer-events: none; } }
-.lade-tisch { display: grid; justify-items: center; gap: 22px; transition: transform .45s ease; }
-.lade-karten { position: relative; width: 300px; height: 168px; }
-.lk {
-  position: absolute; left: 50%; top: 8px; width: 82px; height: 116px; margin-left: -41px;
-  border-radius: 10px; background: linear-gradient(160deg, #FBF6EC, #EDE3D1);
-  box-shadow: 0 0 0 2px var(--rang) inset, 0 0 0 5px #FBF6EC inset, 0 18px 30px -12px rgba(0,0,0,.75);
-  display: grid; place-items: center; transform-origin: 50% 120%;
-  animation: lk-austeilen .7s cubic-bezier(.2, 1.2, .35, 1) backwards, lk-wippen 2.4s ease-in-out infinite;
-  animation-delay: calc(var(--i) * 110ms), calc(var(--i) * 180ms + .8s);
-  --dreh: calc((var(--i) - 1.5) * 11deg); --weg: calc((var(--i) - 1.5) * 52px);
-  transform: translateX(var(--weg)) rotate(var(--dreh));
-}
-.lk svg { width: 40px; height: 40px; fill: #22262A; filter: drop-shadow(0 1px 0 rgba(255,255,255,.6)); }
-.lk-karo svg, .lk-herz svg { fill: #C9463F; }
-.lk-ecke { position: absolute; left: 9px; top: 6px; font: 800 15px/1 var(--display); color: #22262A; }
-.lk-karo .lk-ecke, .lk-herz .lk-ecke { color: #C9463F; }
-.lk-ecke.unten { left: auto; top: auto; right: 9px; bottom: 6px; transform: rotate(180deg); }
-@keyframes lk-austeilen { from { opacity: 0; transform: translate(0, 60px) rotate(0deg) scale(.85); } }
-@keyframes lk-wippen { 0%, 100% { transform: translateX(var(--weg)) rotate(var(--dreh)); } 50% { transform: translateX(var(--weg)) translateY(-10px) rotate(calc(var(--dreh) * 1.25)); } }
-.lade-titel { margin: 0; font: 800 clamp(2.6rem, 6vw, 4.2rem)/.9 var(--display); letter-spacing: -.045em; color: #E4E7E4; text-align: center; animation: t-text .5s ease .25s backwards; }
-.lade-titel span { display: block; font-size: .32em; letter-spacing: 0; color: var(--sand); margin-bottom: 6px; }
-.lade-balken { width: 220px; height: 5px; border-radius: 99px; background: rgba(255,255,255,.08); overflow: hidden; }
-.lade-balken i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--salbei), var(--sand)); transform: scaleX(.06); transform-origin: left; transition: transform .35s ease; }
-.lade-text { margin: -8px 0 0; color: var(--text-3); font-size: .85rem; font-weight: 600; min-height: 1.3em; }
 /* unsichtbare Probebühne zum Vorwärmen der Effekte */
 .lade-probe { position: fixed; left: 0; top: 0; width: 320px; opacity: .01; pointer-events: none; z-index: -1; }
 .lade-probe .hochkarte { width: 300px; }
-@media (prefers-reduced-motion: reduce) { .lk { animation: none; } }
 
 
 /* ---------- Abzeichen ---------- */
@@ -1951,3 +1917,14 @@ button.dock-link { border: 0; background: none; cursor: pointer; }
 /* Meister (neu): schwarze Karte mit Goldprägung, Art-déco-Ecken, Strahlenfächer, wandernder Goldglanz */
 .skin-meister .hk-flaeche { background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 270 378' preserveAspectRatio='none'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%238C6A1E'/%3E%3Cstop offset='.3' stop-color='%23F7DE7E'/%3E%3Cstop offset='.55' stop-color='%23B8892B'/%3E%3Cstop offset='.8' stop-color='%23FFF1B5'/%3E%3Cstop offset='1' stop-color='%239E7520'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cg fill='none' stroke='url(%23g)' opacity='.22'%3E%3Cpath d='M135 378 L-109.3 289.1' stroke-width='2'/%3E%3Cpath d='M135 378 L-90.2 248.0' stroke-width='1'/%3E%3Cpath d='M135 378 L-64.2 210.9' stroke-width='2'/%3E%3Cpath d='M135 378 L-32.1 178.8' stroke-width='1'/%3E%3Cpath d='M135 378 L5.0 152.8' stroke-width='2'/%3E%3Cpath d='M135 378 L46.1 133.7' stroke-width='1'/%3E%3Cpath d='M135 378 L89.9 121.9' stroke-width='2'/%3E%3Cpath d='M135 378 L135.0 118.0' stroke-width='1'/%3E%3Cpath d='M135 378 L180.1 121.9' stroke-width='2'/%3E%3Cpath d='M135 378 L223.9 133.7' stroke-width='1'/%3E%3Cpath d='M135 378 L265.0 152.8' stroke-width='2'/%3E%3Cpath d='M135 378 L302.1 178.8' stroke-width='1'/%3E%3Cpath d='M135 378 L334.2 210.9' stroke-width='2'/%3E%3Cpath d='M135 378 L360.2 248.0' stroke-width='1'/%3E%3Cpath d='M135 378 L379.3 289.1' stroke-width='2'/%3E%3C/g%3E%3Cg fill='none' stroke='url(%23g)' opacity='.35'%3E%3Ccircle cx='135' cy='378' r='70' stroke-width='1.2'/%3E%3Ccircle cx='135' cy='378' r='95' stroke-width='.7'/%3E%3C/g%3E%3Crect x='9' y='9' width='252' height='360' rx='14' fill='none' stroke='url(%23g)' stroke-width='2'/%3E%3Crect x='15' y='15' width='240' height='348' rx='10' fill='none' stroke='url(%23g)' stroke-width='.8' opacity='.8'/%3E%3Cg transform='' fill='none' stroke='url(%23g)' stroke-linecap='round'%3E%3Cpath d='M14 70 V14 H70' stroke-width='2'/%3E%3Cpath d='M22 56 V22 H56' stroke-width='1'/%3E%3Cpath d='M14 14 L36 36' stroke-width='1.2'/%3E%3Cpath d='M30 22 V30 H22' stroke-width='1.2'/%3E%3Cpath d='M40 22 Q40 40 22 40' stroke-width='1'/%3E%3Cpath d='M50 22 Q50 50 22 50' stroke-width='.8'/%3E%3Ccircle cx='36' cy='36' r='2.4' fill='url(%23g)' stroke='none'/%3E%3C/g%3E%3Cg transform='translate(270 0) scale(-1 1)' fill='none' stroke='url(%23g)' stroke-linecap='round'%3E%3Cpath d='M14 70 V14 H70' stroke-width='2'/%3E%3Cpath d='M22 56 V22 H56' stroke-width='1'/%3E%3Cpath d='M14 14 L36 36' stroke-width='1.2'/%3E%3Cpath d='M30 22 V30 H22' stroke-width='1.2'/%3E%3Cpath d='M40 22 Q40 40 22 40' stroke-width='1'/%3E%3Cpath d='M50 22 Q50 50 22 50' stroke-width='.8'/%3E%3Ccircle cx='36' cy='36' r='2.4' fill='url(%23g)' stroke='none'/%3E%3C/g%3E%3Cg transform='translate(0 378) scale(1 -1)' fill='none' stroke='url(%23g)' stroke-linecap='round'%3E%3Cpath d='M14 70 V14 H70' stroke-width='2'/%3E%3Cpath d='M22 56 V22 H56' stroke-width='1'/%3E%3Cpath d='M14 14 L36 36' stroke-width='1.2'/%3E%3Cpath d='M30 22 V30 H22' stroke-width='1.2'/%3E%3Cpath d='M40 22 Q40 40 22 40' stroke-width='1'/%3E%3Cpath d='M50 22 Q50 50 22 50' stroke-width='.8'/%3E%3Ccircle cx='36' cy='36' r='2.4' fill='url(%23g)' stroke='none'/%3E%3C/g%3E%3Cg transform='translate(270 378) scale(-1 -1)' fill='none' stroke='url(%23g)' stroke-linecap='round'%3E%3Cpath d='M14 70 V14 H70' stroke-width='2'/%3E%3Cpath d='M22 56 V22 H56' stroke-width='1'/%3E%3Cpath d='M14 14 L36 36' stroke-width='1.2'/%3E%3Cpath d='M30 22 V30 H22' stroke-width='1.2'/%3E%3Cpath d='M40 22 Q40 40 22 40' stroke-width='1'/%3E%3Cpath d='M50 22 Q50 50 22 50' stroke-width='.8'/%3E%3Ccircle cx='36' cy='36' r='2.4' fill='url(%23g)' stroke='none'/%3E%3C/g%3E%3Cg fill='url(%23g)'%3E%3Cpath d='M135 22 l6 8 -6 8 -6 -8Z'/%3E%3Cpath d='M135 356 l6 -8 -6 -8 -6 8Z'/%3E%3C/g%3E%3C/svg%3E") center / 100% 100% no-repeat, radial-gradient(120% 60% at 50% 100%, #2A2210 0, #0D0B07 60%), #0B0A07; }
 .skin-meister .hk-flaeche::after { content: ""; position: absolute; inset: 0; background: linear-gradient(120deg, transparent 38%, rgba(255,232,160,.22) 48%, rgba(255,255,255,.1) 50%, transparent 60%); transform: translateX(-70%); animation: skin-glanz 5s ease-in-out infinite; }
+
+/* Ladebildschirm: nur Logo und dünne Linie, erscheint erst nach einer Viertelsekunde (sonst sieht man ihn gar nicht) */
+.lade { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; background: var(--grund, #1B1E21); transition: opacity .35s ease, visibility .35s; }
+.lade.weg { opacity: 0; visibility: hidden; pointer-events: none; }
+@keyframes lade-rein { to { opacity: 1; } }
+.lade-mitte { display: grid; justify-items: center; gap: 18px; opacity: 0; animation: lade-rein .35s ease .25s forwards; }
+.lade-logo { width: 60px; height: 60px; border-radius: 16px; box-shadow: 0 18px 40px -16px rgba(0,0,0,.8); animation: lade-atmen 1.8s ease-in-out infinite; }
+@keyframes lade-atmen { 50% { transform: scale(1.05); } }
+.lade-linie { width: 120px; height: 2px; border-radius: 2px; background: rgba(255,255,255,.08); overflow: hidden; }
+.lade-linie i { display: block; height: 100%; background: var(--sand); transform: scaleX(0); transform-origin: left; transition: transform .4s ease; }
+@media (prefers-reduced-motion: reduce) { .lade-mitte, .lade-logo { animation: none; } .lade-mitte { opacity: 1; } }
