@@ -2,7 +2,7 @@
 // in jeder Farbe geht es von Bube über Dame und König bis zum Ass. Ganz oben steht der Joker.
 // Der Ruhm selbst wird auf dem Server aus der Statistik berechnet (siehe werkzeuge/schema.sql).
 
-import { FIGUREN, KREISE, RINGE, bildEintrag, bildFreiAb } from './figuren.js?v=0.14.1';
+import { FIGUREN, KREISE, RINGE, bildEintrag, bildFreiAb } from './figuren.js?v=0.14.2';
 
 export const SCHWELLEN = [0, 100, 250, 450, 700, 1000, 1350, 1750, 2200, 2700, 3250, 3850, 4500, 5200, 5950, 6750, 8000];
 

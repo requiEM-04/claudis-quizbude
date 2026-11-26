@@ -1,28 +1,28 @@
-import { VERSION } from './config.js?v=0.14.1';
+import { VERSION } from './config.js?v=0.14.2';
 import {
   online, nameFehler, registrieren, anmelden, abmelden, sitzungHolen, profilLaden, profilSpeichern,
   bestenliste, spieleSeit, alleProfile, sprintEintragen, sprintBestenliste, rangVon, spielerAnzahl, spieleVon, sb,
   adminAnmelden, istAdminName, konfigLaden, adminEinrichten, einrichtungOffen, abzeichenVon, saisonAbschliessen, winterquestStand,
   freundeListe, freundAnfragen, freundAntworten, freundEntfernen,
-} from './server.js?v=0.14.1';
-import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.14.1';
-import { Raum, codeNeu, STANDARD, TIPPFEHLER_ABZUG } from './raum.js?v=0.14.1';
-import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.14.1';
+} from './server.js?v=0.14.2';
+import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.14.2';
+import { Raum, codeNeu, STANDARD, TIPPFEHLER_ABZUG } from './raum.js?v=0.14.2';
+import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.14.2';
 import {
   KATEGORIEN, KATEGORIE_REIHE, SPRINT_REIHE, kategorieVon, optionSchluessel, richtigeWahl, umrisseDa, umrisseLaden,
-  sprintFrage, pruefeFrage, fragenVorladen, kanon, ARTEN as GEMISCHT_ARTEN, gemischtArten, alleArten, varianteVon, zahlLesen, schaetzWertung, zahlText, schildHtml,
-} from './kategorien.js?v=0.14.1';
-import { LAENDER } from './laender.js?v=0.14.1';
-import { auswahlfeld } from './auswahlfeld.js?v=0.14.1';
-import { KATEGORIE_SYMBOL } from './symbole.js?v=0.14.1';
-import { konfetti } from './konfetti.js?v=0.14.1';
-import { karteBauen, karteLaden, auswerten } from './weltkarte.js?v=0.14.1';
-import { STUFEN, ERFOLGE, erfolgStand, emblem, wertungName, saisonName, saisonKurz, vitrineLesen, SKINS, skinVon, skinVonId, skinStand, skinBedingung } from './abzeichen.js?v=0.14.1';
+  sprintFrage, pruefeFrage, fragenVorladen, kanon, ARTEN as GEMISCHT_ARTEN, gemischtArten, alleArten, varianteVon, zahlLesen, schaetzWertung, zahlText,
+} from './kategorien.js?v=0.14.2';
+import { LAENDER } from './laender.js?v=0.14.2';
+import { auswahlfeld } from './auswahlfeld.js?v=0.14.2';
+import { KATEGORIE_SYMBOL } from './symbole.js?v=0.14.2';
+import { konfetti } from './konfetti.js?v=0.14.2';
+import { karteBauen, karteLaden, auswerten } from './weltkarte.js?v=0.14.2';
+import { STUFEN, ERFOLGE, erfolgStand, emblem, wertungName, saisonName, saisonKurz, vitrineLesen, SKINS, skinVon, skinVonId, skinStand, skinBedingung } from './abzeichen.js?v=0.14.2';
 import {
   RAENGE, BILDER, ARTEN, JOKER, SONDER, sonderVon, sonderFrei, WINTERQUEST, questGeschafft, ruhmInfo, stufeVon, stufeInfo, wappen, effektHtml, rahmenDeko, stilVon, istFrei, freiAb, neuFrei,
-  belohnungName, rangVonId, symbol, symbolSvg, SCHWELLEN, flockeSvg, bildVon, BILD_ARTEN } from './ruhm.js?v=0.14.1';
-import { freundeStart, freundeStopp, freundeOrt, istOnline, onlineAbo, einladungAbo, anfrageAbo, einladen, anfrageMelden } from './freunde.js?v=0.14.1';
-import { FIGUREN, FREIE_FIGUREN, KREISE, RINGE, figurSvg, figurAusEmoji, figurVonId, bildFrei, bildFreiAb, bildEintrag, suchtVon } from './figuren.js?v=0.14.1';
+  belohnungName, rangVonId, symbol, symbolSvg, SCHWELLEN, flockeSvg, bildVon, BILD_ARTEN } from './ruhm.js?v=0.14.2';
+import { freundeStart, freundeStopp, freundeOrt, istOnline, onlineAbo, einladungAbo, anfrageAbo, einladen, anfrageMelden } from './freunde.js?v=0.14.2';
+import { FIGUREN, FREIE_FIGUREN, KREISE, RINGE, figurSvg, figurAusEmoji, figurVonId, bildFrei, bildFreiAb, bildEintrag, suchtVon } from './figuren.js?v=0.14.2';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -168,7 +168,7 @@ async function winterLaden() {
     if (neu.length) toast(`Tagesaufgabe geschafft: +${neu.reduce((x, a) => x + a.flocken, 0)} Schneeflocken`);
   }
 }
-const KAT_KURZ = { flaggen: 'Flaggen', karte: 'Weltkarte', umrisse: 'Umrisse', hauptstaedte: 'Hauptstädte', stadtland: 'Hauptstadt → Land', nachbarn: 'Nachbarn', buchstaben: 'Buchstabensalat', kennzeichen: 'Autokennzeichen', groesser: 'Größer oder kleiner', schaetzen: 'Schätzfragen', wissen: 'Allgemeinwissen', gemischt: 'Gemischt' };
+const KAT_KURZ = { flaggen: 'Flaggen', karte: 'Weltkarte', umrisse: 'Umrisse', hauptstaedte: 'Hauptstädte', stadtland: 'Hauptstadt → Land', nachbarn: 'Nachbarn', buchstaben: 'Buchstabensalat', groesser: 'Größer oder kleiner', schaetzen: 'Schätzfragen', wissen: 'Allgemeinwissen', gemischt: 'Gemischt' };
 function aufgabeText(a) {
   const z = Number(a.ziel).toLocaleString('de-DE');
   switch (a.typ) {
@@ -903,7 +903,7 @@ function kachelnHtml(mitRekord) {
     return `
     <button class="kachel${mitRekord ? ' sprint-karte' : ''}" data-k="${k}">
       <span class="kachel-bild" aria-hidden="true">${kachelBild(k)}</span>
-      <span class="kachel-name">${esc(KATEGORIEN[k].name).replace('Allgemeinwissen', 'Allgemein&shy;wissen').replace('Buchstabensalat', 'Buchstaben&shy;salat').replace('Autokennzeichen', 'Auto&shy;kennzeichen')}</span>
+      <span class="kachel-name">${esc(KATEGORIEN[k].name).replace('Allgemeinwissen', 'Allgemein&shy;wissen').replace('Buchstabensalat', 'Buchstaben&shy;salat')}</span>
       <span class="kachel-text">${esc(KATEGORIEN[kk].text)}</span>
       ${mitRekord ? `<span class="sk-rekord${rekord ? '' : ' leer'}"><b>${rekord || '–'}</b><small>${rekord ? 'dein Rekord' : 'noch kein Rekord'}</small></span>` : ''}
     </button>`;
@@ -964,7 +964,7 @@ function weltkarte(id) {
 for (const id of ['raum-weltkarte', 'sprint-weltkarte']) document.body.prepend($(id));
 const kartenmodus = an => document.body.classList.toggle('kartenmodus', !!an);
 const kmText = a => a.km === 0 ? 'Getroffen!' : `${a.km.toLocaleString('de-DE')} km daneben`;
-const eingabeText = f => f.k === 'hauptstaedte' ? 'Welche Stadt?' : f.k === 'schaetzen' ? 'Deine Schätzung' : f.k === 'kennzeichen' ? (f.r === 'ort' ? 'Welches Kürzel?' : 'Welcher Ort?') : 'Welches Land?';
+const eingabeText = f => f.k === 'hauptstaedte' ? 'Welche Stadt?' : f.k === 'schaetzen' ? 'Deine Schätzung' : 'Welches Land?';
 function eingabeVorbereiten(eingabe, f) {
   eingabe.placeholder = eingabeText(f);
   eingabe.inputMode = f.k === 'schaetzen' ? 'decimal' : 'text';
@@ -982,7 +982,6 @@ function kachelBild(k) {
     case 'hauptstaedte': return '<span class="kb-text">Wien?</span>';
     case 'nachbarn': return '<img class="kb-nachbarn" src="bilder/nachbarn-vorschau.svg" alt="">';
     case 'buchstaben': return `<span class="kb-salat">${[['L', 2], ['I', 1], ['H', 2], ['C', 4], ['E', 1]].map(([b, w], i) => `<b style="--w:${(i - 2) * 17}deg">${b}<sub>${w}</sub></b>`).join('')}</span>`;
-    case 'kennzeichen': return `<span class="kb-kfz">${schildHtml('QB')}</span>`;
     case 'schaetzen': { const id = 'kbg' + (++kbGlasNr); return KB_GLAS.replaceAll('kbg-innen', id); }
     case 'groesser': return `<span class="kb-duell">${f('CA')}<b>oder</b>${f('BR')}</span>`;
     case 'wissen': return '<span class="kb-text kb-gross">?</span>';
@@ -2453,7 +2452,7 @@ const REGIONEN_SPRINT = { alle: 'Alle', europa: 'Europa', afrika: 'Afrika', asie
 let sprintRegion = (() => { try { return localStorage.getItem('quizbude.sprintRegion') || 'alle'; } catch { return 'alle'; } })();
 if (!REGIONEN_SPRINT[sprintRegion]) sprintRegion = 'alle';
 // Weitere Einstellungen im Sprint: Variante je Kategorie und was in „Gemischt“ vorkommt (alles außer Standard ist Übung)
-const VARIANTEN_KATEGORIEN = ['flaggen', 'nachbarn', 'buchstaben', 'kennzeichen'];
+const VARIANTEN_KATEGORIEN = ['flaggen', 'nachbarn', 'buchstaben'];
 let sprintVarianten = (() => { try { return JSON.parse(localStorage.getItem('quizbude.sprintVarianten') || '{}') || {}; } catch { return {}; } })();
 let sprintArten = (() => { try { const a = JSON.parse(localStorage.getItem('quizbude.sprintArten') || 'null'); return Array.isArray(a) ? a : null; } catch { return null; } })();
 const sprintIstUebung = k => (sprintRegion !== 'alle' && REGION_KATEGORIEN.includes(k))

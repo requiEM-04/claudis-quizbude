@@ -1,13 +1,12 @@
-import { LAENDER } from './laender.js?v=0.14.1';
-import { WISSEN, WISSEN_THEMEN } from './wissen.js?v=0.14.1';
-import { EMOJI, EMOJI_THEMEN } from './emoji.js?v=0.14.1';
-import { kanon } from './kanon.js?v=0.14.1';
-import { LAND, AUSWAHL, pruefe, mischen, flaggeUrl, abgleichen } from './abgleich.js?v=0.14.1';
-import { karteLaden, ringeAlle } from './weltkarte.js?v=0.14.1';
-import { nachbarKarte } from './nachbarkarte.js?v=0.14.1';
-import { GRENZEN } from './grenzen.js?v=0.14.1';
-import { KENNZEICHEN } from './kennzeichen.js?v=0.14.1';
-import { SCHAETZEN, SCHAETZ_THEMEN } from './schaetzen.js?v=0.14.1';
+import { LAENDER } from './laender.js?v=0.14.2';
+import { WISSEN, WISSEN_THEMEN } from './wissen.js?v=0.14.2';
+import { EMOJI, EMOJI_THEMEN } from './emoji.js?v=0.14.2';
+import { kanon } from './kanon.js?v=0.14.2';
+import { LAND, AUSWAHL, pruefe, mischen, flaggeUrl, abgleichen } from './abgleich.js?v=0.14.2';
+import { karteLaden, ringeAlle } from './weltkarte.js?v=0.14.2';
+import { nachbarKarte } from './nachbarkarte.js?v=0.14.2';
+import { GRENZEN } from './grenzen.js?v=0.14.2';
+import { SCHAETZEN, SCHAETZ_THEMEN } from './schaetzen.js?v=0.14.2';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const zahl = n => n.toLocaleString('de-DE');
@@ -17,7 +16,7 @@ let UMRISSE = null;
 let umrisseLaeuft = null;
 export function umrisseLaden() {
   if (UMRISSE) return Promise.resolve(UMRISSE);
-  umrisseLaeuft ||= import('./umrisse.js?v=0.14.1').then(m => { UMRISSE = m.UMRISSE; return UMRISSE; });
+  umrisseLaeuft ||= import('./umrisse.js?v=0.14.2').then(m => { UMRISSE = m.UMRISSE; return UMRISSE; });
   return umrisseLaeuft;
 }
 export const umrisseDa = () => !!UMRISSE;
@@ -72,39 +71,6 @@ function aehnlichLang(l) {
   const nah = mischen(LAENDER.filter(x => x.code !== l.code && Math.abs(buchstabenZahl(x.name) - n) <= 1 && (!l.bekannt || x.bekannt)));
   return nah.concat(nachbarn(l).filter(x => !nah.includes(x))).slice(0, 3);
 }
-
-// ---------- Autokennzeichen ----------
-const KFZ = KENNZEICHEN.map(([code, ort, haupt]) => ({ code, ort, haupt: !!haupt }));
-const KFZ_ORT = Object.fromEntries(KFZ.map(x => [x.code, x.ort]));
-const KFZ_CODES = {}; // Ort -> alle Kürzel, Hauptkennzeichen zuerst
-for (const x of KFZ) (KFZ_CODES[x.ort] ||= [])[x.haupt ? 'unshift' : 'push'](x.code);
-const ortGrund = o => o.replace(/^(Region|Städteregion|Regionalverband|Rhein-Kreis|Landkreis|Kreis)\s+/, '').replace(/\s*\(.*\)$/, '').replace(/\s+(a\.|i\.|am|an der).*$/, '').trim();
-const GRUND_ZAHL = {};
-for (const o of Object.keys(KFZ_CODES)) GRUND_ZAHL[kanon(ortGrund(o))] = (GRUND_ZAHL[kanon(ortGrund(o))] || 0) + 1;
-const ORT_ANTWORTEN = Object.fromEntries(Object.keys(KFZ_CODES).map(o => {
-  const a = new Set([kanon(o)]);
-  const g = kanon(ortGrund(o));
-  if (GRUND_ZAHL[g] === 1) a.add(g);
-  if (/kreis$/.test(g) && g.length > 9) a.add(g.replace(/-?kreis$/, ''));
-  return [o, [...a]];
-}));
-const ALLE_ORTE = new Map(Object.entries(ORT_ANTWORTEN).flatMap(([o, as]) => as.map(a => [a, o])));
-// Rest des Schilds, nur Deko: aus dem Kürzel abgeleitet, damit alle im Raum dasselbe sehen
-function schildRest(code) {
-  let h = 7; for (const ch of code) h = (h * 31 + ch.charCodeAt(0)) % 100003;
-  const B = 'ABCDEFGHJKLMNPRSTUVWXYZ';
-  return `${B[h % B.length]}${B[(h >> 3) % B.length]} ${1 + (h % 9)}${(h >> 2) % 10}${(h >> 5) % 10}`;
-}
-// ähnliche Kürzel aus anderen Kreisen als falsche Antworten (gleicher Anfangsbuchstabe zuerst)
-function kfzFalsche(x, anzahl, nurHaupt) {
-  const fremd = KFZ.filter(y => y.ort !== x.ort && (!nurHaupt || y.haupt));
-  const nah = mischen(fremd.filter(y => y.code[0] === x.code[0]));
-  const rest = mischen(fremd.filter(y => y.code[0] !== x.code[0]));
-  const aus = [], orte = new Set([x.ort]);
-  for (const y of nah.concat(rest)) { if (orte.has(y.ort)) continue; orte.add(y.ort); aus.push(y.code); if (aus.length === anzahl) break; }
-  return aus;
-}
-export const schildHtml = (code, klein = false) => `<span class="kfz${klein ? ' klein' : ''}" aria-label="Kennzeichen ${esc(code)}"><span class="kfz-eu" aria-hidden="true"><svg viewBox="-10 -10 20 20">${Array.from({ length: 12 }, (_, i) => `<circle cx="${(Math.cos(i * Math.PI / 6) * 6.6).toFixed(2)}" cy="${(Math.sin(i * Math.PI / 6) * 6.6).toFixed(2)}" r="1.7"/>`).join('')}</svg><b>D</b></span><span class="kfz-text">${esc(code)}</span>${klein ? '' : `<span class="kfz-siegel" aria-hidden="true"><i></i><i></i></span><span class="kfz-text">${code === 'QB' ? 'Z 26' : schildRest(code)}</span>`}</span>`;
 
 // ---------- Schätzfragen ----------
 // Zahl aus der Eingabe lesen: 1.234, 1,5, 2 Mio, 3,5 Mrd, 10k
@@ -284,29 +250,6 @@ export const KATEGORIEN = {
     kurz: f => `<img src="${flaggeUrl(f.c)}" alt=""><span>${esc(f.s)}: <b>${esc(LAND[f.c].name)}</b></span>`,
   },
 
-  kennzeichen: {
-    name: 'Autokennzeichen', text: 'Woher kommt das Kennzeichen?', tippen: true, zeit: 15, stufig: true,
-    auswahlen: { bekannt: 'Hauptkennzeichen der Kreise', alle: 'Alle, auch Altkennzeichen' }, standard: 'bekannt',
-    varianten: { titel: 'Richtung', werte: { kuerzel: 'Kürzel gegeben, Ort raten', ort: 'Ort gegeben, Kürzel raten', beides: 'Gemischt' }, standard: 'kuerzel', kurz: { ort: 'Ort → Kürzel', beides: 'gemischt' } },
-    pool: a => KFZ.filter(x => a === 'alle' || x.haupt),
-    frage: (x, mitOptionen, _ziel, opt = {}) => {
-      const v = opt.v || 'beides', r = v === 'beides' ? (Math.random() < 0.5 ? 'kuerzel' : 'ort') : v;
-      return { k: 'kennzeichen', c: x.code, r, ...(mitOptionen && { o: mischen([x.code, ...kfzFalsche(x, 3, x.haupt)]) }) };
-    },
-    hinweis: f => f.r === 'ort' ? 'Welches Kennzeichen gehört zu diesem Ort?' : 'Woher kommt dieses Kennzeichen?',
-    bild: f => f.r === 'ort'
-      ? `<div class="ortsschild"><span>${esc(KFZ_ORT[f.c])}</span></div>`
-      : `<div class="bild-kfz">${schildHtml(f.c)}</div>`,
-    option: (key, f) => f.r === 'ort' ? `<span class="kfz-option">${esc(key)}</span>` : esc(KFZ_ORT[key]),
-    pruefe: (text, f) => f.r === 'ort'
-      ? abgleichen(text, KFZ_CODES[KFZ_ORT[f.c]].map(kanon), k => KFZ.some(x => x.ort !== KFZ_ORT[f.c] && kanon(x.code) === k))
-      : abgleichen(text, ORT_ANTWORTEN[KFZ_ORT[f.c]], k => ALLE_ORTE.has(k) && ALLE_ORTE.get(k) !== KFZ_ORT[f.c]),
-    richtig: (key, f) => KFZ_ORT[key] === KFZ_ORT[f.c],
-    loesung: f => f.r === 'ort' ? KFZ_CODES[KFZ_ORT[f.c]].join(', ') : KFZ_ORT[f.c],
-    info: f => { const andere = KFZ_CODES[KFZ_ORT[f.c]].filter(c => c !== f.c); return f.r === 'ort' ? `Kennzeichen für ${KFZ_ORT[f.c]}` : andere.length ? `Dort gibt es auch: ${andere.join(', ')}` : ''; },
-    kurz: f => `${schildHtml(f.c, true)}<span>${esc(KFZ_ORT[f.c])}</span>`,
-  },
-
   schaetzen: {
     name: 'Schätzfragen', text: 'Wer liegt am nächsten dran?', tippen: true, zahl: true, zeit: 20,
     auswahlen: { alle: 'Alle Themen', ...SCHAETZ_THEMEN }, standard: 'alle',
@@ -404,13 +347,13 @@ function aufdeckenHtml(f) {
 const groesseres = f => (LAND[f.c].flaeche >= LAND[f.d].flaeche ? f.c : f.d);
 
 // Emoji-Rätsel ist vorerst raus (wird inhaltlich überarbeitet), die Weltkarte steht direkt nach Flaggen
-export const KATEGORIE_REIHE = ['flaggen', 'karte', 'umrisse', 'hauptstaedte', 'nachbarn', 'buchstaben', 'kennzeichen', 'groesser', 'schaetzen', 'wissen', 'gemischt'];
+export const KATEGORIE_REIHE = ['flaggen', 'karte', 'umrisse', 'hauptstaedte', 'nachbarn', 'buchstaben', 'groesser', 'schaetzen', 'wissen', 'gemischt'];
 // Was in „Gemischt“ vorkommen kann; ohne eigene Auswahl alle
-export const ARTEN = ['flaggen', 'umrisse', 'hauptstaedte', 'stadtland', 'nachbarn', 'buchstaben', 'kennzeichen', 'groesser', 'schaetzen', 'wissen'];
+export const ARTEN = ['flaggen', 'umrisse', 'hauptstaedte', 'stadtland', 'nachbarn', 'buchstaben', 'groesser', 'schaetzen', 'wissen'];
 export const gemischtArten = arten => { const a = (Array.isArray(arten) ? arten : ARTEN).filter(k => ARTEN.includes(k)); return a.length ? a : ARTEN; };
 export const alleArten = arten => gemischtArten(arten).length === ARTEN.length;
 // Kategorien mit Sprint-Rekord und eigener Sprint-Bestenliste (Hauptstädte gibt es in zwei Richtungen)
-export const SPRINT_REIHE = ['flaggen', 'karte', 'umrisse', 'hauptstaedte', 'stadtland', 'nachbarn', 'buchstaben', 'kennzeichen', 'groesser', 'schaetzen', 'wissen', 'gemischt'];
+export const SPRINT_REIHE = ['flaggen', 'karte', 'umrisse', 'hauptstaedte', 'stadtland', 'nachbarn', 'buchstaben', 'groesser', 'schaetzen', 'wissen', 'gemischt'];
 // gewählte Variante einer Kategorie, sonst die Standardvariante
 export const varianteVon = (kat, v) => (kat?.varianten ? (v in kat.varianten.werte ? v : kat.varianten.standard) : null);
 
@@ -420,7 +363,7 @@ export function sprintFrage(kategorie, stand, benutzt, region = null, opt = {}) 
   const k = kategorie === 'gemischt' ? arten[Math.floor(Math.random() * arten.length)] : kategorie;
   const kat = KATEGORIEN[k];
   const v = kategorie === 'gemischt' ? null : varianteVon(kat, opt.variante);
-  const leicht = (kat.land || kat.stufig) && (stand < 8 || (stand < 16 && Math.random() < 0.5));
+  const leicht = kat.land && (stand < 8 || (stand < 16 && Math.random() < 0.5));
   const id = x => `${k}:${x.code ?? x.n}`;
   // mit Region (Übung): nur Länder dieser Region, sonst erst bekannte, dann alle
   let pool = (kat.land && region ? kat.pool(region, v) : kat.pool(leicht ? 'bekannt' : 'alle', v)).filter(x => !benutzt.has(id(x)));

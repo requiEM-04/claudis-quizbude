@@ -36,7 +36,7 @@ async def main():
         code = (await A.inner_text('#raum-code')).strip()
         await B.goto(BASIS + '?sitzung=2#/raum/' + code); await B.wait_for_selector('#p-warten:not([hidden])')
         # Gemischt: Wissen, Größer und Flaggen abwählen
-        for art in ['wissen', 'groesser', 'flaggen', 'umrisse', 'hauptstaedte', 'stadtland']:
+        for art in ['wissen', 'groesser', 'flaggen', 'umrisse', 'stadtland']:
             await A.click(f'#einst-arten [data-art={art}]'); await A.wait_for_timeout(200)
         await waehle(A, '#einst [data-e=runden]', '10'); await waehle(A, '#einst [data-e=zeit]', '10'); await A.wait_for_timeout(300)
         await A.screenshot(path=f'{BILDER}/v_warten_gemischt.png')
@@ -55,13 +55,13 @@ async def main():
         await A.click('#andere-kategorie'); await A.wait_for_selector('#p-warten:not([hidden])')
         # Varianten je Kategorie
         for kat, var, name in [('buchstaben', 'leicht', 'salat_leicht'), ('buchstaben', 'schwer', 'salat_schwer'), ('nachbarn', 'schwer', 'nachbarn_schwer'),
-                               ('flaggen', 'aufdecken', 'flaggen_auf'), ('kennzeichen', 'kuerzel', 'kfz_kuerzel'), ('kennzeichen', 'ort', 'kfz_ort'), ('schaetzen', None, 'schaetzen')]:
+                               ('flaggen', 'aufdecken', 'flaggen_auf'), ('schaetzen', None, 'schaetzen')]:
             await waehle(A, '#einst-kategorie', kat); await A.wait_for_timeout(300)
             if var: await waehle(A, '#einst-variante', var); await A.wait_for_timeout(300)
             await waehle(A, '#einst [data-e=runden]', '5'); await waehle(A, '#einst [data-e=zeit]', '15' if kat == 'flaggen' else '10'); await A.wait_for_timeout(300)
             sicht = await B.evaluate("({v: document.getElementById('einst-variante').value, titel: document.getElementById('einst-variante-titel').textContent, versteckt: document.querySelector('.einst-variante').hidden, modus: document.querySelector('.einst-modus').hidden})")
             print(name, 'B sieht:', sicht)
-            if name in ('salat_leicht', 'kfz_ort'): await A.screenshot(path=f'{BILDER}/v_warten_{name}.png')
+            if name == 'salat_leicht': await A.screenshot(path=f'{BILDER}/v_warten_{name}.png')
             await runde(A, B, name)
         # Sprint: mehr Einstellungen
         await A.goto(BASIS + '#/sprint'); await A.wait_for_selector('#s-sprintwahl:not([hidden])'); await A.wait_for_timeout(400)
@@ -69,7 +69,7 @@ async def main():
         await A.click('#sprint-varianten [data-vk=buchstaben][data-v=schwer]'); await A.wait_for_timeout(200)
         await A.screenshot(path=f'{BILDER}/v_sprint_mehr.png', full_page=True)
         print('Sprint-Übung markiert:', await A.eval_on_selector_all('#sprint-kacheln .mit-region', 'l => l.map(e => e.dataset.k)'), '|', await A.inner_text('#sprint-mehr-zahl'))
-        for kat in ['schaetzen', 'kennzeichen', 'buchstaben']:
+        for kat in ['schaetzen', 'buchstaben']:
             await A.click(f'#sprint-kacheln .kachel[data-k={kat}]')
             await A.wait_for_function('quizbude.sprint && quizbude.sprint.laeuft', timeout=8000); await A.wait_for_timeout(600)
             print(kat, 'Sprint-Hinweis:', await A.inner_text('#sprint-hinweis'), '| Übung:', await A.evaluate('quizbude.sprint.uebung'))
@@ -81,11 +81,6 @@ async def main():
                 rich = await A.evaluate("(async () => { const v = document.getElementById('version').textContent; const S = (await import('./js/schaetzen.js?v=' + v)).SCHAETZEN; return String(S[quizbude.sprint.frage.n].a).replace('.', ','); })()")
                 await A.fill('#sprint-eingabe', rich); await A.evaluate("document.getElementById('sprint-form').requestSubmit()"); await A.wait_for_timeout(300)
                 print('  richtig geschätzt:', await A.inner_text('#sprint-rueck'), '| Punkte', await A.evaluate('quizbude.sprint.punkte'))
-            elif kat == 'kennzeichen':
-                await A.screenshot(path=f'{BILDER}/v_sprint_kfz.png')
-                for i in range(4):
-                    await A.wait_for_timeout(250); r = await A.evaluate(ANTWORTEN.replace('quizbude.raum', 'quizbude.sprint').replace("r.phase !== 'frage' || r.meinStatus", '!r.laeuft').replace('#optionen', '#sprint-optionen').replace("'rate-eingabe'", "'sprint-eingabe'").replace("'rate-form'", "'sprint-form'"), False)
-                print('  Treffer nach 4:', await A.evaluate('quizbude.sprint.punkte'))
             else:
                 await A.screenshot(path=f'{BILDER}/v_sprint_{kat}.png')
             await A.evaluate('quizbude.sprint.ende = performance.now() + 100')

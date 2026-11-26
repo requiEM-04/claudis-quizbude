@@ -1995,28 +1995,6 @@ button.dock-link { border: 0; background: none; cursor: pointer; }
 .skin-probe .sz-teilchen, .skin-probe .sz-orbit, .skin-probe .sk-ecke { display: none !important; }
 @media (prefers-reduced-motion: reduce) { .hk-flaeche .sz, .hk-flaeche .sz i, .sk-rahmen { animation: none !important; } }
 
-/* ---------- Autokennzeichen: Nummernschild und Ortsschild ---------- */
-.kfz { display: inline-flex; align-items: stretch; height: 1.55em; font-size: clamp(2.2rem, 6vw, 3.6rem); background: #F7F7F2; border: .06em solid #151515; border-radius: .14em; box-shadow: inset 0 0 0 .04em #fff, 0 .3em .5em -.2em rgba(0,0,0,.6), 0 .02em 0 rgba(255,255,255,.4) inset; overflow: hidden; color: #121212; user-select: none; }
-.kfz-eu { display: grid; place-items: center; align-content: center; gap: .02em; width: .62em; background: linear-gradient(180deg, #2348B8, #17318A); color: #fff; }
-.kfz-eu svg { width: .46em; height: .46em; fill: #FFD61F; }
-.kfz-eu b { font: 700 .3em/1 var(--schrift); letter-spacing: 0; }
-.kfz-text { display: grid; place-items: center; padding: 0 .22em; font: 700 1em/1 'DIN Condensed', 'Bahnschrift', 'Roboto Condensed', 'Arial Narrow', var(--display); font-stretch: condensed; letter-spacing: .04em; white-space: nowrap; }
-.kfz-siegel { display: grid; align-content: center; gap: .06em; padding: 0 .04em; }
-.kfz-siegel i { display: block; width: .34em; height: .34em; border-radius: 50%; background: radial-gradient(circle at 40% 35%, #FFE58A, #E3A92B 60%, #9C6B12); box-shadow: inset 0 0 0 .02em rgba(0,0,0,.35); }
-.kfz-siegel i + i { background: radial-gradient(circle at 40% 35%, #F4F4F4, #BEC6CF 60%, #7C8893); }
-.kfz.klein { font-size: 1rem; height: 1.6em; border-width: 1.5px; }
-.bild-kfz { display: grid; place-items: center; padding: 12px 0; }
-.bild-kfz .kfz { animation: kfz-rein .45s cubic-bezier(.2, .9, .3, 1) both; }
-@keyframes kfz-rein { from { opacity: 0; transform: translateY(-10px) rotate(-1.5deg); } }
-.ortsschild { display: inline-grid; place-items: center; min-width: min(80vw, 380px); max-width: min(92vw, 640px); padding: .55em 1em; border-radius: .22em; background: #F6C400; box-shadow: inset 0 0 0 .14em #F6C400, inset 0 0 0 .26em #141414, 0 .4em .7em -.3em rgba(0,0,0,.6); color: #141414; font: 700 clamp(1.7rem, 4.6vw, 2.9rem)/1.1 'DIN Condensed', 'Bahnschrift', 'Roboto Condensed', 'Arial Narrow', var(--display); font-stretch: condensed; text-align: center; animation: kfz-rein .45s cubic-bezier(.2, .9, .3, 1) both; }
-.kfz-option { font: 700 1.15rem/1 'DIN Condensed', 'Bahnschrift', 'Roboto Condensed', 'Arial Narrow', var(--display); letter-spacing: .06em; }
-.kb-kfz { display: grid; place-items: center; }
-.kb-kfz .kfz { font-size: 1.05rem; transform: rotate(-4deg); box-shadow: inset 0 0 0 .04em #fff, 0 .5em .9em -.3em rgba(0,0,0,.75); transition: transform .4s cubic-bezier(.2, 1.4, .4, 1); }
-#kachel-raster .kb-kfz .kfz { font-size: .92rem; }
-.sprint-karte .kb-kfz .kfz { font-size: 1.32rem; }
-.kachel:hover .kb-kfz .kfz { transform: rotate(0) scale(1.06); }
-.verpasst .kfz.klein, .se-listen .kfz.klein { font-size: .8rem; }
-
 /* ---------- Schätzfragen ---------- */
 .bild-schaetzen { display: grid; justify-items: center; gap: 14px; }
 .schaetz-einheit { padding: 4px 12px; border-radius: 99px; background: rgba(205,182,140,.12); color: var(--sand-hell); font-weight: 700; font-size: .9rem; }
