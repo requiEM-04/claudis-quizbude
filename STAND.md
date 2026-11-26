@@ -2,7 +2,7 @@
 
 ## Aktuell (25.11.2026)
 
-- **Version:** 0.19.2
+- **Version:** 0.19.3
 - **Live:** https://requiem-04.github.io/claudis-quizbude/ (Repo `requiEM-04/claudis-quizbude`, Branch `main`, GitHub Pages)
 - **Server:** Supabase-Projekt `quizbude` (Ref `jgvjjjiwfjxynbzjaxsg`, Frankfurt), E-Mail-Bestätigung aus, Realtime mit öffentlichen Kanälen.
 - **Inhalt:** Konten (Name + Passwort ab 4 Zeichen), Räume mit 4-Buchstaben-Code (live über Realtime), Flaggenraten (tippen oder 4 zur Auswahl), Flaggen-Sprint (60 s), Bestenliste (Siege, Punkte, Sprint), „Zuletzt gespielt".
@@ -185,7 +185,8 @@
   - **Figuren süchtig** (Colins Wunsch, für alle): jede hängt an etwas anderem, mit eigenen Augen (gerötet, Augenringe, halb zu, aufgerissen) und Gegenstand. Fuchs Kaffee, Frosch Kiffen, Panda Bambus, Eule Energy-Drinks, Krake Zocken, Pinguin Bier, Katze Katzenminze, Igel Donuts, Schildkröte Serien, Dino Burger, Biene Honig, Koala Eukalyptus, Wal Vapen, Papagei Handy, Quizbot Strom, Herzdrache Lollis, Sternwolf Musik, Phönix Chili, Hofnarr Glücksspiel, Löwe Zigarren. Bewusst nichts mit Spritzen oder harten Drogen.
   - Colin: **kein Shop**. Mehr Kosmetik zum Freispielen ist gewünscht, Chat-Sticker als gute Idee genannt (umgesetzt als Emotes in 0.18.0).
 
-- **Neu in 0.19.2:** Sprint-Auswahl aufgeräumt: Liste mit einer Zeile je Kategorie und zwei Spalten „Saison“ (Platz, Gold/Silber/Bronze) und „Rekord“ statt Marken und Beschriftung in jeder Zeile. Ab 1440 px drei Spalten (Liste, Vorschau, Beste der Saison mit Top 10), Seite dafür bis 1600 px breit; darunter bleibt die Saison in der Vorschau.
+- **Neu in 0.19.3:** Saisonplatz aus der Liste links wieder raus (Colin), dort steht nur noch der Rekord.
+- **Neu in 0.19.2:** Sprint-Auswahl aufgeräumt: Liste mit einer Zeile je Kategorie und Spalte „Rekord“ statt Marken und Beschriftung in jeder Zeile. Ab 1440 px drei Spalten (Liste, Vorschau, Beste der Saison mit Top 10), Seite dafür bis 1600 px breit; darunter bleibt die Saison in der Vorschau.
 - **Neu in 0.19.1:** Profilbild-Editor: Klick auf den Wert bei Frisur, Brille, Bart oder Oberteil klappt eine Liste mit allen Möglichkeiten am eigenen Kopf auf (feste 50-px-Kacheln, Scrollstand bleibt beim Wählen, nur eine Liste offen).
 - **Neu in 0.19.0:**
   - **Köpfe statt Figuren als Profilbild** (Colin fand die Figuren und die Bestenliste zu kindlich): gezeichnete Köpfe aus Notionists (Zoish, CC0) über DiceBear (MIT), gebündelt in `vendor/koepfe.js` (esbuild aus @dicebear/core 9 + @dicebear/notionists 9, 372 KB, 122 KB gzip), Wrapper `js/koepfe.js`. Ohne Wahl entsteht der Kopf aus dem Namen (FNV-Startwert), eigene Wahl steht als kurzer Text in `profile.stil.kopf` (`s=…;h=…;g=…;b=…;o=…;k=h`). Avatare sind jetzt abgerundete Kacheln (28 %), Ränder per Maske auch für Gold/Silber/Bronze/Joker.

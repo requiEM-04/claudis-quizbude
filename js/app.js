@@ -1,30 +1,30 @@
-import { VERSION } from './config.js?v=0.19.2';
+import { VERSION } from './config.js?v=0.19.3';
 import {
   online, nameFehler, registrieren, anmelden, abmelden, sitzungHolen, profilLaden, profilSpeichern,
   bestenliste, spieleSeit, alleProfile, sprintEintragen, sprintBestenliste, rangVon, spielerAnzahl, spieleVon, sb,
   adminAnmelden, istAdminName, konfigLaden, adminEinrichten, einrichtungOffen, abzeichenVon, saisonAbschliessen, winterquestStand,
   freundeListe, freundAnfragen, freundAntworten, freundEntfernen,
-} from './server.js?v=0.19.2';
-import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.19.2';
-import { Raum, codeNeu, STANDARD, TIPPFEHLER_ABZUG } from './raum.js?v=0.19.2';
-import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.19.2';
+} from './server.js?v=0.19.3';
+import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.19.3';
+import { Raum, codeNeu, STANDARD, TIPPFEHLER_ABZUG } from './raum.js?v=0.19.3';
+import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.19.3';
 import {
   KATEGORIEN, KATEGORIE_REIHE, KATEGORIE_GRUPPEN, SPRINT_REIHE, mehrWert, bombeLaden, bombeBenutzt, bombeGrund, bombeZuletzt, bombeSvg, kategorieVon, optionSchluessel, richtigeWahl, umrisseDa, umrisseLaden,
   sprintFrage, pruefeFrage, fragenVorladen, kanon, ARTEN as GEMISCHT_ARTEN, gemischtArten, alleArten, varianteVon, zahlLesen, schaetzWertung, zahlText,
-} from './kategorien.js?v=0.19.2';
-import { LAENDER } from './laender.js?v=0.19.2';
-import { auswahlfeld } from './auswahlfeld.js?v=0.19.2';
-import { KATEGORIE_SYMBOL } from './symbole.js?v=0.19.2';
-import { konfetti } from './konfetti.js?v=0.19.2';
-import { karteBauen, karteLaden, auswerten } from './weltkarte.js?v=0.19.2';
-import { STUFEN, ERFOLGE, erfolgStand, emblem, wertungName, saisonName, saisonKurz, vitrineLesen, SKINS, skinVon, skinVonId, skinStand, skinBedingung } from './abzeichen.js?v=0.19.2';
+} from './kategorien.js?v=0.19.3';
+import { LAENDER } from './laender.js?v=0.19.3';
+import { auswahlfeld } from './auswahlfeld.js?v=0.19.3';
+import { KATEGORIE_SYMBOL } from './symbole.js?v=0.19.3';
+import { konfetti } from './konfetti.js?v=0.19.3';
+import { karteBauen, karteLaden, auswerten } from './weltkarte.js?v=0.19.3';
+import { STUFEN, ERFOLGE, erfolgStand, emblem, wertungName, saisonName, saisonKurz, vitrineLesen, SKINS, skinVon, skinVonId, skinStand, skinBedingung } from './abzeichen.js?v=0.19.3';
 import {
   RAENGE, BILDER, ARTEN, JOKER, SONDER, sonderVon, sonderFrei, WINTERQUEST, questGeschafft, ruhmInfo, stufeVon, stufeInfo, wappen, effektHtml, rahmenDeko, stilVon, istFrei, freiAb, neuFrei,
-  belohnungName, rangVonId, symbol, symbolSvg, SCHWELLEN, flockeSvg, bildVon, BILD_ARTEN } from './ruhm.js?v=0.19.2';
-import { freundeStart, freundeStopp, freundeOrt, istOnline, onlineAbo, einladungAbo, anfrageAbo, einladen, anfrageMelden } from './freunde.js?v=0.19.2';
-import { FIGUREN, FREIE_FIGUREN, KREISE, RINGE, GESTEN, figurSvg, figurAusEmoji, figurVonId, bildFrei, bildFreiAb, bildEintrag, suchtVon } from './figuren.js?v=0.19.2';
-import { KOPF_TEILE, kopfLesen, kopfSchreiben, kopfBild, kopfWerte, zufallsStart, HELL } from './koepfe.js?v=0.19.2';
-import { EMOTES, emoteVonId, emoteFrei, emoteHinweis, emoteImg, chatHtml, emoteErgaenzen, emotesAbStufe } from './emotes.js?v=0.19.2';
+  belohnungName, rangVonId, symbol, symbolSvg, SCHWELLEN, flockeSvg, bildVon, BILD_ARTEN } from './ruhm.js?v=0.19.3';
+import { freundeStart, freundeStopp, freundeOrt, istOnline, onlineAbo, einladungAbo, anfrageAbo, einladen, anfrageMelden } from './freunde.js?v=0.19.3';
+import { FIGUREN, FREIE_FIGUREN, KREISE, RINGE, GESTEN, figurSvg, figurAusEmoji, figurVonId, bildFrei, bildFreiAb, bildEintrag, suchtVon } from './figuren.js?v=0.19.3';
+import { KOPF_TEILE, kopfLesen, kopfSchreiben, kopfBild, kopfWerte, zufallsStart, HELL } from './koepfe.js?v=0.19.3';
+import { EMOTES, emoteVonId, emoteFrei, emoteHinweis, emoteImg, chatHtml, emoteErgaenzen, emotesAbStufe } from './emotes.js?v=0.19.3';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -1060,17 +1060,16 @@ function sprintSaisonText() {
 }
 const sprintPlatz = kk => (ich && sprintSaisonListen?.[kk] ? sprintSaisonListen[kk].findIndex(p => p.id === ich.id) + 1 : 0);
 
-// Eine Zeile je Kategorie: Name (dazu „Übung“), Saisonplatz und Rekord als ruhige Spalten
+// Eine Zeile je Kategorie: Name (dazu „Übung“) und Rekord
 function sprintZeileInnen(k) {
-  const kk = sprintKat(k), rekord = sprintRekord(kk), platz = sprintPlatz(kk);
+  const kk = sprintKat(k), rekord = sprintRekord(kk);
   return `<span class="sl-symbol" aria-hidden="true">${KATEGORIE_SYMBOL[k] || ''}</span>
     <span class="sl-name"><b>${esc(KATEGORIEN[k].name)}</b>${sprintIstUebung(kk) ? '<span class="sl-marke uebung">Übung</span>' : ''}</span>
-    <span class="sl-platz${platz && platz <= 3 ? ' p' + platz : ''}${platz ? '' : ' ohne'}" aria-label="${platz ? `Platz ${platz} diese Saison` : 'noch kein Saisonplatz'}">${platz ? `${platz}.` : '–'}</span>
     <span class="sl-rekord${rekord ? '' : ' ohne'}" aria-label="${rekord ? `Rekord ${rekord}` : 'noch kein Rekord'}">${rekord || '–'}</span>`;
 }
 function sprintListeZeichnen() {
   $('sprint-wahl').insertBefore($('sprint-vorschau'), $('sprint-saison-spalte')); // auf dem Handy steckt die Vorschau in der Liste
-  $('sprint-liste').innerHTML = '<div class="sl-kopf" aria-hidden="true"><span></span><span>Saison</span><span>Rekord</span></div>' + SPRINT_LISTE.map(g => `<div class="sl-gruppe gruppe-${g.id}" role="group" aria-label="${esc(g.titel)}">
+  $('sprint-liste').innerHTML = '<div class="sl-kopf" aria-hidden="true"><span></span><span>Rekord</span></div>' + SPRINT_LISTE.map(g => `<div class="sl-gruppe gruppe-${g.id}" role="group" aria-label="${esc(g.titel)}">
       <h3 class="gruppe-titel">${esc(g.titel)}</h3>
       ${g.arten.map(k => `<button type="button" class="sl-zeile${k === sprintWahl ? ' an' : ''}" data-k="${k}" aria-pressed="${k === sprintWahl}">${sprintZeileInnen(k)}</button>`).join('')}
     </div>`).join('');

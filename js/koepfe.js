@@ -2,7 +2,7 @@
 // Ohne eigene Wahl entsteht der Kopf aus dem Namen. Eigene Wahl steht kurz in profile.stil.kopf, z. B. "s=k3x9a;h=12;g=0;k=h":
 //   s Startwert (Augen, Mund, Nase, Brauen und alles, was nicht festgelegt ist), h Frisur, g Brille (0 = keine), b Bart (0 = keiner), o Oberteil, k=h heller Grund
 
-import { createAvatar, notionists } from '../vendor/koepfe.js?v=0.19.2';
+import { createAvatar, notionists } from '../vendor/koepfe.js?v=0.19.3';
 
 const liste = feld => notionists.schema.properties[feld].items.enum.slice().sort();
 export const KOPF_TEILE = [

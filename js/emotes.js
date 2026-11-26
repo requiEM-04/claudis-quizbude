@@ -3,8 +3,8 @@
 // der Rest kommt mit dem Ruhm (Dame und Ass jeder Kartenfarbe, Joker) und im Winter.
 // Wer ein Emote nicht hat, schickt nur das Wort: Gezeichnet wird es bei allen nur, wenn der Absender es freigespielt hat.
 
-import { figurAusdruck, ZEICHEN } from './figuren.js?v=0.19.2';
-import { stufeVon, stufeInfo, SCHWELLEN } from './ruhm.js?v=0.19.2';
+import { figurAusdruck, ZEICHEN } from './figuren.js?v=0.19.3';
+import { stufeVon, stufeInfo, SCHWELLEN } from './ruhm.js?v=0.19.3';
 
 const { T, U, hell, dunkel, stern, r1 } = ZEICHEN;
 const gespiegelt = inhalt => `<g transform="matrix(-1 0 0 1 64 0)">${inhalt}</g>`;

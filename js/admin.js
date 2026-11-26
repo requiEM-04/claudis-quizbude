@@ -1,7 +1,7 @@
-import { VERSION } from './config.js?v=0.19.2';
-import { adminClient, adminAnmelden } from './server.js?v=0.19.2';
-import { ruhmInfo, wappen, stilVon, bildVon } from './ruhm.js?v=0.19.2';
-import { kopfLesen, kopfBild } from './koepfe.js?v=0.19.2';
+import { VERSION } from './config.js?v=0.19.3';
+import { adminClient, adminAnmelden } from './server.js?v=0.19.3';
+import { ruhmInfo, wappen, stilVon, bildVon } from './ruhm.js?v=0.19.3';
+import { kopfLesen, kopfBild } from './koepfe.js?v=0.19.3';
 
 // Admin-Bereich: eigenes Konto, eigene Sitzung (quizbude.admin), alles läuft über admin_*-Funktionen mit Protokoll
 const $ = id => document.getElementById(id);
