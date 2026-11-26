@@ -1,28 +1,28 @@
-import { VERSION } from './config.js?v=0.12.1';
+import { VERSION } from './config.js?v=0.13.0';
 import {
   online, nameFehler, registrieren, anmelden, abmelden, sitzungHolen, profilLaden, profilSpeichern,
   bestenliste, spieleSeit, alleProfile, sprintEintragen, sprintBestenliste, rangVon, spielerAnzahl, spieleVon, sb,
   adminAnmelden, istAdminName, konfigLaden, adminEinrichten, einrichtungOffen, abzeichenVon, saisonAbschliessen, winterquestStand,
   freundeListe, freundAnfragen, freundAntworten, freundEntfernen,
-} from './server.js?v=0.12.1';
-import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.12.1';
-import { Raum, codeNeu, STANDARD, TIPPFEHLER_ABZUG } from './raum.js?v=0.12.1';
-import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.12.1';
+} from './server.js?v=0.13.0';
+import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.13.0';
+import { Raum, codeNeu, STANDARD, TIPPFEHLER_ABZUG } from './raum.js?v=0.13.0';
+import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.13.0';
 import {
   KATEGORIEN, KATEGORIE_REIHE, SPRINT_REIHE, kategorieVon, optionSchluessel, richtigeWahl, umrisseDa, umrisseLaden,
   sprintFrage, pruefeFrage, fragenVorladen, kanon,
-} from './kategorien.js?v=0.12.1';
-import { LAENDER } from './laender.js?v=0.12.1';
-import { auswahlfeld } from './auswahlfeld.js?v=0.12.1';
-import { KATEGORIE_SYMBOL } from './symbole.js?v=0.12.1';
-import { konfetti } from './konfetti.js?v=0.12.1';
-import { karteBauen, karteLaden, auswerten } from './weltkarte.js?v=0.12.1';
-import { STUFEN, ERFOLGE, erfolgStand, emblem, wertungName, saisonName, saisonKurz, vitrineLesen } from './abzeichen.js?v=0.12.1';
+} from './kategorien.js?v=0.13.0';
+import { LAENDER } from './laender.js?v=0.13.0';
+import { auswahlfeld } from './auswahlfeld.js?v=0.13.0';
+import { KATEGORIE_SYMBOL } from './symbole.js?v=0.13.0';
+import { konfetti } from './konfetti.js?v=0.13.0';
+import { karteBauen, karteLaden, auswerten } from './weltkarte.js?v=0.13.0';
+import { STUFEN, ERFOLGE, erfolgStand, emblem, wertungName, saisonName, saisonKurz, vitrineLesen, SKINS, skinVon, skinVonId, skinStand, skinBedingung } from './abzeichen.js?v=0.13.0';
 import {
   RAENGE, BILDER, ARTEN, JOKER, SONDER, sonderVon, sonderFrei, WINTERQUEST, questGeschafft, ruhmInfo, stufeVon, stufeInfo, wappen, effektHtml, rahmenDeko, stilVon, istFrei, freiAb, neuFrei,
-  belohnungName, rangVonId, symbol, symbolSvg, SCHWELLEN, flockeSvg, bildVon, BILD_ARTEN } from './ruhm.js?v=0.12.1';
-import { freundeStart, freundeStopp, freundeOrt, istOnline, onlineAbo, einladungAbo, anfrageAbo, einladen, anfrageMelden } from './freunde.js?v=0.12.1';
-import { FIGUREN, FREIE_FIGUREN, KREISE, RINGE, figurSvg, figurAusEmoji, figurVonId, bildFrei, bildFreiAb, bildEintrag } from './figuren.js?v=0.12.1';
+  belohnungName, rangVonId, symbol, symbolSvg, SCHWELLEN, flockeSvg, bildVon, BILD_ARTEN } from './ruhm.js?v=0.13.0';
+import { freundeStart, freundeStopp, freundeOrt, istOnline, onlineAbo, einladungAbo, anfrageAbo, einladen, anfrageMelden } from './freunde.js?v=0.13.0';
+import { FIGUREN, FREIE_FIGUREN, KREISE, RINGE, figurSvg, figurAusEmoji, figurVonId, bildFrei, bildFreiAb, bildEintrag, suchtVon } from './figuren.js?v=0.13.0';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -1095,15 +1095,20 @@ function vitrineTeil(v) {
   }
   return `<span class="hk-abz hk-medaille" tabindex="0" data-tip="Platz ${v.platz}, ${esc(wertungName(v.wertung))}" data-tip2="Saison ${esc(saisonName(v.saison))}" aria-label="Platz ${v.platz}, ${esc(wertungName(v.wertung))}, Saison ${esc(saisonName(v.saison))}">${abzeichenSvg(v.platz, saisonKurz(v.saison))}</span>`;
 }
+// Ecke wie bei einer echten Spielkarte: Rang-Buchstabe über dem Farbsymbol, in der Rangfarbe
+function eckeHtml(info, pos) {
+  const joker = info.i >= JOKER;
+  return `<span class="hk-ecke ${pos}" style="color:${info.rang.farbe}" aria-hidden="true"><b>${joker ? 'J' : info.bild.kurz}</b>${symbolSvg(joker ? 'stern' : info.rang.id)}</span>`;
+}
 function hochkarteHtml(p, st, medaillen = null) {
   const info = ruhmInfo(p.ruhm || 0), zahl = n => (n || 0).toLocaleString('de-DE');
   const titel = st.titel ? rangVonId(st.titel).titel : '';
   const sprint = Math.max(0, p.sprint_rekord || 0, ...Object.values(p.rekorde || {}));
-  return `<div class="hochkarte${st.rahmen ? ` rahmen-${st.rahmen}` : ''}" style="--rang:${info.rang.farbe}">
-    <div class="hk-flaeche${st.hintergrund ? ` hgf-${st.hintergrund}` : ''}"></div>
+  const skin = p.skinVorschau !== undefined ? p.skinVorschau : skinVon(p);
+  return `<div class="hochkarte${st.rahmen ? ` rahmen-${st.rahmen}` : ''}${skin ? ` skin-${skin}` : ''}" style="--rang:${info.rang.farbe}">
+    <div class="hk-flaeche"></div>
     ${effektHtml(st.effekt)}${rahmenDeko(st.rahmen)}
-    <span class="hk-ecke lo">${wappen(p.ruhm, { groesse: 30 })}</span>
-    <span class="hk-ecke ru">${wappen(p.ruhm, { groesse: 30 })}</span>
+    ${eckeHtml(info, 'lo')}${eckeHtml(info, 'ru')}
     <div class="hk-inhalt">
       <span class="hk-avatar">${avatarHtml(p, { bewegt: true })}</span>
       <b class="hk-name${st.farbe ? ` nf-${st.farbe}` : ''}">${esc(p.name)}</b>
@@ -1146,7 +1151,11 @@ function anpassenZeichnen() {
     const sonder = SONDER[a.id] || [];
     const anzahl = RAENGE.filter(r => istFrei(a.id, r.id, ruhm)).length + sonder.filter(s => s.frei(ich, winterStand)).length;
     return `<button role="tab" class="umschalter-knopf${a.id === anpassenArt ? ' aktiv' : ''}" aria-selected="${a.id === anpassenArt}" data-art="${a.id}">${ART_NAME[a.id]} <small>${anzahl}/${5 + sonder.length}</small></button>`;
-  }).join('');
+  }).join('') + (() => {
+    const extra = { medaillen: meineMedaillen.length }, frei = SKINS.filter(k => skinStand(k, ich, extra).frei).length;
+    return `<button role="tab" class="umschalter-knopf${anpassenArt === 'skin' ? ' aktiv' : ''}" aria-selected="${anpassenArt === 'skin'}" data-art="skin">Kartenskin <small>${frei + 1}/${SKINS.length + 1}</small></button>`;
+  })();
+  if (anpassenArt === 'skin') { skinKachelnZeichnen(); hochkarteZeichnen(); return; }
   const art = anpassenArt;
   const keiner = `<button class="stil-kachel${!wahl[art] ? ' gewaehlt' : ''}${!st[art] ? ' an' : ''}" data-rang="" aria-pressed="${!wahl[art]}">${kachelProbe(art, null)}<span class="sk-text"><b>Keiner</b><small>${!st[art] ? 'angelegt' : 'nichts anzeigen'}</small></span></button>`;
   $('stil-kacheln').innerHTML = keiner + RAENGE.map(r => {
@@ -1164,7 +1173,7 @@ function anpassenZeichnen() {
   hochkarteZeichnen();
 }
 async function stilAnlegen(neu, meldung = 'Angelegt.') {
-  const stil = Object.fromEntries(Object.entries({ ...bildVon(ich), ...neu }).filter(([, v]) => v));
+  const stil = Object.fromEntries(Object.entries({ ...bildVon(ich), skin: skinVon(ich), ...neu }).filter(([, v]) => v));
   try {
     await profilSpeichern(ich.id, { stil });
     ich = { ...ich, stil };
@@ -1377,6 +1386,20 @@ function freundeAufbauen() {
   einladungAbo(p => (freundeGeladen ? Promise.resolve() : freundeLaden()).then(() => einladungZeigen(p)));
 }
 
+// Kartenskins: eigene Oberfläche der Spielerkarte, frei über Abzeichen
+function skinKachelnZeichnen() {
+  const extra = { medaillen: meineMedaillen.length }, jetzt = skinVon(ich);
+  const probe = id => `<span class="sk-probe skin-probe${id ? ` skin-${id}` : ''}"><span class="hk-flaeche"></span></span>`;
+  $('stil-kacheln').innerHTML = `<button class="stil-kachel${!jetzt ? ' gewaehlt an' : ''}" data-skin="" aria-pressed="${!jetzt}">${probe('')}<span class="sk-text"><b>Klassik</b><small>${!jetzt ? 'angelegt' : 'immer frei'}</small></span></button>`
+    + SKINS.map(k => {
+      const st = skinStand(k, ich, extra), an = jetzt === k.id;
+      const unten = an ? '<small class="sk-an">angelegt</small>'
+        : st.frei ? '<small>frei</small>'
+        : `<small>${esc(skinBedingung(k))}</small><span class="ruhm-balken" style="--rang:#CDB68C;--anteil:${(st.hat / st.braucht).toFixed(3)}"><i></i></span><small>${st.hat} / ${st.braucht}</small>`;
+      return `<button class="stil-kachel${an ? ' gewaehlt an' : ''}${st.frei ? '' : ' gesperrt'}" data-skin="${k.id}" aria-pressed="${an}">${probe(k.id)}<span class="sk-text"><b>${esc(k.name)}</b>${unten}</span>${st.frei ? '' : '<span class="sk-schloss" aria-hidden="true">🔒</span>'}</button>`;
+    }).join('');
+}
+
 // ---------- Profil ----------
 const profilWahl = { avatar: '', farbe: '', figur: '', kreis: '', ring: '' };
 
@@ -1390,7 +1413,7 @@ function bildEditorZeichnen() {
   const stufe = stufeVon(ich.ruhm || 0), best = besterPlatz();
   const kachel = (art, e, innen, gewaehlt) => {
     const frei = bildFrei(art, e.id, stufe, best);
-    return `<button type="button" class="pb-wahl${frei ? '' : ' gesperrt'}" data-art="${art}" data-id="${e.id}" aria-pressed="${gewaehlt}" title="${esc(e.name)}${frei ? '' : `, ${esc(bildBedingung(art, e))}`}">${innen}${frei ? '' : '<span class="pb-schloss" aria-hidden="true">🔒</span>'}</button>`;
+    return `<button type="button" class="pb-wahl${frei ? '' : ' gesperrt'}" data-art="${art}" data-id="${e.id}" aria-pressed="${gewaehlt}" title="${esc(e.name)}${art === 'figur' && suchtVon(e.id) ? `, süchtig nach ${esc(suchtVon(e.id))}` : ''}${frei ? '' : `, ${esc(bildBedingung(art, e))}`}">${innen}${frei ? '' : '<span class="pb-schloss" aria-hidden="true">🔒</span>'}</button>`;
   };
   const grund = profilWahl.kreis ? '#3A4046' : profilWahl.farbe;
   $('pb-figuren').innerHTML = FIGUREN.map(f => kachel('figur', f, `<span class="avatar mit-figur" style="background:${grund}">${figurSvg(f.id)}</span>`, profilWahl.figur === f.id)).join('');
@@ -1401,7 +1424,7 @@ function bildEditorZeichnen() {
   const fig = figurVonId(profilWahl.figur);
   const vorschau = { ...ich, avatar: fig?.emoji || profilWahl.avatar, farbe: profilWahl.farbe, stil: { ...stilVon(ich), figur: profilWahl.figur, kreis: profilWahl.kreis, ring: profilWahl.ring } };
   $('pb-vorschau').innerHTML = avatarHtml(vorschau, { bewegt: true });
-  $('pb-was').innerHTML = `<b>${esc(fig?.name || 'Altes Bild')}</b><small>${esc(profilWahl.kreis ? bildEintrag('kreis', profilWahl.kreis).name : 'Einfarbig')}, ${esc(profilWahl.ring ? `Rand ${bildEintrag('ring', profilWahl.ring).name}` : 'ohne Rand')}</small>`;
+  $('pb-was').innerHTML = `<b>${esc(fig?.name || 'Altes Bild')}</b>${fig && suchtVon(fig.id) ? `<small>süchtig nach ${esc(suchtVon(fig.id))}</small>` : ''}<small>${esc(profilWahl.kreis ? bildEintrag('kreis', profilWahl.kreis).name : 'Einfarbig')}, ${esc(profilWahl.ring ? `Rand ${bildEintrag('ring', profilWahl.ring).name}` : 'ohne Rand')}</small>`;
 }
 function bildWahl(t) {
   const art = t.dataset.art, id = t.dataset.id;
@@ -1442,6 +1465,13 @@ function profilAufbauen() {
   $('stil-kacheln').onclick = e => {
     const b = e.target.closest('.stil-kachel');
     if (!b) return;
+    if (anpassenArt === 'skin') {
+      const k = skinVonId(b.dataset.skin);
+      if (b.classList.contains('gesperrt')) { toast(`${k.name}: frei mit ${skinBedingung(k)}.`); return; }
+      if (b.getAttribute('aria-pressed') === 'true') return;
+      stilAnlegen({ ...stilVon(ich), skin: b.dataset.skin }, b.dataset.skin ? `${k.name} angelegt.` : 'Klassik angelegt.');
+      return;
+    }
     if (b.classList.contains('gesperrt')) {
       const sonder = sonderVon(anpassenArt, b.dataset.rang);
       toast(sonder ? `${sonder[anpassenArt]}: ${sonder.hinweis}.` : `Noch gesperrt, frei ab ${stufeInfo(freiAb(anpassenArt, b.dataset.rang)).name}.`);
@@ -1454,7 +1484,7 @@ function profilAufbauen() {
   $('profil-speichern').onclick = async () => {
     // Freie Figuren stehen im Emoji (wirkt überall, auch in alten Listen), besondere zusätzlich geprüft im Stil
     const fig = figurVonId(profilWahl.figur), avatar = fig ? fig.emoji : profilWahl.avatar;
-    const stil = Object.fromEntries(Object.entries({ ...stilVon(ich), figur: fig && (fig.rang || fig.medaille) ? fig.id : '', kreis: profilWahl.kreis, ring: profilWahl.ring }).filter(([, v]) => v));
+    const stil = Object.fromEntries(Object.entries({ ...stilVon(ich), skin: skinVon(ich), figur: fig && (fig.rang || fig.medaille) ? fig.id : '', kreis: profilWahl.kreis, ring: profilWahl.ring }).filter(([, v]) => v));
     try {
       await profilSpeichern(ich.id, { avatar, farbe: profilWahl.farbe, stil });
       ich = { ...ich, avatar, farbe: profilWahl.farbe, stil };

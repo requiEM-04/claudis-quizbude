@@ -2,7 +2,7 @@
 
 ## Aktuell (25.11.2026)
 
-- **Version:** 0.12.1
+- **Version:** 0.13.0
 - **Live:** https://requiem-04.github.io/claudis-quizbude/ (Repo `requiEM-04/claudis-quizbude`, Branch `main`, GitHub Pages)
 - **Server:** Supabase-Projekt `quizbude` (Ref `jgvjjjiwfjxynbzjaxsg`, Frankfurt), E-Mail-Bestätigung aus, Realtime mit öffentlichen Kanälen.
 - **Inhalt:** Konten (Name + Passwort ab 4 Zeichen), Räume mit 4-Buchstaben-Code (live über Realtime), Flaggenraten (tippen oder 4 zur Auswahl), Flaggen-Sprint (60 s), Bestenliste (Siege, Punkte, Sprint), „Zuletzt gespielt".
@@ -178,6 +178,12 @@
 - **Sprint** für Nachbarn und Buchstabensalat (inkl. Regionen) und zwei Rekord-Abzeichen (Grenzkenner, Wortakrobat). Migration 010 lässt die Kategorien in `sprint_eintragen` zu.
 
 - **Neu in 0.12.1:** Abzeichen auf der Spielerkarte 74 px und in der Profil-Übersicht 68 px, ohne Namen darunter; Name und Stufe erscheinen als Schild beim Drüberfahren (auch per Tastatur), ebenso bei Medaillen im Spielerfenster.
+
+- **Neu in 0.13.0:**
+  - **Spielerkarte:** Ecken wie bei echten Spielkarten (Rang-Buchstabe über Farbsymbol, unten gedreht) statt kleiner Wappenkarten. Die Kartenfläche folgt nicht mehr dem Seitenhintergrund.
+  - **Kartenskins** (Anpassen → Kartenskin, `profile.stil.skin`), frei über Abzeichen: Gewitter (5× Silber+), Matrix (1× Gold+), Frost (3× Gold+), Toxisch (1× Platin+), Lava (3× Platin+), Galaxie (1× Diamant), Meister (Saison-Medaille). Server prüft mit `qb_abzeichen_anzahl`/`qb_skin_frei` (Migration 011, am 26.11. eingespielt; Grenzen müssen zu ERFOLGE passen).
+  - **Figuren süchtig** (Colins Wunsch, für alle): jede hängt an etwas anderem, mit eigenen Augen (gerötet, Augenringe, halb zu, aufgerissen) und Gegenstand. Fuchs Kaffee, Frosch Kiffen, Panda Bambus, Eule Energy-Drinks, Krake Zocken, Pinguin Bier, Katze Katzenminze, Igel Donuts, Schildkröte Serien, Dino Burger, Biene Honig, Koala Eukalyptus, Wal Vapen, Papagei Handy, Quizbot Strom, Herzdrache Lollis, Sternwolf Musik, Phönix Chili, Hofnarr Glücksspiel, Löwe Zigarren. Bewusst nichts mit Spritzen oder harten Drogen.
+  - Colin: **kein Shop**. Mehr Kosmetik zum Freispielen ist gewünscht, Chat-Sticker als gute Idee genannt.
 
 ## Als Nächstes (mit Colin besprochen)
 - Reihenfolge jetzt: neue Profilbilder (live in 0.11.0) → Freunde und Einladungen → neue Quizze Nachbarn und Buchstabensalat → vorgemerkt: Seitenverhältnisse (von Flaggen) raten. Kein Tagesrätsel nach Loldle-Art.

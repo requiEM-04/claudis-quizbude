@@ -156,3 +156,25 @@ export function vitrineLesen(p, extra, medaillen = null) {
   }
   return aus;
 }
+
+// Kartenskins: eigene Oberfläche der Spielerkarte, freigeschaltet über Abzeichen (der Server rechnet dasselbe nach, Migration 011)
+export const SKINS = [
+  { id: 'gewitter', name: 'Gewitter', stufe: 2, anzahl: 5 },
+  { id: 'matrix', name: 'Matrix', stufe: 3, anzahl: 1 },
+  { id: 'frost', name: 'Frost', stufe: 3, anzahl: 3 },
+  { id: 'toxisch', name: 'Toxisch', stufe: 4, anzahl: 1 },
+  { id: 'lava', name: 'Lava', stufe: 4, anzahl: 3 },
+  { id: 'galaxie', name: 'Galaxie', stufe: 5, anzahl: 1 },
+  { id: 'meister', name: 'Meister', medaille: true },
+];
+export const skinVonId = id => SKINS.find(s => s.id === id) || null;
+export const skinVon = p => skinVonId(p?.stil?.skin)?.id || null;
+export function skinBedingung(s) {
+  if (s.medaille) return 'eine Saison-Medaille';
+  return `${s.anzahl === 1 ? 'ein' : s.anzahl} Abzeichen in ${STUFEN[s.stufe - 1].name} oder besser`;
+}
+export function skinStand(s, p, extra) {
+  if (s.medaille) { const n = extra?.medaillen || 0; return { frei: n >= 1, hat: Math.min(n, 1), braucht: 1 }; }
+  const n = ERFOLGE.filter(e => erfolgStand(e, p, extra).stufe >= s.stufe).length;
+  return { frei: n >= s.anzahl, hat: Math.min(n, s.anzahl), braucht: s.anzahl };
+}

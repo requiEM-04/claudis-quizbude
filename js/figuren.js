@@ -39,20 +39,29 @@ function leinwand() {
 }
 
 // Augenpaar, x = linkes Auge (das rechte wird gespiegelt). schraeg > 0: Lid fällt zur Nase hin ab (entschlossener Blick)
-function augen(L, x, y, r, iris, { lid = T, schraeg = 1, pupille = 'rund', braue = null, schlitz = false } = {}) {
-  const form = `M${r1(x - r)} ${r1(y + r * .08)} Q${r1(x - r * .15)} ${r1(y - r * 1.05)} ${r1(x + r)} ${r1(y - r * (.05 + .28 * schraeg))} Q${r1(x + r * .2)} ${r1(y + r * .95)} ${r1(x - r)} ${r1(y + r * .08)}Z`;
+let SUCHT_JETZT = null; // Augen-Einstellungen der Sucht, gelten für die gerade gezeichnete Figur
+function augen(L, x, y, r, iris, opt = {}) {
+  const { lid = T, schraeg = 1, pupille = 'rund', braue = null, schlitz = false, rot = false, ringe = false, zu = 0, weit = false, haut = null } = { ...opt, ...(SUCHT_JETZT?.augen || {}) };
+  const s2 = weit ? schraeg * .2 : schraeg;
+  const form = `M${r1(x - r)} ${r1(y + r * .08)} Q${r1(x - r * .15)} ${r1(y - r * 1.05)} ${r1(x + r)} ${r1(y - r * (.05 + .28 * s2))} Q${r1(x + r * .2)} ${r1(y + r * .95)} ${r1(x - r)} ${r1(y + r * .08)}Z`;
   const clip = L.clip(`<path d="${form}"/>`);
-  const ix = x + r * .14, iy = y + r * .04;
+  const ix = x + r * .14, iy = y + r * .04, ir = weit ? r * .5 : r * .64;
   const pup = schlitz || pupille === 'schlitz'
     ? `<ellipse cx="${r1(ix)}" cy="${r1(iy)}" rx="${r1(r * .14)}" ry="${r1(r * .52)}" fill="${T}"/>`
-    : `<circle cx="${r1(ix)}" cy="${r1(iy)}" r="${r1(r * .3)}" fill="${T}"/>`;
-  const auge = `<path d="${form}" fill="#F3EEE3"/>`
-    + `<g clip-path="${clip}"><circle cx="${r1(ix)}" cy="${r1(iy)}" r="${r1(r * .64)}" fill="${iris}"/><circle cx="${r1(ix)}" cy="${r1(iy)}" r="${r1(r * .64)}" fill="none" stroke="${dunkel(iris, .45)}" stroke-width="${r1(r * .12)}"/>${pup}`
-    + `<path d="M${r1(x - r)} ${r1(y - r * .9)} L${r1(x + r)} ${r1(y - r * 1.1)} L${r1(x + r)} ${r1(y - r * .18)} Q${r1(x)} ${r1(y - r * .55)} ${r1(x - r)} ${r1(y - r * .2)}Z" fill="${T}" opacity=".22"/></g>`
-    + `<circle cx="${r1(ix - r * .2)}" cy="${r1(iy - r * .26)}" r="${r1(r * .19)}" fill="#fff"/>`
+    : `<circle cx="${r1(ix)}" cy="${r1(iy)}" r="${r1(weit ? r * .17 : zu > .3 ? r * .38 : r * .3)}" fill="${T}"/>`;
+  const adern = rot ? `<path d="M${r1(x - r)} ${r1(y)} l${r1(r * .35)} ${r1(-r * .08)} l${r1(r * .12)} ${r1(r * .12)} M${r1(x - r * .95)} ${r1(y + r * .2)} l${r1(r * .3)} ${r1(r * .05)} M${r1(x + r)} ${r1(y - r * .1)} l${r1(-r * .3)} ${r1(r * .1)} l${r1(-r * .1)} ${r1(-r * .12)} M${r1(x + r * .9)} ${r1(y + r * .25)} l${r1(-r * .28)} ${r1(-r * .02)}" fill="none" stroke="#D0453F" stroke-width="${r1(r * .09)}" stroke-linecap="round"/>` : '';
+  const lidY = y - r * .95 + r * 1.55 * zu;
+  const deckel = zu > 0 ? `<path d="M${r1(x - r * 1.2)} ${r1(y - r * 1.3)} H${r1(x + r * 1.2)} V${r1(lidY - r * .05)} Q${r1(x)} ${r1(lidY + r * .2)} ${r1(x - r * 1.2)} ${r1(lidY + r * .05)}Z" fill="${haut || dunkel(iris, .2)}"/>` : '';
+  const auge = (ringe ? `<path d="M${r1(x - r * .95)} ${r1(y + r * .55)} Q${r1(x + r * .1)} ${r1(y + r * 1.35)} ${r1(x + r * 1.05)} ${r1(y + r * .45)}" fill="none" stroke="#3A2440" stroke-opacity=".5" stroke-width="${r1(r * .38)}" stroke-linecap="round"/>` : '')
+    + `<path d="${form}" fill="${rot ? '#F3D5CF' : '#F3EEE3'}"/>`
+    + `<g clip-path="${clip}">${adern}<circle cx="${r1(ix)}" cy="${r1(iy)}" r="${r1(ir)}" fill="${iris}"/><circle cx="${r1(ix)}" cy="${r1(iy)}" r="${r1(ir)}" fill="none" stroke="${dunkel(iris, .45)}" stroke-width="${r1(r * .12)}"/>${pup}`
+    + `<path d="M${r1(x - r)} ${r1(y - r * .9)} L${r1(x + r)} ${r1(y - r * 1.1)} L${r1(x + r)} ${r1(y - r * .18)} Q${r1(x)} ${r1(y - r * .55)} ${r1(x - r)} ${r1(y - r * .2)}Z" fill="${T}" opacity=".22"/>${deckel}</g>`
+    + `<circle cx="${r1(ix - r * .2)}" cy="${r1(iy - r * .26)}" r="${r1(r * .19)}" fill="#fff"${zu > .45 ? ' opacity="0"' : ''}/>`
     + `<path d="${form}" fill="none" stroke="${T}" stroke-width="1.1"/>`
-    + `<path d="M${r1(x - r * 1.12)} ${r1(y + r * .02)} Q${r1(x - r * .15)} ${r1(y - r * 1.15)} ${r1(x + r * 1.1)} ${r1(y - r * (.1 + .3 * schraeg))}" fill="none" stroke="${lid}" stroke-width="${r1(r * .38)}" stroke-linecap="round"/>`
-    + (braue ? `<path d="M${r1(x - r * 1.1)} ${r1(y - r * 1.55)} Q${r1(x)} ${r1(y - r * 1.75)} ${r1(x + r * 1.15)} ${r1(y - r * (1.05 + .25 * schraeg))}" fill="none" stroke="${braue}" stroke-width="${r1(r * .5)}" stroke-linecap="round"/>` : '');
+    + (zu > 0
+      ? `<path d="M${r1(x - r * 1.12)} ${r1(lidY + r * .05)} Q${r1(x)} ${r1(lidY + r * .25)} ${r1(x + r * 1.1)} ${r1(lidY - r * .05)}" fill="none" stroke="${lid}" stroke-width="${r1(r * .34)}" stroke-linecap="round"/>`
+      : `<path d="M${r1(x - r * 1.12)} ${r1(y + r * .02)} Q${r1(x - r * .15)} ${r1(y - r * 1.15)} ${r1(x + r * 1.1)} ${r1(y - r * (.1 + .3 * s2))}" fill="none" stroke="${lid}" stroke-width="${r1(r * (weit ? .24 : .38))}" stroke-linecap="round"/>`)
+    + (braue ? `<path d="M${r1(x - r * 1.1)} ${r1(y - r * 1.55)} Q${r1(x)} ${r1(y - r * 1.75)} ${r1(x + r * 1.15)} ${r1(y - r * (1.05 + .25 * s2))}" fill="none" stroke="${braue}" stroke-width="${r1(r * .5)}" stroke-linecap="round"/>` : '');
   return auge + `<g transform="matrix(-1 0 0 1 64 0)">${auge}</g>`;
 }
 
@@ -76,6 +85,60 @@ function stern(cx, cy, r) {
 }
 // Nase mit Glanz
 const nase = (x, y, rx, ry, f = T) => `<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="${f}"/><ellipse cx="${r1(x - rx * .3)}" cy="${r1(y - ry * .35)}" rx="${r1(rx * .38)}" ry="${r1(ry * .28)}" fill="#fff" opacity=".45"/>`;
+
+// ---------- Süchte: jede Figur hängt an etwas anderem (Augen-Einstellung + Gegenstand) ----------
+const pfote = (x, y, f, rx = 3.4, ry = 2.8) => `<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="${f}" ${U} stroke-width="1.4"/>`;
+const rauch = (x, y) => `<path d="M${x} ${y} q-3.5 -4 0 -8 q3.5 -4 0 -8 M${x + 3} ${y - 3} q2.5 -3 0 -6" fill="none" stroke="#DCE2E8" stroke-width="1.6" stroke-linecap="round" opacity=".75"/>`;
+const ZEUG = {
+  becher: (x, y) => `<path d="M${x - 4.6} ${y} L${x + 4.6} ${y} L${x + 3.6} ${y + 13} L${x - 3.6} ${y + 13}Z" fill="#F4EFE6" ${U} stroke-width="1.4"/><path d="M${x - 4.2} ${y + 4} L${x + 4.2} ${y + 4} L${x + 3.9} ${y + 8.5} L${x - 3.9} ${y + 8.5}Z" fill="#8A5A34"/><rect x="${x - 5.4}" y="${y - 2.4}" width="10.8" height="3" rx="1.2" fill="#3A2A22" ${U} stroke-width="1.2"/>`
+    + `<path d="M${x - 2} ${y - 4} q-2 -3 0 -6 q2 -3 0 -6 M${x + 2} ${y - 4} q-2 -3 0 -6" fill="none" stroke="#fff" stroke-width="1.3" stroke-linecap="round" opacity=".7"/>`,
+  joint: (x, y) => `<path d="M${x} ${y} L${x + 11} ${y - 5}" stroke="${T}" stroke-width="4" stroke-linecap="round"/><path d="M${x} ${y} L${x + 11} ${y - 5}" stroke="#F1ECDF" stroke-width="2.6" stroke-linecap="round"/><circle cx="${x + 11.4}" cy="${y - 5.2}" r="1.6" fill="#FF7A2A"/><circle cx="${x + 11.4}" cy="${y - 5.2}" r="3" fill="#FF9A4A" opacity=".35"/>` + rauch(x + 12, y - 8),
+  bambus: () => `<path d="M14 52 L50 44" stroke="${T}" stroke-width="5" stroke-linecap="round"/><path d="M14 52 L50 44" stroke="#86C14F" stroke-width="3.4" stroke-linecap="round"/><path d="M22 49.6 l.6 2.6 M33 47.2 l.6 2.6 M43 45 l.6 2.6" stroke="#4E7F2C" stroke-width="1.2" stroke-linecap="round"/><path d="M50 44 q5 -5 9 -3 q-4 4 -9 3Z M48 44.5 q2 -7 7 -8 q-1 5 -7 8Z" fill="#6DB43F" ${U} stroke-width="1"/>`,
+  dose: (x, y, f) => `<rect x="${x - 4.6}" y="${y}" width="9.2" height="14" rx="1.8" fill="#1B1E24" ${U} stroke-width="1.4"/><ellipse cx="${x}" cy="${y + .6}" rx="4.2" ry="1.3" fill="#C9D0D6"/><path d="M${x + .8} ${y + 3} L${x - 2} ${y + 8} L${x} ${y + 8} L${x - 1} ${y + 12} L${x + 2.4} ${y + 6.6} L${x + .4} ${y + 6.6}Z" fill="#7CFF4F"/>` + pfote(x - 4, y + 9, f),
+  controller: () => `<path d="M19 52 Q19 47 24 47 L40 47 Q45 47 45 52 L46.5 58 Q47 61.5 44 61.5 Q41.5 61.5 40 58.5 L38 56 L26 56 L24 58.5 Q22.5 61.5 20 61.5 Q17 61.5 17.5 58Z" fill="#2B2F38" ${U} stroke-width="1.5"/><path d="M23.5 51 v4 M21.5 53 h4" stroke="#C9D0D6" stroke-width="1.4" stroke-linecap="round"/><circle cx="39" cy="51" r="1.2" fill="#5FD0FF"/><circle cx="41.6" cy="53.4" r="1.2" fill="#FF5F7A"/><circle cx="36.6" cy="53.4" r="1.2" fill="#7CFF6A"/><circle cx="39" cy="55.6" r="1.2" fill="#FFD84A"/>`,
+  bier: (x, y, f) => `<path d="M${x - 1.8} ${y} h3.6 v4 q3 2 3 6 v9.5 q0 1.5 -1.5 1.5 h-6.6 q-1.5 0 -1.5 -1.5 v-9.5 q0 -4 3 -6Z" fill="#7A4A1C" ${U} stroke-width="1.4"/><rect x="${x - 3.3}" y="${y + 10.5}" width="6.6" height="5" fill="#F2E3B8"/><rect x="${x - 2}" y="${y - 1.6}" width="4" height="2" fill="#D9B14A" ${U} stroke-width="1"/><path d="M${x - 2} ${y + 7} v10" stroke="#fff" stroke-width="1" opacity=".35" stroke-linecap="round"/>` + pfote(x + 3.6, y + 13, f),
+  minze: (x, y) => `<path d="M${x} ${y + 12} Q${x + 1} ${y + 5} ${x + 4} ${y}" fill="none" stroke="#3F7A2A" stroke-width="1.4" stroke-linecap="round"/>` + [[x - 2.5, y + 6, -40], [x + 5, y + 5, 30], [x + 3, y - 1, -10]].map(([a, b, d]) => `<ellipse cx="${a}" cy="${b}" rx="3.6" ry="2.4" transform="rotate(${d} ${a} ${b})" fill="#5DBB4C" ${U} stroke-width="1"/><path d="M${a - 2} ${b} h4" stroke="#3F7A2A" stroke-width=".7" transform="rotate(${d} ${a} ${b})"/>`).join(''),
+  donut: (x, y, f) => `<circle cx="${x}" cy="${y}" r="7" fill="#D9A15E" ${U} stroke-width="1.4"/><path d="M${x - 6.4} ${y - .6} Q${x - 6} ${y - 6.4} ${x} ${y - 6.6} Q${x + 6} ${y - 6.4} ${x + 6.4} ${y - .4} Q${x + 4} ${y + 2} ${x + 2} ${y + 1} Q${x} ${y + 3} ${x - 2} ${y + 1} Q${x - 4} ${y + 2} ${x - 6.4} ${y - .6}Z" fill="#F28DB8"/><circle cx="${x}" cy="${y}" r="2.2" fill="${T}" opacity=".55"/><path d="M${x - 3.6} ${y - 3.6} l1.2 .6 M${x + 2} ${y - 4.6} l.8 1 M${x + 4} ${y - 2} l1.2 -.2 M${x - 1} ${y - 5} l1 -.4" stroke="#fff" stroke-width="1" stroke-linecap="round"/><path d="M${x + 5.5} ${y + 3} a2 2 0 0 1 -3 2.6" fill="${T}" opacity=".0"/>` + pfote(x - 6, y + 4, f),
+  fernbedienung: (x, y, f) => `<rect x="${x - 3}" y="${y}" width="6" height="14" rx="2" fill="#23262C" ${U} stroke-width="1.3"/><circle cx="${x}" cy="${y + 2.6}" r="1.2" fill="#FF4F4F"/><path d="M${x - 1.2} ${y + 6} h.1 M${x + 1.2} ${y + 6} h.1 M${x - 1.2} ${y + 8.5} h.1 M${x + 1.2} ${y + 8.5} h.1" stroke="#9AA3AD" stroke-width="1.4" stroke-linecap="round"/>` + pfote(x + 2.8, y + 9, f),
+  burger: (x, y, f) => `<path d="M${x - 7.5} ${y} Q${x - 7.5} ${y - 7} ${x} ${y - 7} Q${x + 7.5} ${y - 7} ${x + 7.5} ${y}Z" fill="#E5A657" ${U} stroke-width="1.3"/><path d="M${x - 8} ${y + .4} q2 2 4 0 q2 2 4 0 q2 2 4 0 q2 2 4 0" fill="none" stroke="#6CC04A" stroke-width="1.8" stroke-linecap="round"/><path d="M${x - 7} ${y + 1.6} L${x + 7} ${y + 1.6} L${x + 2} ${y + 4}Z" fill="#F6CC3A"/><rect x="${x - 7.5}" y="${y + 2.4}" width="15" height="3.4" rx="1.6" fill="#6B3A20" ${U} stroke-width="1.1"/><path d="M${x - 7} ${y + 6} h14 q0 3.6 -3.5 3.6 h-7 q-3.5 0 -3.5 -3.6Z" fill="#E5A657" ${U} stroke-width="1.3"/><path d="M${x - 3} ${y - 4.5} h.1 M${x + 1} ${y - 5.2} h.1 M${x + 3.8} ${y - 3.6} h.1" stroke="#FFF3D8" stroke-width="1.2" stroke-linecap="round"/>` + pfote(x + 7, y + 4, f),
+  honig: (x, y, f) => `<path d="M${x - 5} ${y + 2} Q${x - 5.5} ${y + 13} ${x} ${y + 13} Q${x + 5.5} ${y + 13} ${x + 5} ${y + 2}Z" fill="#F0A92E" ${U} stroke-width="1.4"/><rect x="${x - 5.6}" y="${y - 1}" width="11.2" height="3.4" rx="1.2" fill="#C97A2C" ${U} stroke-width="1.2"/><path d="M${x - 2} ${y + 2.4} q0 3 1 3 q1 0 1 -3" fill="#F7C04A"/><path d="M${x - 3} ${y + 6} v4" stroke="#fff" stroke-width="1" opacity=".4" stroke-linecap="round"/>` + pfote(x + 4.4, y + 9, f),
+  eukalyptus: () => `<path d="M26 49.5 Q38 47 52 40" fill="none" stroke="#5B6B4E" stroke-width="1.6" stroke-linecap="round"/>` + [[40, 44.5, -25], [47, 40, -40], [53, 38.5, -10], [34, 49.5, 15]].map(([a, b, d]) => `<ellipse cx="${a}" cy="${b}" rx="5" ry="2.5" transform="rotate(${d} ${a} ${b})" fill="#9CCDB7" stroke="#3D6A55" stroke-width=".9"/><path d="M${a - 3.5} ${b} h7" transform="rotate(${d} ${a} ${b})" stroke="#5E8F78" stroke-width=".6"/>`).join(''),
+  dampf: () => `<g fill="#ECF0F3" stroke="#B9C3CC" stroke-width="1" opacity=".92"><circle cx="24" cy="10" r="6"/><circle cx="32" cy="6" r="7"/><circle cx="41" cy="9.5" r="6"/><circle cx="29" cy="13" r="5.5"/><circle cx="37" cy="13.5" r="5"/></g>`,
+  handy: (x, y, f) => `<rect x="${x - 4}" y="${y}" width="8" height="14" rx="1.8" fill="#1E2128" ${U} stroke-width="1.3"/><rect x="${x - 2.9}" y="${y + 1.3}" width="5.8" height="11" rx=".8" fill="#8FD6FF"/><path d="M${x} ${y + 9.2} c-2.2 -1.4 -1.6 -3.2 0 -2.3 c1.6 -.9 2.2 .9 0 2.3Z" fill="#FF4F7A"/>` + pfote(x + 3.6, y + 10, f)
+    + `<circle cx="50" cy="24" r="4.6" fill="#fff" ${U} stroke-width="1.2"/><path d="M50 26.4 c-3 -2 -2.2 -4.4 0 -3.2 c2.2 -1.2 3 1.2 0 3.2Z" fill="#FF4F7A"/>`,
+  kabel: () => `<path d="M56 34 Q63 40 60 52 Q58 60 62 66" fill="none" stroke="${T}" stroke-width="3" stroke-linecap="round"/><rect x="53.5" y="31" width="5" height="6" rx="1" fill="#5A5F68" ${U} stroke-width="1"/><rect x="8" y="9" width="11" height="6" rx="1.4" fill="none" stroke="#F2F4F6" stroke-width="1.4"/><rect x="19.2" y="10.8" width="1.6" height="2.4" fill="#F2F4F6"/><rect x="9.4" y="10.4" width="2.4" height="3.2" fill="#FF4F4F"/>`,
+  lolli: (x, y, f) => `<path d="M${x} ${y + 5} L${x} ${y + 17}" stroke="#F4EFE6" stroke-width="2" stroke-linecap="round"/><circle cx="${x}" cy="${y}" r="6" fill="#FF7FB0" ${U} stroke-width="1.4"/><path d="M${x} ${y} m-3.6 0 a3.6 3.6 0 1 1 3.6 3.6 a2.4 2.4 0 1 1 -2.4 -2.4 a1.2 1.2 0 1 1 1.2 1.2" fill="none" stroke="#fff" stroke-width="1.3"/>` + pfote(x, y + 13, f),
+  kopfhoerer: () => `<path d="M10 34 Q10 6 32 6 Q54 6 54 34" fill="none" stroke="${T}" stroke-width="5" stroke-linecap="round"/><path d="M10 34 Q10 6 32 6 Q54 6 54 34" fill="none" stroke="#3A4250" stroke-width="3" stroke-linecap="round"/>`
+    + `<rect x="5" y="28" width="9" height="14" rx="3.5" fill="#2D3440" ${U} stroke-width="1.4"/><rect x="50" y="28" width="9" height="14" rx="3.5" fill="#2D3440" ${U} stroke-width="1.4"/><rect x="11" y="30.5" width="3" height="9" rx="1.4" fill="#5FF4FF"/><rect x="50" y="30.5" width="3" height="9" rx="1.4" fill="#5FF4FF"/>`
+    + `<path d="M48 14 v-5 l4 -1 v5 M48 14 a1.6 1.4 0 1 1 -1.6 -1.4 M52 13 a1.6 1.4 0 1 1 -1.6 -1.4" fill="none" stroke="#fff" stroke-width="1.2" stroke-linecap="round" opacity=".85"/>`,
+  chili: () => `<path d="M34 41 Q42 41 47 46 Q51 51 49 56 Q45 50 39 47 Q35 45 34 41Z" fill="#E2332F" ${U} stroke-width="1.3"/><path d="M33.5 41.5 q-1 -3 1 -4" fill="none" stroke="#4E9A3A" stroke-width="2" stroke-linecap="round"/><path d="M41 44 q3 1 5 4" fill="none" stroke="#fff" stroke-width="1" opacity=".5" stroke-linecap="round"/><path d="M19 26 q-1.6 2.4 0 3.4 q1.6 -1 0 -3.4Z M45 25 q-1.6 2.4 0 3.4 q1.6 -1 0 -3.4Z" fill="#8FD3FF" ${U} stroke-width=".7"/>`,
+  wuerfel: (x, y, f) => [[x - 3, y + 2, -12], [x + 5, y + 6, 14]].map(([a, b, d]) => `<g transform="rotate(${d} ${a} ${b})"><rect x="${a - 4}" y="${b - 4}" width="8" height="8" rx="1.8" fill="#F7F3EA" ${U} stroke-width="1.2"/><circle cx="${a - 1.8}" cy="${b - 1.8}" r=".9" fill="${T}"/><circle cx="${a}" cy="${b}" r=".9" fill="#D0453F"/><circle cx="${a + 1.8}" cy="${b + 1.8}" r=".9" fill="${T}"/></g>`).join('') + pfote(x + 1, y + 11, f),
+  zigarre: () => `<path d="M35 47.5 L48 51" stroke="${T}" stroke-width="4.6" stroke-linecap="round"/><path d="M35 47.5 L48 51" stroke="#7A4A26" stroke-width="3.2" stroke-linecap="round"/><path d="M38.5 48.3 l-.7 2.6" stroke="#D9B14A" stroke-width="1.6"/><circle cx="48.4" cy="51.1" r="1.6" fill="#FF7A2A"/>` + rauch(49, 48),
+};
+const glimmen = (f, o = .16) => `<ellipse cx="32" cy="32" rx="22" ry="20" fill="${f}" opacity="${o}"/>`;
+const SUCHT = {
+  fuchs: { text: 'Kaffee', augen: { weit: true, ringe: true }, dazu: () => ZEUG.becher(14, 47) + pfote(19, 55, '#E0702A') },
+  frosch: { text: 'Kiffen', augen: { rot: true, zu: .5, haut: '#5FAE45' }, dazu: () => ZEUG.joint(45, 42) },
+  panda: { text: 'Bambus', augen: { rot: true, zu: .35, haut: '#26222A' }, dazu: () => ZEUG.bambus() },
+  eule: { text: 'Energy-Drinks', augen: { weit: true, ringe: true }, dazu: () => ZEUG.dose(48, 45, '#8A5A36') },
+  krake: { text: 'Zocken', augen: { ringe: true, rot: true }, dazu: () => glimmen('#6FB8FF') + ZEUG.controller() },
+  pinguin: { text: 'Bier', augen: { zu: .4, haut: '#25304A', rot: true }, dazu: () => `<ellipse cx="21.5" cy="39.5" rx="3.2" ry="2" fill="#F06A7A" opacity=".55"/><ellipse cx="42.5" cy="39.5" rx="3.2" ry="2" fill="#F06A7A" opacity=".55"/>` + ZEUG.bier(47, 42, '#25304A') },
+  katze: { text: 'Katzenminze', augen: { rot: true, zu: .3, haut: '#727985' }, dazu: () => ZEUG.minze(11, 46) },
+  igel: { text: 'Donuts', augen: { weit: true }, dazu: () => ZEUG.donut(48, 52, '#E3C79D') },
+  schildkroete: { text: 'Serien', augen: { ringe: true, zu: .25, haut: '#6FAE5E' }, dazu: () => glimmen('#7FC4FF', .14) + ZEUG.fernbedienung(13, 45, '#6FAE5E') },
+  dino: { text: 'Burger', augen: { weit: true }, dazu: () => ZEUG.burger(47, 52, '#3F9C8A') },
+  biene: { text: 'Honig', augen: { zu: .35, haut: '#F0B92F' }, dazu: () => ZEUG.honig(13, 47, '#F0B92F') },
+  koala: { text: 'Eukalyptus', augen: { rot: true, zu: .6, haut: '#8F97A2' }, dazu: () => ZEUG.eukalyptus() },
+  wal: { text: 'Vapen', augen: { zu: .35, haut: '#3F78B8', rot: true }, dazu: () => ZEUG.dampf() },
+  papagei: { text: 'Handy', augen: { ringe: true, weit: true }, dazu: () => glimmen('#8FD6FF', .12) + ZEUG.handy(13, 46, '#2F8E57') },
+  quizbot: { text: 'Strom', dazu: () => ZEUG.kabel() },
+  herzdrache: { text: 'Lollis', augen: { weit: true, ringe: true }, dazu: () => ZEUG.lolli(49, 43, '#E2789F') },
+  sternwolf: { text: 'Musik', augen: { zu: .4, haut: '#7E97AB' }, dazu: () => ZEUG.kopfhoerer() },
+  phoenix: { text: 'Chili', augen: { weit: true, rot: true }, dazu: () => ZEUG.chili() },
+  hofnarr: { text: 'Glücksspiel', augen: { weit: true, ringe: true }, dazu: () => ZEUG.wuerfel(14, 49, '#7A4FD0') },
+  loewe: { text: 'Zigarren', augen: { zu: .3, haut: '#EDBA62' }, dazu: () => ZEUG.zigarre() },
+};
+export const suchtVon = id => SUCHT[id]?.text || '';
 
 const ZEICHNUNG = {
   fuchs: L => {
@@ -348,7 +411,9 @@ export const figurVonId = id => FIGUREN.find(f => f.id === id);
 export function figurSvg(id) {
   const zeichnen = ZEICHNUNG[id];
   if (!zeichnen) return '';
-  const L = leinwand(), inhalt = zeichnen(L);
+  SUCHT_JETZT = SUCHT[id] || null;
+  const L = leinwand(), inhalt = zeichnen(L) + (SUCHT_JETZT?.dazu ? SUCHT_JETZT.dazu(L) : '');
+  SUCHT_JETZT = null;
   return `<svg class="figur" viewBox="0 0 64 64" aria-hidden="true"><defs>${L.defs()}</defs>${inhalt}</svg>`;
 }
 
