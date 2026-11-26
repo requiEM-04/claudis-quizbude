@@ -1,13 +1,13 @@
-import { sb, spielEintragen, spielLoggen } from './server.js?v=0.15.1';
-import { stilVon, bildVon } from './ruhm.js?v=0.15.1';
-import { letzteTippfehler } from './abgleich.js?v=0.15.1';
-import { auswerten } from './weltkarte.js?v=0.15.1';
+import { sb, spielEintragen, spielLoggen } from './server.js?v=0.16.0';
+import { stilVon, bildVon } from './ruhm.js?v=0.16.0';
+import { letzteTippfehler } from './abgleich.js?v=0.16.0';
+import { auswerten } from './weltkarte.js?v=0.16.0';
 export const TIPPFEHLER_ABZUG = 10; // Punkte Abzug je Tippfehler bei einer richtigen Antwort
-import { fragenBauen, pruefeFrage, richtigeWahl, fragenVorladen, KATEGORIEN, kategorieVon, zahlLesen, schaetzWertung, bombeBenutzt, bombeZuletzt } from './kategorien.js?v=0.15.1';
-import { lobbyMelden, lobbyAbmelden } from './lobby.js?v=0.15.1';
-import { chatErlaubt, textPruefen } from './filter.js?v=0.15.1';
+import { fragenBauen, pruefeFrage, richtigeWahl, fragenVorladen, KATEGORIEN, kategorieVon, zahlLesen, schaetzWertung, bombeBenutzt, bombeZuletzt } from './kategorien.js?v=0.16.0';
+import { lobbyMelden, lobbyAbmelden } from './lobby.js?v=0.16.0';
+import { chatErlaubt, textPruefen } from './filter.js?v=0.16.0';
 
-export const STANDARD = { kategorie: 'flaggen', runden: 10, zeit: 15, auswahl: 'alle', modus: 'tippen', chat: 'eingeschraenkt', sichtbar: 'offen', ziel: 'beides', variante: null, arten: null };
+export const STANDARD = { kategorie: 'flaggen', runden: 10, zeit: 15, auswahl: 'alle', modus: 'tippen', chat: 'eingeschraenkt', sichtbar: 'offen', ziel: 'beides', variante: null, arten: null, leiter: null };
 const COUNTDOWN = 3000;
 const AUFLOESUNG = 3500;
 
@@ -73,7 +73,11 @@ export class Raum {
     this.unentschieden = false;
   }
 
-  get startBereit() { return this.spieler.size >= 2; } // gespielt wird ab 2 Leuten
+  // Spielleiter: der Gastgeber kann nur leiten und spielt dann nicht mit (einst.leiter = seine ID)
+  get leiterId() { return this.einst?.leiter || null; }
+  get ichLeite() { return !!this.leiterId && this.leiterId === this.ich.id; }
+  get mitspieler() { return [...this.spieler.keys()].filter(id => id !== this.leiterId); }
+  get startBereit() { return this.mitspieler.length >= 2; } // gespielt wird ab 2 Leuten, der Spielleiter zählt nicht mit
 
   get binHost() { return this.hostId === this.ich.id; }
 
@@ -258,7 +262,7 @@ export class Raum {
         this.start = performance.now();
         break;
       case 'treffer':
-        if (!this.binHost || this.phase !== 'frage' || p.i !== this.idx || this.vergeben.has(p.von)) break;
+        if (!this.binHost || this.phase !== 'frage' || p.i !== this.idx || this.vergeben.has(p.von) || p.von === this.leiterId) break;
         this.vergeben.add(p.von);
         {
           const rang = this.vergeben.size;
@@ -268,17 +272,17 @@ export class Raum {
         }
         break;
       case 'pin': // Weltkarte: Wertung nach Entfernung, rechnet der Spieler selbst aus (gleiche Daten bei allen)
-        if (!this.binHost || this.phase !== 'frage' || p.i !== this.idx || this.vergeben.has(p.von)) break;
+        if (!this.binHost || this.phase !== 'frage' || p.i !== this.idx || this.vergeben.has(p.von) || p.von === this.leiterId) break;
         this.vergeben.add(p.von);
         this.senden('geloest', { i: p.i, id: p.von, pkt: Math.max(0, Math.min(150, Math.round(Number(p.pkt) || 0))), rang: this.vergeben.size, km: Math.max(0, Math.round(Number(p.km) || 0)), lon: +p.lon, lat: +p.lat, treffer: !!p.treffer, karte: true });
         break;
       case 'schaetz': // Schätzfrage: Wertung nach Nähe, rechnet der Spieler selbst aus (gleiche Daten bei allen)
-        if (!this.binHost || this.phase !== 'frage' || p.i !== this.idx || this.vergeben.has(p.von)) break;
+        if (!this.binHost || this.phase !== 'frage' || p.i !== this.idx || this.vergeben.has(p.von) || p.von === this.leiterId) break;
         this.vergeben.add(p.von);
         this.senden('geloest', { i: p.i, id: p.von, pkt: Math.max(0, Math.min(150, Math.round(Number(p.pkt) || 0))), rang: this.vergeben.size, wert: Number(p.wert), treffer: !!p.treffer, schaetz: true });
         break;
       case 'fehl':
-        if (!this.binHost || this.phase !== 'frage' || p.i !== this.idx || this.vergeben.has(p.von)) break;
+        if (!this.binHost || this.phase !== 'frage' || p.i !== this.idx || this.vergeben.has(p.von) || p.von === this.leiterId) break;
         this.vergeben.add(p.von);
         this.senden('gesperrt', { i: p.i, id: p.von, wahl: p.wahl });
         break;
@@ -360,7 +364,7 @@ export class Raum {
   allePruefen() {
     const schritt = this.hostSchritt;
     if (!schritt || schritt.fertig || schritt.alleDa || this.phase !== 'frage') return;
-    const ids = [...this.spieler.keys()];
+    const ids = this.mitspieler;
     if (ids.length && ids.every(id => this.geloest.has(id) || this.gesperrt.has(id))) {
       schritt.alleDa = true; // nur einmal planen, sonst schiebt jede Anwesenheits-Meldung die Auflösung nach hinten
       clearTimeout(this.timer);
@@ -384,8 +388,8 @@ export class Raum {
   }
 
   beenden() {
-    const liste = [...this.punkte].map(([id, pkt]) => ({ id, pkt, ...(this.bekannt.get(id) || { name: '?' }) }));
-    for (const [id, s] of this.spieler) if (!this.punkte.has(id)) liste.push({ id, pkt: 0, name: s.name, avatar: s.avatar, farbe: s.farbe, ruhm: s.ruhm, stil: s.stil });
+    const liste = [...this.punkte].filter(([id]) => id !== this.leiterId).map(([id, pkt]) => ({ id, pkt, ...(this.bekannt.get(id) || { name: '?' }) }));
+    for (const [id, s] of this.spieler) if (!this.punkte.has(id) && id !== this.leiterId) liste.push({ id, pkt: 0, name: s.name, avatar: s.avatar, farbe: s.farbe, ruhm: s.ruhm, stil: s.stil });
     liste.sort((a, b) => b.pkt - a.pkt);
     this.senden('ende', { liste });
     if (!this.ich.gast) spielLoggen({
@@ -411,7 +415,7 @@ export class Raum {
 
   // ---------- Mitspielen ----------
   raten(text) {
-    if (this.phase !== 'frage' || this.meinStatus) return 'zu';
+    if (this.phase !== 'frage' || this.meinStatus || this.ichLeite) return 'zu';
     const ergebnis = pruefeFrage(this.frage, text);
     if (ergebnis === 'richtig') {
       this.meinStatus = 'wartet';
@@ -429,7 +433,7 @@ export class Raum {
 
   // Weltkarte: Pin setzen (geht nur einmal pro Frage)
   pinSetzen(lon, lat) {
-    if (this.phase !== 'frage' || this.meinStatus || this.frage?.k !== 'karte') return null;
+    if (this.phase !== 'frage' || this.meinStatus || this.frage?.k !== 'karte' || this.ichLeite) return null;
     const a = auswerten(this.frage.c, this.frage.t, lon, lat);
     this.meinStatus = 'wartet';
     this.meinPin = { lon, lat, ...a };
@@ -439,7 +443,7 @@ export class Raum {
 
   // Schätzfrage: eine Zahl abgeben (geht nur einmal pro Frage). null = keine Zahl erkannt
   schaetzen(text) {
-    if (this.phase !== 'frage' || this.meinStatus || this.frage?.k !== 'schaetzen') return 'zu';
+    if (this.phase !== 'frage' || this.meinStatus || this.frage?.k !== 'schaetzen' || this.ichLeite) return 'zu';
     const wert = zahlLesen(text);
     const w = schaetzWertung(this.frage, wert);
     if (!w) return null;
@@ -450,7 +454,7 @@ export class Raum {
   }
 
   waehlen(code) {
-    if (this.phase !== 'frage' || this.meinStatus) return 'zu';
+    if (this.phase !== 'frage' || this.meinStatus || this.ichLeite) return 'zu';
     const ms = performance.now() - this.start;
     if (richtigeWahl(this.frage, code)) { this.meinStatus = 'wartet'; this.senden('treffer', { i: this.idx, ms }); return 'richtig'; }
     this.meinStatus = 'gesperrt';

@@ -1,28 +1,28 @@
-import { VERSION } from './config.js?v=0.15.1';
+import { VERSION } from './config.js?v=0.16.0';
 import {
   online, nameFehler, registrieren, anmelden, abmelden, sitzungHolen, profilLaden, profilSpeichern,
   bestenliste, spieleSeit, alleProfile, sprintEintragen, sprintBestenliste, rangVon, spielerAnzahl, spieleVon, sb,
   adminAnmelden, istAdminName, konfigLaden, adminEinrichten, einrichtungOffen, abzeichenVon, saisonAbschliessen, winterquestStand,
   freundeListe, freundAnfragen, freundAntworten, freundEntfernen,
-} from './server.js?v=0.15.1';
-import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.15.1';
-import { Raum, codeNeu, STANDARD, TIPPFEHLER_ABZUG } from './raum.js?v=0.15.1';
-import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.15.1';
+} from './server.js?v=0.16.0';
+import { lobbyStart, lobbyAbo, lobbyStopp } from './lobby.js?v=0.16.0';
+import { Raum, codeNeu, STANDARD, TIPPFEHLER_ABZUG } from './raum.js?v=0.16.0';
+import { LAND, pruefe, flaggeUrl } from './abgleich.js?v=0.16.0';
 import {
-  KATEGORIEN, KATEGORIE_REIHE, SPRINT_REIHE, mehrWert, bombeLaden, bombeBenutzt, bombeGrund, bombeZuletzt, bombeSvg, kategorieVon, optionSchluessel, richtigeWahl, umrisseDa, umrisseLaden,
+  KATEGORIEN, KATEGORIE_REIHE, KATEGORIE_GRUPPEN, SPRINT_REIHE, mehrWert, bombeLaden, bombeBenutzt, bombeGrund, bombeZuletzt, bombeSvg, kategorieVon, optionSchluessel, richtigeWahl, umrisseDa, umrisseLaden,
   sprintFrage, pruefeFrage, fragenVorladen, kanon, ARTEN as GEMISCHT_ARTEN, gemischtArten, alleArten, varianteVon, zahlLesen, schaetzWertung, zahlText,
-} from './kategorien.js?v=0.15.1';
-import { LAENDER } from './laender.js?v=0.15.1';
-import { auswahlfeld } from './auswahlfeld.js?v=0.15.1';
-import { KATEGORIE_SYMBOL } from './symbole.js?v=0.15.1';
-import { konfetti } from './konfetti.js?v=0.15.1';
-import { karteBauen, karteLaden, auswerten } from './weltkarte.js?v=0.15.1';
-import { STUFEN, ERFOLGE, erfolgStand, emblem, wertungName, saisonName, saisonKurz, vitrineLesen, SKINS, skinVon, skinVonId, skinStand, skinBedingung } from './abzeichen.js?v=0.15.1';
+} from './kategorien.js?v=0.16.0';
+import { LAENDER } from './laender.js?v=0.16.0';
+import { auswahlfeld } from './auswahlfeld.js?v=0.16.0';
+import { KATEGORIE_SYMBOL } from './symbole.js?v=0.16.0';
+import { konfetti } from './konfetti.js?v=0.16.0';
+import { karteBauen, karteLaden, auswerten } from './weltkarte.js?v=0.16.0';
+import { STUFEN, ERFOLGE, erfolgStand, emblem, wertungName, saisonName, saisonKurz, vitrineLesen, SKINS, skinVon, skinVonId, skinStand, skinBedingung } from './abzeichen.js?v=0.16.0';
 import {
   RAENGE, BILDER, ARTEN, JOKER, SONDER, sonderVon, sonderFrei, WINTERQUEST, questGeschafft, ruhmInfo, stufeVon, stufeInfo, wappen, effektHtml, rahmenDeko, stilVon, istFrei, freiAb, neuFrei,
-  belohnungName, rangVonId, symbol, symbolSvg, SCHWELLEN, flockeSvg, bildVon, BILD_ARTEN } from './ruhm.js?v=0.15.1';
-import { freundeStart, freundeStopp, freundeOrt, istOnline, onlineAbo, einladungAbo, anfrageAbo, einladen, anfrageMelden } from './freunde.js?v=0.15.1';
-import { FIGUREN, FREIE_FIGUREN, KREISE, RINGE, figurSvg, figurAusEmoji, figurVonId, bildFrei, bildFreiAb, bildEintrag, suchtVon } from './figuren.js?v=0.15.1';
+  belohnungName, rangVonId, symbol, symbolSvg, SCHWELLEN, flockeSvg, bildVon, BILD_ARTEN } from './ruhm.js?v=0.16.0';
+import { freundeStart, freundeStopp, freundeOrt, istOnline, onlineAbo, einladungAbo, anfrageAbo, einladen, anfrageMelden } from './freunde.js?v=0.16.0';
+import { FIGUREN, FREIE_FIGUREN, KREISE, RINGE, figurSvg, figurAusEmoji, figurVonId, bildFrei, bildFreiAb, bildEintrag, suchtVon } from './figuren.js?v=0.16.0';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -906,17 +906,26 @@ function sprintRekord(k) {
   return ich.rekorde?.[k] ?? (k === 'flaggen' ? ich.sprint_rekord || 0 : 0);
 }
 
-function kachelnHtml(mitRekord) {
-  return KATEGORIE_REIHE.filter(k => !mitRekord || SPRINT_REIHE.includes(k)).map(k => {
-    const kk = mitRekord ? sprintKat(k) : k; // im Sprint: Hauptstädte in der gewählten Richtung
-    const rekord = mitRekord ? sprintRekord(kk) : 0;
-    return `
+function kachelHtml(k, mitRekord) {
+  const kk = mitRekord ? sprintKat(k) : k; // im Sprint: Hauptstädte in der gewählten Richtung
+  const rekord = mitRekord ? sprintRekord(kk) : 0;
+  return `
     <button class="kachel${mitRekord ? ' sprint-karte' : ''}" data-k="${k}">
       <span class="kachel-bild" aria-hidden="true">${kachelBild(k)}</span>
       <span class="kachel-name">${esc(KATEGORIEN[k].name).replace('Allgemeinwissen', 'Allgemein&shy;wissen').replace('Buchstabensalat', 'Buchstaben&shy;salat')}</span>
       <span class="kachel-text">${esc(KATEGORIEN[kk].text)}</span>
       ${mitRekord ? `<span class="sk-rekord${rekord ? '' : ' leer'}"><b>${rekord || '–'}</b><small>${rekord ? 'dein Rekord' : 'noch kein Rekord'}</small></span>` : ''}
     </button>`;
+}
+// Kacheln in Gruppen (Geografie, Wörter, …); kleine Gruppen stehen nebeneinander
+function kachelnHtml(mitRekord) {
+  return KATEGORIE_GRUPPEN.map(g => {
+    const arten = g.arten.filter(k => !mitRekord || SPRINT_REIHE.includes(k));
+    if (!arten.length) return '';
+    return `<section class="kachel-gruppe gruppe-${g.id}" style="--n:${arten.length}" aria-label="${esc(g.titel)}">
+      <h3 class="gruppe-titel">${esc(g.titel)}</h3>
+      <div class="gruppe-kacheln">${arten.map(k => kachelHtml(k, mitRekord)).join('')}</div>
+    </section>`;
   }).join('');
 }
 
@@ -1823,6 +1832,7 @@ function raumAufbauen() {
         return;
       }
       if (s.dataset.e === 'richtung') { raum.einstellen({ kategorie: s.value === 'stadt' ? 'stadtland' : 'hauptstaedte' }); return; }
+      if (s.dataset.e === 'leiter') { raum.einstellen({ leiter: s.value === 'leiten' ? raum.ich.id : null }); return; }
       const wert = ['runden', 'zeit'].includes(s.dataset.e) ? Number(s.value) : s.value;
       raum.einstellen({ [s.dataset.e]: wert });
     };
@@ -1837,6 +1847,13 @@ function raumAufbauen() {
     raum.einstellen({ arten: neu.length === GEMISCHT_ARTEN.length ? null : neu });
   };
   $('einst-arten-alle').onclick = () => { if (raum?.binHost) raum.einstellen({ arten: null }); };
+  $('leiter-loesung-knopf').onclick = () => {
+    const l = $('leiter-loesung'), f = raum?.frage;
+    if (!f) return;
+    l.hidden = !l.hidden;
+    l.textContent = l.hidden ? '' : kategorieVon(f).loesung(f);
+    $('leiter-loesung-knopf').textContent = l.hidden ? 'Lösung zeigen' : 'Lösung verstecken';
+  };
   $('los').onclick = () => raum?.starten();
   $('nochmal').onclick = () => raum?.nochmal();
   $('andere-kategorie').onclick = () => raum?.zurueckInDenWarteraum();
@@ -1950,6 +1967,7 @@ function raumZeichnen() {
     }
     document.querySelectorAll('#einst select').forEach(s => { s.value = String(r.einst[s.dataset.e] ?? STANDARD[s.dataset.e] ?? ''); s.disabled = !r.binHost; });
     if (kat.varianten) $('einst-variante').value = vWahl;
+    $('einst-leiter').value = r.einst.leiter ? 'leiten' : 'mit';
     // Hauptstädte gibt es in zwei Richtungen; in der Kategorie-Liste steht nur „Hauptstädte“
     const stadtKat = ['hauptstaedte', 'stadtland'].includes(r.einst.kategorie);
     if (r.einst.kategorie === 'stadtland') $('einst-kategorie').value = 'hauptstaedte';
@@ -1963,7 +1981,7 @@ function raumZeichnen() {
     const genug = r.startBereit;
     $('los').disabled = !genug;
     $('los-hinweis').textContent = genug ? '' : r.binHost
-        ? 'Starten geht ab 2 Leuten. Klick oben auf den Code und schick den Link rum.'
+        ? (r.ichLeite ? 'Als Spielleiter brauchst du mindestens 2 Mitspieler. Klick oben auf den Code und schick den Link rum.' : 'Starten geht ab 2 Leuten. Klick oben auf den Code und schick den Link rum.')
         : 'Es geht los, sobald genug Leute da sind.';
     $('warten-text').textContent = !r.hostId ? 'Verbinde mit dem Raum …'
       : r.binHost ? 'Stell ein und leg los, sobald alle da sind. Klick auf den Code oben, dann ist der Einladungslink kopiert.'
@@ -2053,7 +2071,15 @@ function raumZeichnen() {
       gezeichnet.phase = 'aufloesung-' + r.idx;
     }
     if (r.phase === 'frage') $('aufgeloest').textContent = '';
-    $('rate-form').hidden = !!f.o || istKarte || r.phase === 'aufloesung';
+    $('rate-form').hidden = !!f.o || istKarte || r.phase === 'aufloesung' || r.ichLeite;
+    $('leiter-hinweis').hidden = !r.ichLeite;
+    if (r.ichLeite) {
+      document.querySelectorAll('#optionen button').forEach(b => { b.disabled = true; });
+      const mit = r.mitspieler, fertig = mit.filter(id => r.geloest.has(id) || r.gesperrt.has(id)).length;
+      $('leiter-stand').textContent = r.phase === 'aufloesung' ? 'Du leitest diese Runde.' : `Du leitest: ${fertig} von ${mit.length} haben geantwortet.`;
+      if (gezeichnet.leiterIdx !== r.idx) { $('leiter-loesung').hidden = true; $('leiter-loesung').textContent = ''; $('leiter-loesung-knopf').textContent = 'Lösung zeigen'; gezeichnet.leiterIdx = r.idx; }
+      $('leiter-loesung-knopf').hidden = r.phase === 'aufloesung';
+    }
     gezeichnet.idx = r.idx;
   } else {
     kartenmodus(false); $('raum-weltkarte').hidden = true;
@@ -2087,17 +2113,18 @@ function raumZeichnen() {
     $('nochmal').hidden = !r.binHost;
     $('andere-kategorie').hidden = !r.binHost;
     $('ende-text').textContent = r.binHost
-      ? (r.spieler.size < 2 ? 'Du bist gerade allein im Raum. Nochmal bringt dich in den Warteraum.' : '')
+      ? (!r.startBereit ? (r.ichLeite ? 'Als Spielleiter brauchst du mindestens 2 Mitspieler. Nochmal bringt dich in den Warteraum.' : 'Du bist gerade allein im Raum. Nochmal bringt dich in den Warteraum.') : r.ichLeite ? 'Du hast diese Runde geleitet.' : '')
       : `${hostName || 'Der Gastgeber'} entscheidet, wie es weitergeht: nochmal oder andere Kategorie.`;
   }
 
   // Spielerliste
-  const leute = [...r.spieler.values()].sort((a, b) => (r.punkte.get(b.id) || 0) - (r.punkte.get(a.id) || 0));
+  const leute = [...r.spieler.values()].sort((a, b) => (a.id === r.leiterId) - (b.id === r.leiterId) || (r.punkte.get(b.id) || 0) - (r.punkte.get(a.id) || 0));
   $('spieler-liste').innerHTML = leute.map(p => {
     const status = r.phase === 'frage' || r.phase === 'aufloesung'
       ? (r.geloest.has(p.id) ? '<span class="status ok" title="Gefunden">✓</span>' : r.gesperrt.has(p.id) ? '<span class="status nein" title="Daneben">✗</span>' : '<span class="status"></span>')
       : '<span class="status"></span>';
-    return `<li>${avatarMitWappen(p, 13)}<span class="name"><span class="${nameKlasse(p).trim()}">${esc(p.name)}</span>${p.id === r.hostId ? '<span class="host">Gastgeber</span>' : ''}</span>${status}<span class="wert">${r.punkte.get(p.id) || 0}</span></li>`;
+    const leitet = p.id === r.leiterId;
+    return `<li${leitet ? ' class="leitet"' : ''}>${avatarMitWappen(p, 13)}<span class="name"><span class="${nameKlasse(p).trim()}">${esc(p.name)}</span>${leitet ? '<span class="host">Spielleiter</span>' : p.id === r.hostId ? '<span class="host">Gastgeber</span>' : ''}</span>${leitet ? '<span class="status"></span>' : status}<span class="wert">${leitet ? '–' : r.punkte.get(p.id) || 0}</span></li>`;
   }).join('');
 
   // Chat

@@ -2,7 +2,7 @@
 
 ## Aktuell (25.11.2026)
 
-- **Version:** 0.14.2
+- **Version:** 0.16.0
 - **Live:** https://requiem-04.github.io/claudis-quizbude/ (Repo `requiEM-04/claudis-quizbude`, Branch `main`, GitHub Pages)
 - **Server:** Supabase-Projekt `quizbude` (Ref `jgvjjjiwfjxynbzjaxsg`, Frankfurt), E-Mail-Bestätigung aus, Realtime mit öffentlichen Kanälen.
 - **Inhalt:** Konten (Name + Passwort ab 4 Zeichen), Räume mit 4-Buchstaben-Code (live über Realtime), Flaggenraten (tippen oder 4 zur Auswahl), Flaggen-Sprint (60 s), Bestenliste (Siege, Punkte, Sprint), „Zuletzt gespielt".
@@ -185,6 +185,15 @@
   - **Figuren süchtig** (Colins Wunsch, für alle): jede hängt an etwas anderem, mit eigenen Augen (gerötet, Augenringe, halb zu, aufgerissen) und Gegenstand. Fuchs Kaffee, Frosch Kiffen, Panda Bambus, Eule Energy-Drinks, Krake Zocken, Pinguin Bier, Katze Katzenminze, Igel Donuts, Schildkröte Serien, Dino Burger, Biene Honig, Koala Eukalyptus, Wal Vapen, Papagei Handy, Quizbot Strom, Herzdrache Lollis, Sternwolf Musik, Phönix Chili, Hofnarr Glücksspiel, Löwe Zigarren. Bewusst nichts mit Spritzen oder harten Drogen.
   - Colin: **kein Shop**. Mehr Kosmetik zum Freispielen ist gewünscht, Chat-Sticker als gute Idee genannt.
 
+- **Neu in 0.16.0:**
+  - **Spielleiter**: Gastgeber kann im Warteraum „Leitet nur, spielt nicht mit“ wählen (`einst.leiter` = seine ID). Dann Start erst ab 2 Mitspielern (`startBereit` zählt den Spielleiter nicht), keine Eingabe/Knöpfe für ihn (auch `raten`/`waehlen`/`pinSetzen`/`schaetzen` geben „zu“, der Host ignoriert Treffer von ihm), Stand „x von y haben geantwortet“, Lösung auf Knopfdruck nur für ihn, nicht im Endstand und nicht in der Bestenliste, Auflösung wartet nicht auf ihn. In der Spielerliste als „Spielleiter“ unten.
+  - **Kacheln in Gruppen** (`KATEGORIE_GRUPPEN` in kategorien.js: Geografie, Wörter, Wissen und Schätzen, Alles zusammen; `KATEGORIE_REIHE` folgt daraus). Kleine Gruppen stehen nebeneinander (Kachelbreite `--kw` über Container-Einheiten), gleiche Höhe in einer Reihe, auf dem Handy zwei Spalten je Gruppe.
+- **Neu in 0.15.1:** Mehr oder weniger mit Pfeiltasten: ↑ = mehr (höher, länger, später, schwerer), ↓ = weniger; Tastenhinweis auf den Knöpfen und in der Tastenliste.
+- **Neu in 0.15.0:**
+  - **Bombe** (`bombe`): Silbe auf einer Bombe, Zündschnur brennt über die Fragezeit ab; jedes Wort mit der Silbe zählt, aber nur einmal pro Spiel (`bombeBenutzt`, im Raum über `treffer`/`geloest` mit `wort` geteilt). Wortliste `js/bombe-woerter.js` (601.762 Wörter bis 12 Buchstaben plus häufige, vorne komprimiert, 3,3 MB, wird nur bei Bombe geladen), dazu Zusammensetzungen aus bis zu drei bekannten Teilen mit Fugen-s. Silben `js/silben.js` mit Häufigkeit; Auswahl Leicht (≥250), Mittel (90–249), Schwer (<90, nur drei Buchstaben); Sprint steigert sich von selbst. ae/oe/ue und ss gehen auch. Gebaut mit `node --max-old-space-size=4096 werkzeuge/bombe_bauen.mjs <all-the-german-words/woerter.json> <@zxcvbn-ts/language-de/src/commonWords.json>`. Zeit um und nicht alle hatten ein Wort: „BUMM!“, sonst entschärft. Nicht in Gemischt (große Liste).
+  - **Mehr oder weniger** (`mehr`, Daten `js/mehr.js`): links Wert sichtbar, rechts raten; Themen Bauwerke, Berge, Flüsse, Erfindungen und Ereignisse, Tiere; Paare nur mit deutlichem Abstand.
+  - Schätzfragen im Sprint: Auflösung groß unter der Frage, bleibt kurz stehen, danach leere Rückmeldung.
+  - Migration 013 (Sprint-Whitelist + mehr, bombe), am 26.11. eingespielt.
 - **Neu in 0.14.2:** Autokennzeichen wieder komplett raus (Colin: kennt keiner). Die Server-Whitelist aus Migration 012 kennt `kennzeichen` noch, das schadet nicht.
 - **Neu in 0.14.1:** Abzeichen „Auf deiner Karte“ per Ziehen sortieren (Pointer-Events, auch am Handy; aus der Liste mit der Maus direkt auf einen Platz, voller Platz wird ersetzt; Klick nimmt weiterhin runter). Kachelbild Schätzfragen als Bonbonglas (clipPath-ID je Kachel eindeutig).
 - **Neu in 0.14.0:**

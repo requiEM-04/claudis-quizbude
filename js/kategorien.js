@@ -1,14 +1,14 @@
-import { LAENDER } from './laender.js?v=0.15.1';
-import { WISSEN, WISSEN_THEMEN } from './wissen.js?v=0.15.1';
-import { EMOJI, EMOJI_THEMEN } from './emoji.js?v=0.15.1';
-import { kanon } from './kanon.js?v=0.15.1';
-import { LAND, AUSWAHL, pruefe, mischen, flaggeUrl, abgleichen } from './abgleich.js?v=0.15.1';
-import { karteLaden, ringeAlle } from './weltkarte.js?v=0.15.1';
-import { nachbarKarte } from './nachbarkarte.js?v=0.15.1';
-import { GRENZEN } from './grenzen.js?v=0.15.1';
-import { SCHAETZEN, SCHAETZ_THEMEN } from './schaetzen.js?v=0.15.1';
-import { MEHR_THEMEN } from './mehr.js?v=0.15.1';
-import { SILBEN } from './silben.js?v=0.15.1';
+import { LAENDER } from './laender.js?v=0.16.0';
+import { WISSEN, WISSEN_THEMEN } from './wissen.js?v=0.16.0';
+import { EMOJI, EMOJI_THEMEN } from './emoji.js?v=0.16.0';
+import { kanon } from './kanon.js?v=0.16.0';
+import { LAND, AUSWAHL, pruefe, mischen, flaggeUrl, abgleichen } from './abgleich.js?v=0.16.0';
+import { karteLaden, ringeAlle } from './weltkarte.js?v=0.16.0';
+import { nachbarKarte } from './nachbarkarte.js?v=0.16.0';
+import { GRENZEN } from './grenzen.js?v=0.16.0';
+import { SCHAETZEN, SCHAETZ_THEMEN } from './schaetzen.js?v=0.16.0';
+import { MEHR_THEMEN } from './mehr.js?v=0.16.0';
+import { SILBEN } from './silben.js?v=0.16.0';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const zahl = n => n.toLocaleString('de-DE');
@@ -18,7 +18,7 @@ let UMRISSE = null;
 let umrisseLaeuft = null;
 export function umrisseLaden() {
   if (UMRISSE) return Promise.resolve(UMRISSE);
-  umrisseLaeuft ||= import('./umrisse.js?v=0.15.1').then(m => { UMRISSE = m.UMRISSE; return UMRISSE; });
+  umrisseLaeuft ||= import('./umrisse.js?v=0.16.0').then(m => { UMRISSE = m.UMRISSE; return UMRISSE; });
   return umrisseLaeuft;
 }
 export const umrisseDa = () => !!UMRISSE;
@@ -106,7 +106,7 @@ export function schaetzWertung(f, wert) {
 // Die Wortliste ist groß und kommt erst, wenn Bombe gespielt wird
 let BOMBE = null, bombeLaeuft = null;
 export function bombeLaden() {
-  bombeLaeuft ||= import('./bombe-woerter.js?v=0.15.1').then(m => {
+  bombeLaeuft ||= import('./bombe-woerter.js?v=0.16.0').then(m => {
     const woerter = new Set(); let vorher = '';
     for (const z of m.WOERTER.split('\n')) { const w = vorher.slice(0, z.charCodeAt(0) - 48) + z.slice(1); woerter.add(w); vorher = w; }
     BOMBE = { woerter, beispiele: m.BEISPIELE.split(' ') };
@@ -462,7 +462,14 @@ function aufdeckenHtml(f) {
 const groesseres = f => (LAND[f.c].flaeche >= LAND[f.d].flaeche ? f.c : f.d);
 
 // Emoji-Rätsel ist vorerst raus (wird inhaltlich überarbeitet), die Weltkarte steht direkt nach Flaggen
-export const KATEGORIE_REIHE = ['flaggen', 'karte', 'umrisse', 'hauptstaedte', 'nachbarn', 'buchstaben', 'bombe', 'groesser', 'mehr', 'schaetzen', 'wissen', 'gemischt'];
+// Gruppen für die Kacheln (Bude und Sprint); die Reihenfolge der Kategorien folgt den Gruppen
+export const KATEGORIE_GRUPPEN = [
+  { id: 'geo', titel: 'Geografie', arten: ['flaggen', 'karte', 'umrisse', 'hauptstaedte', 'nachbarn', 'groesser'] },
+  { id: 'woerter', titel: 'Wörter', arten: ['buchstaben', 'bombe'] },
+  { id: 'wissen', titel: 'Wissen und Schätzen', arten: ['mehr', 'schaetzen', 'wissen'] },
+  { id: 'alles', titel: 'Alles zusammen', arten: ['gemischt'] },
+];
+export const KATEGORIE_REIHE = KATEGORIE_GRUPPEN.flatMap(g => g.arten);
 // Was in „Gemischt“ vorkommen kann; ohne eigene Auswahl alle
 export const ARTEN = ['flaggen', 'umrisse', 'hauptstaedte', 'stadtland', 'nachbarn', 'buchstaben', 'groesser', 'mehr', 'schaetzen', 'wissen'];
 export const gemischtArten = arten => { const a = (Array.isArray(arten) ? arten : ARTEN).filter(k => ARTEN.includes(k)); return a.length ? a : ARTEN; };
