@@ -30,10 +30,10 @@ revoke all on function public.qb_abzeichen_anzahl(public.profile, int) from publ
 create or replace function public.qb_skin_frei(p_wert text, p public.profile) returns boolean
 language sql stable security definer set search_path = public as $$
   select case p_wert
-    when 'carbon' then public.qb_abzeichen_anzahl(p, 2) >= 5
-    when 'neon' then public.qb_abzeichen_anzahl(p, 3) >= 1
-    when 'marmor' then public.qb_abzeichen_anzahl(p, 3) >= 3
-    when 'polarlicht' then public.qb_abzeichen_anzahl(p, 4) >= 1
+    when 'gewitter' then public.qb_abzeichen_anzahl(p, 2) >= 5
+    when 'matrix' then public.qb_abzeichen_anzahl(p, 3) >= 1
+    when 'frost' then public.qb_abzeichen_anzahl(p, 3) >= 3
+    when 'toxisch' then public.qb_abzeichen_anzahl(p, 4) >= 1
     when 'lava' then public.qb_abzeichen_anzahl(p, 4) >= 3
     when 'galaxie' then public.qb_abzeichen_anzahl(p, 5) >= 1
     when 'meister' then exists (select 1 from public.abzeichen a where a.user_id = p.id)
@@ -66,5 +66,5 @@ end $$;
 
 -- Kontrolle: Abzeichen je Stufe für alle Konten (soll zur Seite passen)
 select name, public.qb_abzeichen_anzahl(p, 1) as bronze_plus, public.qb_abzeichen_anzahl(p, 2) as silber_plus,
-       public.qb_abzeichen_anzahl(p, 3) as gold_plus, public.qb_skin_frei('carbon', p) as carbon
+       public.qb_abzeichen_anzahl(p, 3) as gold_plus, public.qb_skin_frei('gewitter', p) as gewitter
 from public.profile p order by name;
