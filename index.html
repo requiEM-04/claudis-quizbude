@@ -239,7 +239,7 @@
         <div class="buehne-kopf">
           <button class="raum-code" id="raum-code" title="Einladungslink kopieren"></button>
           <span class="runde" id="raum-runde"></span>
-          <span class="kopf-knoepfe"><button class="tasten-knopf" type="button" title="Tasten anzeigen (?)" aria-label="Tasten anzeigen">⌨</button><a class="knopf zweit klein" href="#/">Raus</a></span>
+          <span class="kopf-knoepfe"><button class="knopf zweit klein" id="raum-freunde" type="button" hidden>Freunde einladen</button><button class="tasten-knopf" type="button" title="Tasten anzeigen (?)" aria-label="Tasten anzeigen">⌨</button><a class="knopf zweit klein" href="#/">Raus</a></span>
         </div>
         <div class="zeitleiste" id="zeitleiste" hidden><div class="zeitleiste-fuellung" id="zeitleiste-fuellung"></div></div>
 
@@ -364,6 +364,8 @@
 
 <!-- Tastenliste -->
 <dialog class="spieler-fenster" id="spieler-fenster" aria-label="Spieler"><div class="sf-innen" id="sf-innen"></div></dialog>
+<dialog class="spieler-fenster freunde-fenster" id="freunde-fenster" aria-label="Freunde"><div class="sf-innen" id="fr-innen"></div></dialog>
+<div class="einladung" id="einladung" role="alert" hidden></div>
 <dialog class="aufstieg" id="aufstieg" aria-labelledby="aufstieg-titel"><div class="aufstieg-inhalt" id="aufstieg-inhalt"></div></dialog>
 <dialog class="tasten-dialog" id="tasten-dialog" aria-labelledby="tasten-titel">
   <button class="dialog-zu" id="tasten-zu" aria-label="Schließen">×</button>
@@ -383,6 +385,7 @@
   <a class="dock-link" href="#/" data-nav="bude"><svg class="dock-icon" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg><span>Bude</span></a>
   <a class="dock-link" href="#/sprint" data-nav="sprint"><svg class="dock-icon" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5"/><path d="M10 2h4"/><path d="M12 2v3"/></svg><span>Sprint</span></a>
   <a class="dock-link" href="#/lernen" data-nav="lernen"><svg class="dock-icon" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/></svg><span>Lernen</span></a>
+  <button class="dock-link dock-freunde" id="dock-freunde" type="button" hidden><svg class="dock-icon" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8"/><path d="M18.5 14.8c1.7.7 2.8 2.4 3.1 5.2"/></svg><span>Freunde</span><b class="dock-zahl" id="freunde-zahl" hidden></b></button>
   <span class="dock-trenner" aria-hidden="true"></span>
   <span class="dock-profil" id="profil-chip"></span>
   <a class="ruhm-mini" id="ruhm-mini" href="#/profil" hidden></a>

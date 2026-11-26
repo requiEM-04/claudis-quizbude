@@ -175,6 +175,29 @@
           }
           return { data: null, error: null };
         }
+        if (name === 'freunde_liste' || name.startsWith('freund_')) {
+          const ich = uid(), F = L.get('fake.freunde', []), P = L.get('fake.profile', []).map(mitRuhm);
+          const zwischen = (x, y) => F.find(f => (f.von === x && f.an === y) || (f.von === y && f.an === x));
+          if (name === 'freunde_liste') return { data: F.filter(f => f.von === ich || f.an === ich).map(f => {
+            const andere = f.von === ich ? f.an : f.von, p = P.find(x => x.id === andere) || {};
+            return { id: f.id, andere, name: p.name, avatar: p.avatar, farbe: p.farbe, ruhm: p.ruhm, stil: p.stil, status: f.status, richtung: f.an === ich ? 'ein' : 'aus', am: f.am };
+          }), error: null };
+          if (name === 'freund_anfragen') {
+            const z = P.find(x => x.name.toLowerCase() === String(a.p_name || '').trim().toLowerCase());
+            if (!z) return { data: 'unbekannt', error: null };
+            if (z.id === ich) return { data: 'selbst', error: null };
+            const v = zwischen(ich, z.id);
+            if (v) { if (v.status === 'offen' && v.an === ich) { v.status = 'ok'; L.set('fake.freunde', F); return { data: 'angenommen', error: null }; } return { data: 'schon', error: null }; }
+            L.set('fake.freunde', [...F, { id: Date.now() + Math.floor(Math.random() * 1000), von: ich, an: z.id, status: 'offen', am: new Date().toISOString() }]);
+            return { data: 'gesendet', error: null };
+          }
+          if (name === 'freund_antworten') {
+            const f = F.find(x => x.id === a.p_id && x.an === ich && x.status === 'offen');
+            if (f) L.set('fake.freunde', a.p_annehmen ? F.map(x => x === f ? { ...x, status: 'ok' } : x) : F.filter(x => x !== f));
+            return { data: null, error: null };
+          }
+          if (name === 'freund_entfernen') { L.set('fake.freunde', F.filter(f => !((f.von === ich && f.an === a.p_andere) || (f.von === a.p_andere && f.an === ich)))); return { data: null, error: null }; }
+        }
         if (name === 'winterquest_stand') return { data: L.get('fake.winter', { flocken: 0, heute: [] }), error: null };
         if (name === 'spiel_loggen') L.set('fake.spiele', [{ ...a.p, am: new Date().toISOString() }, ...L.get('fake.spiele', [])]);
         return { data: null, error: null };

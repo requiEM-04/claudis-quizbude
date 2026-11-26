@@ -1845,3 +1845,40 @@ body.kartenmodus .winterwelt { display: none; }
 @keyframes salat-rein { from { opacity: 0; transform: translateY(-14px) rotate(calc((var(--i, 0) - 4) * 3deg)) scale(.8); } }
 @media (prefers-reduced-motion: reduce) { .salat-wort b { animation: none; } }
 #aufgeloest.lang { font-size: clamp(1.1rem, 2.2vw, 1.6rem); line-height: 1.35; max-width: 640px; margin-inline: auto; }
+
+/* ---------- Freunde ---------- */
+button.dock-link { border: 0; background: none; cursor: pointer; }
+.dock-freunde { position: relative; }
+.dock-zahl { position: absolute; top: 6px; right: 12px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 99px; display: grid; place-items: center; font: 800 .68rem/1 var(--schrift); color: #10251B; background: #7FD1A0; box-shadow: 0 0 0 2px var(--flaeche); }
+.dock-zahl.anfrage { background: var(--rose, #D99A9A); color: #2A1414; animation: zahl-puls 1.6s ease-in-out infinite; }
+@keyframes zahl-puls { 50% { transform: scale(1.15); } }
+.freunde-fenster { width: min(560px, calc(100vw - 32px)); }
+.fr-form { display: flex; gap: 10px; margin-bottom: 8px; }
+.fr-form input { flex: 1; min-width: 0; padding: 11px 14px; border-radius: 12px; border: 1px solid var(--linie-stark); background: var(--tief); color: var(--text); font: 600 .95rem var(--schrift); }
+.fr-form input:focus-visible { outline: 2px solid var(--sand); outline-offset: 1px; }
+.fr-titel { margin: 18px 0 8px; font-size: .86rem; color: var(--text-2); }
+.fr-liste { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.fr-liste li { display: flex; align-items: center; gap: 12px; padding: 9px 12px; border-radius: 14px; background: rgba(255,255,255,.03); border: 1px solid var(--linie); }
+.fr-liste li.neu { border-color: rgba(217,154,154,.45); background: rgba(217,154,154,.07); }
+.fr-liste li .avatar { width: 36px; height: 36px; font-size: 1.1rem; }
+.fr-name { display: grid; gap: 2px; flex: 1; min-width: 0; }
+.fr-name b { font-size: .98rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fr-name small { color: var(--text-3); font-size: .76rem; display: flex; align-items: center; gap: 6px; }
+.fr-punkt { width: 8px; height: 8px; border-radius: 50%; background: #5A6066; flex: none; }
+.fr-liste li.da .fr-punkt { background: #7FD1A0; box-shadow: 0 0 0 3px rgba(127,209,160,.18); }
+.fr-liste li.da .fr-name small { color: var(--text-2); }
+.fr-knoepfe { display: flex; gap: 6px; align-items: center; flex: none; }
+.fr-weg { width: 30px; height: 30px; border-radius: 50%; border: 1px solid transparent; background: none; color: var(--text-3); font-size: 1.15rem; cursor: pointer; }
+.fr-weg:hover { color: var(--text); border-color: var(--linie-stark); }
+.fr-weg.sicher, .fr-knoepfe .sicher { width: auto; padding: 0 10px; border-radius: 99px; font-size: .78rem; font-weight: 800; color: #F2B8B8; border-color: rgba(217,154,154,.5); }
+.fr-leer { color: var(--text-3); font-size: .9rem; margin: 4px 0 0; line-height: 1.5; }
+.einladung { position: fixed; top: 18px; left: 50%; z-index: 60; display: flex; align-items: center; gap: 12px; padding: 12px 12px 14px 18px; border-radius: 18px; background: var(--flaeche-hoch); border: 1px solid var(--linie-stark); box-shadow: 0 18px 40px -14px rgba(0,0,0,.8); transform: translateX(-50%); overflow: hidden; max-width: calc(100vw - 32px); }
+.einladung.an { animation: einladung-rein .4s cubic-bezier(.2, 1.3, .4, 1); }
+@keyframes einladung-rein { from { opacity: 0; transform: translate(-50%, -20px) scale(.96); } }
+.ei-text { display: grid; gap: 2px; font-size: .95rem; }
+.ei-text small { color: var(--text-3); font-size: .76rem; }
+.ei-zu { width: 30px; height: 30px; border: 0; border-radius: 50%; background: none; color: var(--text-3); font-size: 1.2rem; cursor: pointer; }
+.ei-zu:hover { color: var(--text); background: rgba(255,255,255,.06); }
+.ei-zeit { position: absolute; left: 0; bottom: 0; height: 3px; width: 100%; background: var(--sand); transform-origin: left; animation: ei-ablauf 15s linear forwards; }
+@keyframes ei-ablauf { to { transform: scaleX(0); } }
+@media (prefers-reduced-motion: reduce) { .einladung.an, .dock-zahl.anfrage { animation: none; } }

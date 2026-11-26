@@ -209,3 +209,23 @@ export async function winterquestStand() {
   if (error) throw new Error(error.message);
   return data || { flocken: 0, heute: [] };
 }
+
+// ---------- Freunde (Tabelle freunde, Migration 010) ----------
+export async function freundeListe() {
+  const { data, error } = await sb.rpc('freunde_liste');
+  if (error) throw new Error(uebersetzen(error));
+  return data || [];
+}
+export async function freundAnfragen(name) {
+  const { data, error } = await sb.rpc('freund_anfragen', { p_name: name });
+  if (error) throw new Error(uebersetzen(error));
+  return data;
+}
+export async function freundAntworten(id, annehmen) {
+  const { error } = await sb.rpc('freund_antworten', { p_id: id, p_annehmen: annehmen });
+  if (error) throw new Error(uebersetzen(error));
+}
+export async function freundEntfernen(andere) {
+  const { error } = await sb.rpc('freund_entfernen', { p_andere: andere });
+  if (error) throw new Error(uebersetzen(error));
+}
