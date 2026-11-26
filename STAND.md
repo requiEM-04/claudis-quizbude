@@ -2,7 +2,7 @@
 
 ## Aktuell (25.11.2026)
 
-- **Version:** 0.11.3
+- **Version:** 0.12.0
 - **Live:** https://requiem-04.github.io/claudis-quizbude/ (Repo `requiEM-04/claudis-quizbude`, Branch `main`, GitHub Pages)
 - **Server:** Supabase-Projekt `quizbude` (Ref `jgvjjjiwfjxynbzjaxsg`, Frankfurt), E-Mail-Bestätigung aus, Realtime mit öffentlichen Kanälen.
 - **Inhalt:** Konten (Name + Passwort ab 4 Zeichen), Räume mit 4-Buchstaben-Code (live über Realtime), Flaggenraten (tippen oder 4 zur Auswahl), Flaggen-Sprint (60 s), Bestenliste (Siege, Punkte, Sprint), „Zuletzt gespielt".
@@ -171,12 +171,11 @@
 
 - **Neu in 0.11.3:** Alle 20 Figuren neu gezeichnet im Sammelkarten-Stil (Colin: „cooler, weniger kindlich“ und „detaillierter, edler“): kräftiger Umriss, Licht-Verläufe, entschlossener Blick mit Lid und farbiger Iris, keine Bäckchen und Grinsemünder. Verläufe mit eindeutigen IDs je Zeichnung (Präfix je Modul + Zähler).
 
-## Fertig auf Branch `freunde` (noch nicht live, wartet auf Migration 010)
+- **Neu in 0.12.0: Freunde und Einladungen** (Migration 010 am 26.11. eingespielt und mit zwei zurückgerollten Probe-Spielern geprüft: Anfrage, Doppelanfrage, Annehmen, Lese-Regel, Sprint Nachbarn/Buchstabensalat, Entfernen)
 - **Freunde:** Dock-Knopf „Freunde“ mit Zähler (grün: wie viele online, rot pulsierend: neue Anfragen). Fenster mit Anfrage per Name, Anfragen annehmen/ablehnen, Liste mit Online-Status („online“, „im Raum ABCD, Flaggen“), Gesendet/Zurückziehen, Entfernen mit Rückfrage. „Als Freund hinzufügen“ im Spielerfenster (Klick in der Bestenliste).
 - **Einladen:** im Warteraum „Freunde einladen“ bzw. im Fenster „Einladen“; beim Freund erscheint oben 15 s ein Banner mit „Beitreten“. Ist ein Freund in einem Raum, zeigt das Fenster „Mitspielen“.
 - **Technik:** Tabelle `freunde` + Funktionen `freund_anfragen`, `freund_antworten`, `freund_entfernen`, `freunde_liste` (Migration 010). Online und Einladungen über Realtime-Kanal `qb-online` (`js/freunde.js`, Presence-Schlüssel = Konto-ID, Broadcasts `einladung` und `anfrage`). Test: `werkzeuge/test/freundetest.py`.
 - **Sprint** für Nachbarn und Buchstabensalat (inkl. Regionen) und zwei Rekord-Abzeichen (Grenzkenner, Wortakrobat). Migration 010 lässt die Kategorien in `sprint_eintragen` zu.
-- **Live schalten:** 1. `werkzeuge/migrationen/010_freunde_kategorien.sql` (vom Branch) im SQL-Editor einspielen, Kontrollzeile `freunde_da = true`, `funktionen = 4`. 2. Optional mit zurückgerolltem Probe-Spieler prüfen (wie bei 009). 3. `git merge freunde` in main, `release.py 0.12.0`, pushen, Deployment prüfen (`gh run list`).
 
 ## Als Nächstes (mit Colin besprochen)
 - Reihenfolge jetzt: neue Profilbilder (live in 0.11.0) → Freunde und Einladungen → neue Quizze Nachbarn und Buchstabensalat → vorgemerkt: Seitenverhältnisse (von Flaggen) raten. Kein Tagesrätsel nach Loldle-Art.

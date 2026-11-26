@@ -1,4 +1,4 @@
-import { sb } from './server.js?v=0.11.3';
+import { sb } from './server.js?v=0.12.0';
 
 // Wer ist gerade da? Ein Kanal für alle angemeldeten Spieler (Schlüssel = Konto-ID).
 // Jeder meldet: Name und, falls im Raum, Code und Kategorie. Einladungen und „neue Anfrage“ laufen als Broadcast.
